@@ -5,9 +5,10 @@ define([
     'kb.runtime',
     'kb.utils',
     'kb.alert',
-    'kb.html'
+    'kb.html',
+    'kb_plugin_dataview'
 ],
-    function (nunjucks, $, Promise, R, Utils, Alert, html) {
+    function (nunjucks, $, Promise, R, Utils, Alert, html, Plugin) {
         "use strict";
         var widget = Object.create({}, {
             // The init function interfaces this object with the caller, and sets up any 
@@ -84,7 +85,7 @@ define([
                     // NB the templating requires a dedicated widget resources directory in 
                     //   /src/widgets/WIDGETNAME/templates
                     this.templates = {};
-                    this.templates.env = new nunjucks.Environment(new nunjucks.WebLoader('/plugins/dataview/source/javascript/widgets/' + this.widgetName + '/templates'), {
+                    this.templates.env = new nunjucks.Environment(new nunjucks.WebLoader(Plugin.plugin.path + '/javascript/widgets/' + this.widgetName + '/templates'), {
                         'autoescape': false
                     });
 
