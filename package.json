@@ -1,0 +1,8 @@
+{
+    "name": "kbase-ui-plugin-MY_PLUGIN",
+    "version": "0.0.1",
+    "keywords": ["kbase", "plugin"],
+    "author": "PLUGIN AUTHOR",
+    "contributors": [],
+    "dependencies": {}
+}
