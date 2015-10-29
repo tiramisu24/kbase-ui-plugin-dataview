@@ -63,7 +63,7 @@ define([
                                 content: div({id: widgetSet.addWidget('kb_dataview_provenance')})
                             }),
                             html.makePanel({
-                                title: 'Data Widget Here',
+                                title: 'Data View',
                                 content: div({id: widgetSet.addWidget('kb_dataview_dataObjectVisualizer')})
                             })
                         ])
