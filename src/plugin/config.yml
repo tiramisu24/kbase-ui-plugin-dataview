@@ -73,6 +73,9 @@ source:
         -
             module: kb_dataview_assembly_referenceAssembly
             file: widgets/assembly/kbaseReferenceAssembly
+        -
+            module: kb_dataview_assembly_assemblyView
+            file: widgets/assembly/kbaseAssemblyView
         # GENOMES
         -
             module: kb_dataview_widget_genome_genomeComparison
@@ -168,6 +171,11 @@ install:
             module: kb_dataview_assembly_referenceAssembly
             id: kb_dataview_referenceAssembly
             type: kbwidget
+        -
+            module: kb_dataview_assembly_assemblyView
+            id: kb_dataview_assemblyView
+            type: kbwidget
+            
         # GENOMES
         -
             module: kb_dataview_widget_genome_genomeComparison
@@ -466,6 +474,26 @@ install:
                             from: objectVersion
                             to: objVer
                             optional: true
+        -
+            type:
+                module: KBaseAssembly
+                name: AssemblyReport
+                version: any
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_assemblyView
+                        config: 
+                            jqueryName: kbaseAssemblyView
+                    panel: true
+                    options:
+                        -
+                            from: workspaceId
+                            to: ws_name
+                        -
+                            from: objectId
+                            to: ws_id
         -
             type:
                 module: KBaseAssembly

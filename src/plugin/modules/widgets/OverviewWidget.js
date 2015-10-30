@@ -457,8 +457,6 @@ define([
                 var content,
                     tooManyRefs = state.get('too_many_out_refs'),
                     refs = state.get('out_references');
-                console.log('REFS');
-                console.log(refs);
                 if (tooManyRefs) {
                     content = 'Sorry, there are too many references from this data to display.';
                 } else {
