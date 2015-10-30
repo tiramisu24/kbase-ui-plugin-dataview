@@ -11,15 +11,14 @@
 define([
     'jquery',
     'bluebird',
-    'kb.service.workspace',
-    'kb.runtime',
-    'kb.html',
-    'kb_widget_dataview_communities_heatmap',
+    'kb_service_workspace',
+    'kb_common_html',
+    'kb_dataview_communities_heatmap',
     // no parameters
     'datatables_bootstrap',
-    'kb.jquery.authenticatedwidget'
+    'kb_widgetBases_kbAuthenticatedWidget'
 ],
-    function ($, Promise, Workspace, R, html, Heatmap) {
+    function ($, Promise, Workspace, html, Heatmap) {
         'use strict';
         $.KBWidget({
             name: 'AbundanceDataHeatmap',
@@ -31,7 +30,6 @@ define([
                 ws: null,
                 rows: 0
             },
-            ws_url: R.getConfig('services.workspace.url'),
             init: function (options) {
                 this._super(options);
                 return this;
@@ -41,13 +39,15 @@ define([
 
                 var container = this.$elem;
                 container.empty();
-                if (!R.isLoggedIn()) {
+                if (!this.runtime.service('session').isLoggedIn()) {
                     container.append("<div>[Error] You're not logged in</div>");
                     return;
                 }
                 container.append(html.loading('loading data...'));
 
-                var kbws = new Workspace(self.ws_url, {'token': self.token});
+                var kbws = new Workspace(this.runtime.getConfig('services.workspace.url'), {
+                    token: this.runtime.service('session').getAuthToken()
+                });
                 kbws.get_objects([{ref: self.options.ws + "/" + self.options.id}], function (data) {
                     container.empty();
                     // parse data

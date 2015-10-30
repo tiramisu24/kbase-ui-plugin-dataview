@@ -29,7 +29,6 @@ define([
                 ws: null,
                 name: 0
             },
-            ws_url: this.runtime.getConfig('services.workspace.url'),
             init: function (options) {
                 this._super(options);
                 return this;
@@ -46,7 +45,7 @@ define([
                 }
                 container.append(html.loading('loading data...'));
 
-                var kbws = new Workspace(self.ws_url, {'token': self.token});
+                var kbws = new Workspace(this.runtime.getConfig('services.workspace.url'), {'token': self.token});
                 kbws.get_objects([{ref: self.options.ws + "/" + self.options.id}], function (data) {
                     container.empty();
                     // parse data
@@ -124,7 +123,7 @@ define([
                         // you off of an Angular page
                         // ...but the button function needs to be set up manually as below.
                         var graphId = html.genId();
-                        var tableId = htmle.genId();
+                        var tableId = html.genId();
                         var $graphTab = $('<a href="#outputGraph' + graphId + '">BoxPlots</a>')
                             .click(function (e) {
                                 e.preventDefault();

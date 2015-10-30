@@ -91,15 +91,12 @@ define([
                             mapping.options.forEach(function (item) {
                                 var from = widgetParams[item.from];
                                 if (!from && item.optional !== true) {
-                                    // console.log(params);
                                     throw 'Missing param, from ' + item.from + ', to ' + item.to;
                                 }
                                 widgetParams[item.to] = from;
                             });
                         }
                         // Handle different types of widgets here.
-                        console.log('MAKING WIDGET WITH');
-                        console.log(mapping);
                         var w = runtime.getService('widget').makeWidget(mapping.widget.name, mapping.widget.options);
                         resolve({
                             widget: w,
@@ -148,11 +145,8 @@ define([
 //                        }
                     })
                     .catch(function (err) {
-                        //console.log('ERROR');
-                        //console.log(err);
                         reject(err);
-                    })
-                    .done();
+                    });
             });
         }
 
@@ -164,7 +158,7 @@ define([
 
             function findMapping(type, params) {
                 // var mapping = typeMap[objectType];
-                var mapping = runtime.getService('types').getViewer({type: type});
+                var mapping = runtime.getService('type').getViewer({type: type});
                 if (mapping) {
                     if (params.sub && params.subid) {
                         if (mapping.sub) {
@@ -188,16 +182,12 @@ define([
                 // Translate and normalize params.
                 params.objectVersion = params.ver;
 
-                console.log('Z: making widget...');
-
                 // Get other params from the runtime.
                 return new Promise(function (resolve, reject) {
-                    console.log('Z: starting promise...');
                     var workspace = new Workspace(runtime.getConfig('services.workspace.url'), {
                         token: runtime.getService('session').getAuthToken()
                     }),
                         objectRefs = [{ref: params.workspaceId + '/' + params.objectId}];
-                    console.log(objectRefs);
                     Promise.resolve(workspace.get_object_info_new({
                         objects: objectRefs,
                         ignoreErrors: 1,
@@ -224,9 +214,6 @@ define([
                                 reject('Not Found', 'Sorry, cannot find widget for ' + type.module + '.' + type.name);
                                 return;
                             }
-                            console.log('Z: got object...');
-                            console.log(wsobject);
-
                             // These params are from the found object.
                             var widgetParams = {
                                 workspaceId: params.workspaceId,
@@ -244,15 +231,12 @@ define([
                                 mapping.options.forEach(function (item) {
                                     var from = widgetParams[item.from];
                                     if (!from && item.optional !== true) {
-                                        // console.log(params);
                                         throw 'Missing param, from ' + item.from + ', to ' + item.to;
                                     }
                                     widgetParams[item.to] = from;
                                 });
                             }
                             // Handle different types of widgets here.
-                            console.log('MAKING WIDGET WITH');
-                            console.log(mapping);
                             runtime.getService('widget').makeWidget(mapping.widget.name, mapping.widget.config)
                                 .then(function (result) {
                                     resolve({
@@ -266,11 +250,8 @@ define([
 
                         })
                         .catch(function (err) {
-                            //console.log('ERROR');
-                            //console.log(err);
                             reject(err);
-                        })
-                        .done();
+                        });
                 });
             }
 
@@ -306,8 +287,6 @@ define([
                     var newParams;
                     makeWidget(params)
                         .then(function (result) {
-                            console.log('GOT widget');
-                            console.log(result);
                             theWidget = result.widget;
                             newParams = result.params;
                             if (theWidget.init) {
@@ -331,8 +310,7 @@ define([
                             // TO BE DONE
                             showError(err);
                             reject(err);
-                        })
-                        .done();
+                        });
                 });
             }
             function stop() {
@@ -344,8 +322,7 @@ define([
                             })
                             .catch(function (err) {
                                 reject(err);
-                            })
-                            .done();
+                            });
                     } else {
                         resolve();
                     }
@@ -360,8 +337,7 @@ define([
                             })
                             .catch(function (err) {
                                 reject(err);
-                            })
-                            .done();
+                            });
                     } else {
                         resolve();
                     }
@@ -376,8 +352,7 @@ define([
                             })
                             .catch(function (err) {
                                 reject(err);
-                            })
-                            .done();
+                            });
                     } else {
                         resolve();
                     }

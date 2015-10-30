@@ -46,15 +46,13 @@ define(['jquery', 'kb.runtime', 'kb.utils', 'kb.html', 'kb.service.workspace', '
                                 container.rmLoading();
                                 container.append('<div class="alert alert-danger">' +
                                     err.error.message + '</div>');
-                            })
-                            .done();
+                            });
                     })
                     .catch(function (err) {
                         container.rmLoading();
                         container.append('<div class="alert alert-danger">' +
                             err.error.message + '</div>')
-                    })
-                    .done();
+                    });
 
 
                 function buildTable(data, refhash) {
@@ -152,8 +150,7 @@ define(['jquery', 'kb.runtime', 'kb.utils', 'kb.html', 'kb.service.workspace', '
                                 $(ele).rmLoading();
                                 $(ele).append('<div class="alert alert-danger">' +
                                     err.error.message + '</div>');
-                            })
-                            .done();
+                            });
                     }
                 }
                 return this;

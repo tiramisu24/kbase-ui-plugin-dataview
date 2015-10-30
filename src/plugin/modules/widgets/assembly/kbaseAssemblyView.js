@@ -12,10 +12,10 @@
  */
 define([
     'jquery',
-    'kb.runtime',
-    'kb.html',
-    'kb.jquery.authenticatedwidget'
-], function ($, R, html) {
+    'kb_common_html',
+    'kb_service_workspace',
+    'kb_widgetBases_kbAuthenticatedWidget'
+], function ($, html, Workspace) {
     'use strict';
     $.KBWidget({
         name: "kbaseAssemblyView",
@@ -34,7 +34,7 @@ define([
         timer: null,
         init: function (options) {
             this._super(options);
-            this.wsUrl = R.getConfig('services.workspace.url');
+            this.wsUrl = this.runtime.getConfig('services.workspace.url');
             this.ws_name = options.ws_name;
             this.ws_id = options.ws_id;
             if (options.job_id)
@@ -47,7 +47,6 @@ define([
         },
         render: function () {
             var self = this;
-            var pref = this.uuid();
 
             var container = this.$elem;
             if (self.token === null) {
@@ -65,10 +64,10 @@ define([
                 objname = self.ws_id;
                 // commented this out ... can't think of how this ever worked. eap.
                 //if (typeof self.ws_id === 'string') {
-               //     if (self.ws_id.indexOf('.report') === -1) { //Check if contigset or report
+                //     if (self.ws_id.indexOf('.report') === -1) { //Check if contigset or report
                 //        objname = self.ws_id + '.report';
-               //     }
-               // }
+                //     }
+                // }
 
                 kbws.get_objects([{ref: self.ws_name + '/' + objname}], function (data) {
                     container.empty();
@@ -102,13 +101,6 @@ define([
             this.token = null;
             this.render();
             return this;
-        },
-        uuid: function () {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,
-                function (c) {
-                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-                    return v.toString(16);
-                });
         }
     });
 });

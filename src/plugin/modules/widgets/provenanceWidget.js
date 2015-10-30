@@ -68,9 +68,6 @@ define([
             config.width = 1200;
             config.height = 700;
             
-            console.log('PROV WIDGET');
-            console.log(runtime.service('session').getAuthToken());
-
             function renderLayout() {
                 return div([
                     div(['This is a visualization of the relationships between this piece of data and other data in KBase.  Mouse over objects to show additional information (shown below the graph). Double click on an object to select and recenter the graph on that object in a new window.', br(), br()]),
@@ -339,7 +336,6 @@ define([
                                     text += '</table>';
                                     text += "</td></tr></table>";
                                     $container.find('#objdetailsdiv').html(text);
-                                    // console.error(err);
                                 }
                                 );
                             }
@@ -703,7 +699,11 @@ define([
                                             }
 
                                         }
-                                        tempRefData = {uniqueRefs: uniqueRefs, uniqueRefObjectIdentities: uniqueRefObjectIdentities, links: links};
+                                        tempRefData = {
+                                            uniqueRefs: uniqueRefs, 
+                                            uniqueRefObjectIdentities: uniqueRefObjectIdentities, 
+                                            links: links
+                                        };
 
                                     }, function (err) {
                                     $container.find('#loading-mssg').hide();
@@ -717,16 +717,11 @@ define([
                             ];
 
                             $.when.apply($, getDataJobList).done(function () {
-                                if ("uniqueRefObjectIdentities" in tempRefData) {
-                                    console.log('ok: got here... get_object_info_new');
-                                    console.log(tempRefData);
+                                if (tempRefData && 'uniqueRefObjectIdentities' in tempRefData) {
                                     if (tempRefData.uniqueRefObjectIdentities.length > 0) {
                                         var getRefInfoJobList = [
                                             workspace.get_object_info_new({objects: tempRefData['uniqueRefObjectIdentities'], includeMetadata: 1, ignoreErrors: 1},
                                                 function (objInfoList) {
-                                                    console.log('OK: ok');
-                                                    console.log(objInfoList);
-
                                                     var objInfoStash = {};
                                                     for (var i = 0; i < objInfoList.length; i++) {
                                                         if (objInfoList[i]) {
@@ -758,7 +753,6 @@ define([
                                                     }
                                                     // add the link info
                                                     var links = tempRefData['links'];
-                                                    //console.log(links);
                                                     for (var i = 0; i < links.length; i++) {
                                                         if (objRefToNodeIdx[links[i]['source']] !== null && objRefToNodeIdx[links[i]['target']] !== null) {
                                                             graph['links'].push({
@@ -802,15 +796,12 @@ define([
                                         ];
                                         $.when.apply($, getRefInfoJobList)
                                             .done(function () {
-                                                console.log('OK: done');
                                                 finishUpAndRender();
                                             })
                                             .fail(function () {
-                                                console.log('OK: fail');
                                                 finishUpAndRender();
                                             });
                                     } else {
-                                        console.log('ok: no uniqueRefObjectIdentities');
                                         finishUpAndRender();
                                     }
                                 } else {

@@ -151,8 +151,8 @@ define([
             function createDataIcon(object_info) {
                 try {
                     var typeId = object_info[2],
-                        type = runtime.service('types').parseTypeId(typeId);
-                    var icon = runtime.service('types').getIcon({type: type});
+                        type = runtime.service('type').parseTypeId(typeId);
+                    var icon = runtime.service('type').getIcon({type: type});
 
                     var code = 0;
                     for (var i = 0; i < type.length; code += type.charCodeAt(i++))
@@ -457,8 +457,6 @@ define([
                 var content,
                     tooManyRefs = state.get('too_many_out_refs'),
                     refs = state.get('out_references');
-                console.log('REFS');
-                console.log(refs);
                 if (tooManyRefs) {
                     content = 'Sorry, there are too many references from this data to display.';
                 } else {
@@ -527,6 +525,7 @@ define([
                     container = dom.createElement('div');
                     mount.appendChild(container);
                     container.innerHTML = renderLayout();
+                    container.querySelector('[data-placeholder="content"]').innerHTML = html.loading();
                 });
             }
             function start(params) {
