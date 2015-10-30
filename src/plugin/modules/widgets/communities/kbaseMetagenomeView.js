@@ -11,18 +11,17 @@
  */
 define([
     'jquery',
-    'kb.service.workspace',
-    'kb.runtime',
-    'kb.html',
-    'kb_widget_dataview_communities_graph',
-    'kb_widget_dataview_communities_plot',
-    'googlepalette',
+    'kb_dataview_googlepalette',
+    'kb_service_workspace',
+    'kb_common_html',
+    'kb_dataview_communities_graph',
+    'kb_dataview_communities_plot',
     
     // these don't need a parameter
-    'kb.jquery.authenticatedwidget',
-    'kb.jquery.tabs',
+    'kb_widgetBases_kbAuthenticatedWidget',
+    'kb_widget_tabs',
     'datatables_bootstrap'
-], function ($, Workspace, R, H, Graph, Plot, GooglePalette) {
+], function ($, GooglePalette, Workspace, html, Graph, Plot) {
     'use strict';
     $.KBWidget({
         name: 'MetagenomeView',
@@ -33,7 +32,6 @@ define([
             id: null,
             ws: null
         },
-        ws_url: R.getConfig('services.workspace.url'),
         init: function (options) {
             this._super(options);
             return this;
@@ -48,9 +46,11 @@ define([
                 container.append("<div>[Error] You're not logged in</div>");
                 return;
             }
-            container.append(H.loading('loading data...'));
+            container.append(html.loading('loading data...'));
 
-            var kbws = new Workspace(self.ws_url, {'token': self.token});
+            var kbws = new Workspace(this.runtime.getConfig('services.workspace.url'), {
+                token: this.runtime.service('session').getAuthToken()
+            });
             kbws.get_objects([{ref: self.options.ws + "/" + self.options.id}], function (data) {
                 container.empty();
                 // parse data
@@ -116,22 +116,22 @@ define([
                     // overview tab
                     var oTabDiv = $('<div id="' + pref + 'overview">');
                     tabPane.kbaseTabs('addTab', {tab: 'Overview', content: oTabDiv, canDelete: false, show: true});
-                    var html = '<h4>Info</h4>';
-                    html += '<p><table class="table table-striped table-bordered" style="width: 50%;">';
-                    html += '<tr><td style="padding-right: 25px; width: 165px;"><b>Metagenome ID</b></td><td>' + d.id + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 165px;"><b>Metagenome Name</b></td><td>' + d.name + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 165px;"><b>Project ID</b></td><td>' + d.metadata.project.id + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 165px;"><b>Project Name</b></td><td>' + d.metadata.project.name + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 165px;"><b>PI</b></td><td>' + d.metadata.project.data.PI_firstname + ' ' + d.metadata.project.data.PI_lastname + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 165px;"><b>Organization</b></td><td>' + d.metadata.project.data.PI_organization + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 165px;"><b>Sequence Type</b></td><td>' + d.sequence_type + '</td></tr>';
-                    html += '</table></p>';
-                    html += '<h4>Summary</h4>';
-                    html += '<p>The dataset ' + d.name + ' was uploaded on ' + d.created + ' and contains ' + stats.sequence_count_raw + ' sequences totaling ' + stats.bp_count_raw + ' basepairs with an average length of ' + stats.average_length_raw + ' bps.</p>';
+                    var overviewTable = '<h4>Info</h4>';
+                    overviewTable += '<p><table class="table table-striped table-bordered" style="width: 50%;">';
+                    overviewTable += '<tr><td style="padding-right: 25px; width: 165px;"><b>Metagenome ID</b></td><td>' + d.id + '</td></tr>';
+                    overviewTable += '<tr><td style="padding-right: 25px; width: 165px;"><b>Metagenome Name</b></td><td>' + d.name + '</td></tr>';
+                    overviewTable += '<tr><td style="padding-right: 25px; width: 165px;"><b>Project ID</b></td><td>' + d.metadata.project.id + '</td></tr>';
+                    overviewTable += '<tr><td style="padding-right: 25px; width: 165px;"><b>Project Name</b></td><td>' + d.metadata.project.name + '</td></tr>';
+                    overviewTable += '<tr><td style="padding-right: 25px; width: 165px;"><b>PI</b></td><td>' + d.metadata.project.data.PI_firstname + ' ' + d.metadata.project.data.PI_lastname + '</td></tr>';
+                    overviewTable += '<tr><td style="padding-right: 25px; width: 165px;"><b>Organization</b></td><td>' + d.metadata.project.data.PI_organization + '</td></tr>';
+                    overviewTable += '<tr><td style="padding-right: 25px; width: 165px;"><b>Sequence Type</b></td><td>' + d.sequence_type + '</td></tr>';
+                    overviewTable += '</table></p>';
+                    overviewTable += '<h4>Summary</h4>';
+                    overviewTable += '<p>The dataset ' + d.name + ' was uploaded on ' + d.created + ' and contains ' + stats.sequence_count_raw + ' sequences totaling ' + stats.bp_count_raw + ' basepairs with an average length of ' + stats.average_length_raw + ' bps.</p>';
                     var ptext = " Of the remainder, " + ann_aa_reads + " sequences (" + (ann_aa_reads / raw_seqs * 100).toFixed(2) + "%) contain predicted proteins with known functions and " + unkn_aa_reads + " sequences (" + (unkn_aa_reads / raw_seqs * 100).toFixed(2) + "%) contain predicted proteins with unknown function.";
                     var ftext = " " + unknown_all + " sequences (" + (unknown_all / raw_seqs * 100).toFixed(2) + "%) have no rRNA genes" + (is_rna ? '.' : " or predicted proteins");
-                    html += '<p>' + qc_fail_seqs + ' sequences (' + (qc_fail_seqs / raw_seqs * 100).toFixed(2) + '%) failed to pass the QC pipeline. Of the sequences that passed QC, ' + ann_rna_reads + ' sequences (' + (ann_rna_reads / raw_seqs * 100).toFixed(2) + '%) containe ribosomal RNA genes.' + (is_rna ? '' : ptext) + ftext + '</p>';
-                    $('#' + pref + 'overview').append(html);
+                    overviewTable += '<p>' + qc_fail_seqs + ' sequences (' + (qc_fail_seqs / raw_seqs * 100).toFixed(2) + '%) failed to pass the QC pipeline. Of the sequences that passed QC, ' + ann_rna_reads + ' sequences (' + (ann_rna_reads / raw_seqs * 100).toFixed(2) + '%) containe ribosomal RNA genes.' + (is_rna ? '' : ptext) + ftext + '</p>';
+                    $('#' + pref + 'overview').append(overviewTable);
 
                     // metadata tab
                     var mTabDiv = $('<div id="' + pref + 'metadata" style="width: 95%;">');
@@ -151,7 +151,7 @@ define([
                         rows: mdata,
                         class: 'table table-striped'
                     };
-                    var table = H.makeTable(tableOptions);
+                    var table = html.makeTable(tableOptions);
                     $('#' + pref + 'metadata').html(table);
                     $('#' + tableOptions.generated.id).dataTable();
 
@@ -185,23 +185,23 @@ define([
                     // seq stats tab
                     var oTabDiv = $('<div id="' + pref + 'stats">');
                     tabPane.kbaseTabs('addTab', {tab: 'Statistics', content: oTabDiv, canDelete: false, show: false});
-                    html = '<p><table class="table table-striped table-bordered" style="width: 65%;">';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Upload: bp Count</b></td><td>' + stats.bp_count_raw + ' bp</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Upload: Sequences Count</b></td><td>' + stats.sequence_count_raw + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Upload: Mean Sequence Length</b></td><td>' + stats.average_length_raw + " ± " + stats.standard_deviation_length_raw + ' bp</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Upload: Mean GC percent</b></td><td>' + stats.average_gc_content_raw + " ± " + stats.standard_deviation_gc_content_raw + ' %</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Artificial Duplicate Reads: Sequence Count</b></td><td>' + stats.sequence_count_dereplication_removed + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Post QC: bp Count</b></td><td>' + stats.bp_count_preprocessed + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Post QC: Sequences Count</b></td><td>' + stats.sequence_count_preprocessed + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Post QC: Mean Sequence Length</b></td><td>' + stats.average_length_preprocessed + " ± " + stats.standard_deviation_length_preprocessed + ' bp</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Post QC: Mean GC percent</b></td><td>' + stats.average_gc_content_preprocessed + " ± " + stats.standard_deviation_gc_content_preprocessed + ' %</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Processed: Predicted Protein Features</b></td><td>' + stats.sequence_count_processed_aa + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Processed: Predicted rRNA Features</b></td><td>' + stats.sequence_count_processed_rna + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Alignment: Identified Protein Features</b></td><td>' + stats.sequence_count_sims_aa + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Alignment: Identified rRNA Features</b></td><td>' + stats.sequence_count_sims_rna + '</td></tr>';
-                    html += '<tr><td style="padding-right: 25px; width: 325px;"><b>Annotation: Identified Functional Categories</b></td><td>' + stats.sequence_count_ontology + '</td></tr>';
-                    html += '</table></p>';
-                    $('#' + pref + 'stats').append(html);
+                    var statsTable = '<p><table class="table table-striped table-bordered" style="width: 65%;">';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Upload: bp Count</b></td><td>' + stats.bp_count_raw + ' bp</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Upload: Sequences Count</b></td><td>' + stats.sequence_count_raw + '</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Upload: Mean Sequence Length</b></td><td>' + stats.average_length_raw + " ± " + stats.standard_deviation_length_raw + ' bp</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Upload: Mean GC percent</b></td><td>' + stats.average_gc_content_raw + " ± " + stats.standard_deviation_gc_content_raw + ' %</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Artificial Duplicate Reads: Sequence Count</b></td><td>' + stats.sequence_count_dereplication_removed + '</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Post QC: bp Count</b></td><td>' + stats.bp_count_preprocessed + '</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Post QC: Sequences Count</b></td><td>' + stats.sequence_count_preprocessed + '</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Post QC: Mean Sequence Length</b></td><td>' + stats.average_length_preprocessed + " ± " + stats.standard_deviation_length_preprocessed + ' bp</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Post QC: Mean GC percent</b></td><td>' + stats.average_gc_content_preprocessed + " ± " + stats.standard_deviation_gc_content_preprocessed + ' %</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Processed: Predicted Protein Features</b></td><td>' + stats.sequence_count_processed_aa + '</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Processed: Predicted rRNA Features</b></td><td>' + stats.sequence_count_processed_rna + '</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Alignment: Identified Protein Features</b></td><td>' + stats.sequence_count_sims_aa + '</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Alignment: Identified rRNA Features</b></td><td>' + stats.sequence_count_sims_rna + '</td></tr>';
+                    statsTable += '<tr><td style="padding-right: 25px; width: 325px;"><b>Annotation: Identified Functional Categories</b></td><td>' + stats.sequence_count_ontology + '</td></tr>';
+                    statsTable += '</table></p>';
+                    $('#' + pref + 'stats').append(statsTable);
 
                     // drisee tab
                     var drisee_cols = d.statistics.qc.drisee.percents.columns;

@@ -11,6 +11,9 @@ source:
     ## NB: need to quote file names, otherwise 
     modules:
         -
+            module: kb_dataview_googlepalette
+            file: googlepalette
+        -
             module: kb_dataview_widget_panel
             file: panelWidget
             # widget: kb_dataview_panel
@@ -32,9 +35,7 @@ source:
         -
             module: kb_dataview_dataObjectVisualizer
             file: widgets/dataObjectVisualizer
-        -
-            module: kb_dataview_widget_communities_collection
-            file: widgets/communities/kbaseCollectionView
+        
         -
             module: kb_dataview_widget_contigSet
             file: widgets/contigset/kbaseContigSetView
@@ -85,7 +86,7 @@ source:
             module: kb_dataview_communities_graph
             file: widgets/communities/kbStandaloneGraph
         -
-            module: kb_dataview_dataview_communities_plot
+            module: kb_dataview_communities_plot
             file: widgets/communities/kbStandalonePlot
         -
             module: kb_dataview_communities_heatmap
@@ -101,6 +102,12 @@ source:
             file: widgets/communities/jquery.svg            
         -
             module: kb_dataview_communities_functionalMatrix
+            file: widgets/communities/kbaseAbundanceDataView
+        -
+            module: kb_dataview_widget_communities_collection
+            file: widgets/communities/kbaseCollectionView
+        -
+            module: kb_dataview_communities_functionalProfile
             file: widgets/communities/kbaseAbundanceDataView
             
         
@@ -173,15 +180,24 @@ install:
             module: kb_dataview_genomeComparison_proteomeComparison
             id: kb_dataview_proteomeComparison
             type: kbwidget
-        #-
-        #    module: kb_dataview_widget_biochem_media
-        #    id: kb_dataview_biochem_media
-        #    type: kbwidget
+            
         # COMMUNINITIES
         
         -
             module: kb_dataview_communities_functionalMatrix
             id: kb_dataview_functionalMatrix
+            type: kbwidget
+        -
+            module: kb_dataview_communities_metagenome
+            id: kb_dataview_metagenome
+            type: kbwidget
+        -
+            module: kb_dataview_communities_functionalProfile
+            id: kb_dataview_functionalProfile
+            type: kbwidget
+        -
+            module: kb_dataview_communities_abundanceDataHeatmap
+            id: kb_dataview_abundanceDataHeatmap
             type: kbwidget
         
     routes:
@@ -243,6 +259,32 @@ install:
                         -
                             from: objectId
                             to: id
+        
+        -
+            type: 
+                module: Communities
+                name:   Heatmap
+                version: any
+            icon:   
+                type: fontAwesome
+                classes: ['fa-th']
+            viewers:
+                -
+                    name: Data View
+                    widget: 
+                        name: kb_dataview_abundanceDataHeatmap
+                        config:
+                            jqueryName: AbundanceDataHeatmap
+                    options:
+                        -
+                            from: workspaceId
+                            to: ws
+                        -
+                            from: objectId
+                            to: id
+                            
+        # GENOMES
+        
         -
             type:
                 module: KBaseGenomes
@@ -309,9 +351,9 @@ install:
                 -
                     title: Data View
                     widget:
-                            name: kb_dataview_functionalMatrix
-                            config:
-                                jqueryName: AbundanceDataView
+                        name: kb_dataview_functionalMatrix
+                        config:
+                            jqueryName: AbundanceDataView
                     panel: true
                     options: 
                         -
@@ -319,7 +361,51 @@ install:
                             to: ws
                         -
                             from: objectId
-                            to: id    
+                            to: id  
+                            
+        -
+            type:
+                module: Communities
+                name: Metagenome
+                version: any 
+            icon:   
+                type: kbase
+                classes: ['icon-metagenome', 'kb-data-icon-dnudge']
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_metagenome
+                        config:
+                                jqueryName: MetagenomeView
+                    panel: true
+                    options:
+                        -
+                            from: workspaceId
+                            to: ws
+                        -
+                            from: objectId
+                            to: id            
+        -
+            type:
+                module: Communities
+                name: FunctionalProfile
+                version: any
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_functionalProfile
+                        config:
+                            jqueryName: AbundanceDataView
+                    panel: true
+                    options: 
+                        -
+                            from: workspaceId
+                            to: ws
+                        -
+                            from: objectId
+                            to: id                                    
         # GENOME COMPARISON
         - 
             type:
@@ -399,4 +485,56 @@ install:
                             from: objectVersion
                             to: objVer
                             optional: true
+        -
+            type:
+                module: KBaseAssembly
+                name: ReferenceAssembly
+                version: any
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_referenceAssembly
+                        config:
+                            jqueryName: kbaseReferenceAssembly
+                    panel: true
+                    options:
+                        -
+                            from: workspaceId
+                            to: workspaceId
+                        -    
+                            from: objectId
+                            to: objId
+                        -    
+                            from: objectVersion
+                            to: objVer
+                            optional: true
+                            
+        # BIOCHHEM
+        -
+            type:
+                module: KBaseBiochem
+                name: Media
+                version: any
+            icon:   
+                type: fontAwesome
+                classes: ['fa-flask']
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_biochem_media
+                        config:
+                            jqueryName: kbaseTabTable
+                    panel: true
+                    options: 
+                        -
+                            from: workspaceName 
+                            to: ws
+                        -
+                            from: objectName 
+                            to: obj
+                        -
+                            from: objectType 
+                            to: type
                             
