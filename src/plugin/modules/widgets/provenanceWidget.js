@@ -699,7 +699,11 @@ define([
                                             }
 
                                         }
-                                        tempRefData = {uniqueRefs: uniqueRefs, uniqueRefObjectIdentities: uniqueRefObjectIdentities, links: links};
+                                        tempRefData = {
+                                            uniqueRefs: uniqueRefs, 
+                                            uniqueRefObjectIdentities: uniqueRefObjectIdentities, 
+                                            links: links
+                                        };
 
                                     }, function (err) {
                                     $container.find('#loading-mssg').hide();
@@ -713,7 +717,7 @@ define([
                             ];
 
                             $.when.apply($, getDataJobList).done(function () {
-                                if ("uniqueRefObjectIdentities" in tempRefData) {
+                                if (tempRefData && 'uniqueRefObjectIdentities' in tempRefData) {
                                     if (tempRefData.uniqueRefObjectIdentities.length > 0) {
                                         var getRefInfoJobList = [
                                             workspace.get_object_info_new({objects: tempRefData['uniqueRefObjectIdentities'], includeMetadata: 1, ignoreErrors: 1},

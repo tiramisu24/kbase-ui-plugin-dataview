@@ -146,8 +146,7 @@ define([
                     })
                     .catch(function (err) {
                         reject(err);
-                    })
-                    .done();
+                    });
             });
         }
 
@@ -159,7 +158,7 @@ define([
 
             function findMapping(type, params) {
                 // var mapping = typeMap[objectType];
-                var mapping = runtime.getService('types').getViewer({type: type});
+                var mapping = runtime.getService('type').getViewer({type: type});
                 if (mapping) {
                     if (params.sub && params.subid) {
                         if (mapping.sub) {
@@ -252,8 +251,7 @@ define([
                         })
                         .catch(function (err) {
                             reject(err);
-                        })
-                        .done();
+                        });
                 });
             }
 
@@ -312,8 +310,7 @@ define([
                             // TO BE DONE
                             showError(err);
                             reject(err);
-                        })
-                        .done();
+                        });
                 });
             }
             function stop() {
@@ -325,8 +322,7 @@ define([
                             })
                             .catch(function (err) {
                                 reject(err);
-                            })
-                            .done();
+                            });
                     } else {
                         resolve();
                     }
@@ -341,8 +337,7 @@ define([
                             })
                             .catch(function (err) {
                                 reject(err);
-                            })
-                            .done();
+                            });
                     } else {
                         resolve();
                     }
@@ -357,8 +352,7 @@ define([
                             })
                             .catch(function (err) {
                                 reject(err);
-                            })
-                            .done();
+                            });
                     } else {
                         resolve();
                     }

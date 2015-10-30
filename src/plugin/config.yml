@@ -57,6 +57,9 @@ source:
             module: kb_dataview_widget_modeling_fba_fbaModel
             file: widgets/modeling/KBaseFBA.FBAModel
         -
+            module: kb_dataview_widget_modeling_fba_fbaModelSet
+            file: widgets/modeling/KBaseFBA.FBAModelSet
+        -
             module: kb_dataview_widget_modeling_phenotypSet
             file: widgets/modeling/KBasePhenotypes.PhenotypeSet
             
@@ -112,99 +115,121 @@ source:
         -
             module: kb_dataview_communities_functionalProfile
             file: widgets/communities/kbaseAbundanceDataView
+            
+        # EXPRESSION
+        
+        -
+            module: kb_dataview_expression_expressionSeries
+            file: widgets/expression/kbaseExpressionSeries
+    styles:
+        - 
+            file: dataview
+        - 
+            file: sankeystyle
         
 install:
     widgets:
         -
             module: kb_dataview_widget_panel
-            id: kb_dataview_panel
+            name: kb_dataview_panel
             type: factory
         -
             module: kb_dataview_widget_overview
-            id: kb_dataview_overview
+            name: kb_dataview_overview
             type: factory
         -
             module: kb_dataview_widget_provenance
-            id: kb_dataview_provenance
+            name: kb_dataview_provenance
             type: factory
         -
             module: kb_dataview_dataObjectVisualizer
-            id: kb_dataview_dataObjectVisualizer
+            name: kb_dataview_dataObjectVisualizer
             type: factory
         -
             module: kb_dataview_widget_communities_collection
-            id: kb_dataview_communities_collection
+            name: kb_dataview_communities_collection
             type: kbwidget
         -
             module: kb_dataview_widget_contigSet
-            id: kb_dataview_contigSet
+            name: kb_dataview_contigSet
             type: kbwidget
         # MODELING
         -
             module: kb_dataview_widget_modeling_tabTable
-            id: kb_dataview_biochem_media
+            name: kb_dataview_biochem_media
             type: kbwidget
         -
             module: kb_dataview_widget_modeling_tabTable
-            id: kb_dataview_fba
+            name: kb_dataview_fba
             type: kbwidget
         -
             module: kb_dataview_widget_modeling_tabTable
-            id: kb_dataview_fbaModel
+            name: kb_dataview_fbaModel
             type: kbwidget
         -
-            module: kb_dataview_widget_modeling_phenotypSet
-            id: kb_dataview_phenotypeSet
+            module: kb_dataview_widget_modeling_tabTable
+            name: kb_dataview_fbaModelSet
+            type: kbwidget
+        -
+            module: kb_dataview_widget_modeling_phenotypeSet
+            name: kb_dataview_phenotypeSet
             type: kbwidget
             
             
         # ASSEMBLY
         -
             module: kb_dataview_assembly_assemblyInput
-            id: kb_dataview_assemblyInput
+            name: kb_dataview_assemblyInput
             type: kbwidget
         -
             module: kb_dataview_assembly_pairedEndLibrary
-            id: kb_dataview_pairedEndLibrary
+            name: kb_dataview_pairedEndLibrary
             type: kbwidget
         -
             module: kb_dataview_assembly_referenceAssembly
-            id: kb_dataview_referenceAssembly
+            name: kb_dataview_referenceAssembly
             type: kbwidget
         -
             module: kb_dataview_assembly_assemblyView
-            id: kb_dataview_assemblyView
+            name: kb_dataview_assemblyView
             type: kbwidget
             
         # GENOMES
         -
             module: kb_dataview_widget_genome_genomeComparison
-            id: kb_dataview_genomeComparison
+            name: kb_dataview_genomeComparison
             type: kbwidget
             
         # GENOME COMPARISON
         -
             module: kb_dataview_genomeComparison_proteomeComparison
-            id: kb_dataview_proteomeComparison
+            name: kb_dataview_proteomeComparison
             type: kbwidget
             
         # COMMUNINITIES
         
         -
             module: kb_dataview_communities_functionalMatrix
-            id: kb_dataview_functionalMatrix
+            name: kb_dataview_functionalMatrix
             type: kbwidget
         -
             module: kb_dataview_communities_metagenome
-            id: kb_dataview_metagenome
+            name: kb_dataview_metagenome
             type: kbwidget
         -
             module: kb_dataview_communities_functionalProfile
-            id: kb_dataview_functionalProfile
+            name: kb_dataview_functionalProfile
             type: kbwidget
         -
             module: kb_dataview_communities_abundanceDataHeatmap
-            id: kb_dataview_abundanceDataHeatmap
+            name: kb_dataview_abundanceDataHeatmap
+            type: kbwidget
+            
+        # EXPRESSION
+        
+        -
+            module: kb_dataview_expression_expressionSeries
+            name: kb_dataview_expressionSeries
             type: kbwidget
         
     routes:
@@ -573,4 +598,59 @@ install:
                         -
                             from: objectType 
                             to: type
+        
+        # EXPRESSION
+        -
+            type:
+                module: KBaseExpression
+                name: ExpressionSeries
+                version: any
+            icon:  
+                type: fontAwesome
+                classes: ['fa-tachometer']
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_expressionSeries
+                        config:
+                            jqueryName: kbaseExpressionSeries
+                    panel: true
+                    options: 
+                        -
+                            from: workspaceName 
+                            to: ws
+                        -
+                            from: objectName 
+                            to: name
+        #
+        -
+            type: 
+                module: KBaseFBA
+                name: FBAModel
+                version: any
+            icon:   
+                type: kbase
+                classes: ['icon-metabolism', 'kb-data-icon-dnudge']
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_fbaModel
+                        config:
+                            jqueryName: kbaseTabTable
+                    panel: true
+                    options: 
+                        -
+                            from: workspaceName 
+                            to: ws
+                        -
+                            from: objectName 
+                            to: obj
+                        -
+                            from: objectType 
+                            to: type
+            
+            
+            
                             

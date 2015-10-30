@@ -220,8 +220,7 @@ define([
                             console.log('ERROR');
                             console.log(err);
                             this.setError(err);
-                        }.bind(this))
-                        .done();
+                        }.bind(this));
                 }
             },
             setup: {
@@ -290,7 +289,7 @@ define([
             setParam: {
                 value: function (path, value) {
                     Utils.setProp(this.params, path, value);
-                    this.refresh().done();
+                    this.refresh();
                 }
             },
             getParam: {
@@ -306,8 +305,7 @@ define([
                         }.bind(this))
                         .catch(function (err) {
                             this.setError(err);
-                        }.bind(this))
-                        .done();
+                        }.bind(this));
                 }
             },
             refresh: {
@@ -339,7 +337,7 @@ define([
                 value: function (path, value, norefresh) {
                     Utils.setProp(this.state, path, value);
                     if (!norefresh) {
-                        this.refresh().done();
+                        this.refresh();
                     }
                 }
             },
@@ -375,7 +373,7 @@ define([
                         message: errorText,
                         original: errorValue
                     }
-                    this.refresh().done();
+                    this.refresh();
                 }
             },
             checkState: {

@@ -111,8 +111,7 @@ define([
                     .catch(function (err) {
                         console.log('ERROR');
                         console.log(err);
-                    })
-                    .done();
+                    });
 
                 //
                 // 4) get object data, create tabs
@@ -139,8 +138,7 @@ define([
                     .catch(function (err) {
                         console.log('ERROR');
                         console.log(err);
-                    })
-                    .done();
+                    });
 
                 var refLookup = {};
                 function preProcessDataTable(tabSpec) {

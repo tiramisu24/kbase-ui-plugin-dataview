@@ -151,8 +151,8 @@ define([
             function createDataIcon(object_info) {
                 try {
                     var typeId = object_info[2],
-                        type = runtime.service('types').parseTypeId(typeId);
-                    var icon = runtime.service('types').getIcon({type: type});
+                        type = runtime.service('type').parseTypeId(typeId);
+                    var icon = runtime.service('type').getIcon({type: type});
 
                     var code = 0;
                     for (var i = 0; i < type.length; code += type.charCodeAt(i++))
@@ -525,6 +525,7 @@ define([
                     container = dom.createElement('div');
                     mount.appendChild(container);
                     container.innerHTML = renderLayout();
+                    container.querySelector('[data-placeholder="content"]').innerHTML = html.loading();
                 });
             }
             function start(params) {
