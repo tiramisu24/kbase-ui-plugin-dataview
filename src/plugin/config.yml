@@ -109,7 +109,6 @@ source:
         -
             module: kb_dataview_communities_functionalProfile
             file: widgets/communities/kbaseAbundanceDataView
-            
         
 install:
     widgets:
@@ -222,6 +221,7 @@ install:
                 subid: {}            
             widget: kb_dataview_panel
     types:
+        # COMMUNITIES
         -
             type: 
                 module: Communities
@@ -282,6 +282,14 @@ install:
                         -
                             from: objectId
                             to: id
+        -
+            type:
+                module: Communities
+                name: TaxonomicMatrix
+                version: any
+            icon:   
+                type: fontAwesome
+                classes: ['fa-table']
                             
         # GENOMES
         
