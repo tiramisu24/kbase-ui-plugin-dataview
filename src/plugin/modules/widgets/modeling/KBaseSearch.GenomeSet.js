@@ -5,7 +5,11 @@
  browser: true,
  white: true
  */
-define(['kb_widget_dataview_modeling_objects'], function (KBObjects) {
+define([
+    'jquery',
+    'kb_dataview_widget_modeling_objects',
+    'kb_dataview_widget_modeling_tabTable'
+], function ($, KBObjects) {
     'use strict';
     function KBaseSearch_GenomeSet(modeltabs) {
         var self = this;
@@ -14,7 +18,8 @@ define(['kb_widget_dataview_modeling_objects'], function (KBObjects) {
         this.setMetadata = function (data) {
             this.workspace = data[7];
             this.objName = data[1];
-            this.overview = {wsid: data[7] + "/" + data[1],
+            this.overview = {
+                wsid: data[7] + "/" + data[1],
                 objecttype: data[2],
                 owner: data[5],
                 instance: data[4],

@@ -14,9 +14,9 @@
  */
 define([
     'jquery',
-    'kb.jquery.widget',
-    'kb_widget_dataview_genome_overview',
-    'kb_widget_dataview_genome_wikiDescription'
+    'kb_widgetBases_kbWidget',
+    'kb_dataview_genomes_overview',
+    'kb_dataview_genomes_wikiDescription'
 ], function ($) {
     'use strict';
     $.KBWidget({
@@ -26,7 +26,6 @@ define([
         options: {
             genomeID: null,
             workspaceID: null,
-            loadingImage: "assets/img/ajax-loader.gif",
             genomeInfo: null
         },
         init: function (options) {
@@ -46,15 +45,14 @@ define([
             overview.KBaseGenomeOverview({
                 genomeID: self.options.genomeID,
                 workspaceID: self.options.workspaceID,
-                loadingImage: self.options.loadingImage,
-                genomeInfo: self.options.genomeInfo
+                genomeInfo: self.options.genomeInfo,
+                runtime: self.runtime
             });
             wikidescription.KBaseWikiDescription({
                 genomeID: self.options.genomeID,
                 workspaceID: self.options.workspaceID,
-                kbCache: self.options.kbCache,
-                loadingImage: self.options.loadingImage,
-                genomeInfo: self.options.genomeInfo
+                genomeInfo: self.options.genomeInfo,
+                runtime: self.runtime
             });
 
         },

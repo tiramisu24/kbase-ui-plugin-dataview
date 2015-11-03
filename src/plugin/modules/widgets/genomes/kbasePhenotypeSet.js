@@ -9,8 +9,18 @@
  browser: true,
  white: true
  */
-define(['jquery', 'kb.runtime', 'kb.utils', 'kb.html', 'kb.service.workspace', 'kb.client.workspace', 'kb.jquery.widget', 'kb.jquery.kb-tabs', 'kb.jquery.media-editor', 'datatables_bootstrap'],
-    function ($, R, Utils, html, Workspace, WorkspaceClient) {
+define([
+    'jquery',
+    'kb_common_html',
+    'kb_service_workspace',
+    'kb_service_fba',
+    'kb_service_workspaceClient',
+    'kb_widgetBases_kbWidget',
+    'kb_widget_kbTabs',
+    // 'kb_widget_mediaEditor', 
+    'datatables_bootstrap'
+],
+    function ($, html, Workspace, FBA, WorkspaceClient) {
         'use strict';
         $.KBWidget({
             name: "kbasePhenotypeSet",
@@ -23,20 +33,23 @@ define(['jquery', 'kb.runtime', 'kb.utils', 'kb.html', 'kb.service.workspace', '
                 this._super(options);
                 var ws = options.ws;
                 var name = options.name;
-
                 var container = this.$elem;
+                var self = this;
 
                 container.loading();
-                var workspace = new Workspace(R.getConfig('services.workspace.url'), {
-                    token: options.token
+                var workspace = new Workspace(this.runtime.getConfig('services.workspace.url'), {
+                    token: this.runtime.service('session').getAuthToken()
                 });
-                Promise.resolve(workspace.get_objects({
+                workspace.get_objects({
                     workspace: ws, name: name
-                }))
+                })
                     .then(function (data) {
                         var reflist = data[0].refs;
                         reflist.push(data[0].data.genome_ref);
-                        var workspaceClient = Object.create(WorkspaceClient).init();
+                        var workspaceClient = Object.create(WorkspaceClient).init({
+                            url: self.runtime.config('services.workspace.url'),
+                            authToken: self.runtime.service('session').getAuthToken()
+                        });
                         workspaceClient.translateRefs(reflist)
                             .then(function (refhash) {
                                 container.rmLoading();
@@ -57,12 +70,13 @@ define(['jquery', 'kb.runtime', 'kb.utils', 'kb.html', 'kb.service.workspace', '
 
                 function buildTable(data, refhash) {
                     // setup tabs
+                    var self = this;
                     var phenoTable = $('<table class="table table-bordered table-striped" style="width: 100%;">');
 
                     var tabs = container.kbTabs({tabs: [
                             {name: 'Overview', active: true},
                             {name: 'Phenotypes', content: phenoTable}]
-                    })
+                    });
 
                     // Code to displaying phenotype overview data
                     var columns = [
@@ -134,10 +148,10 @@ define(['jquery', 'kb.runtime', 'kb.utils', 'kb.html', 'kb.service.workspace', '
                     // this will be replaced with an consolidated media widget once 
                     // ui-common is a submodule
                     function mediaTab(ele, ws, id) {
-                        var fba = new FBA(R.getConfig('services.fba.url'));
-                        Promise.resolve(fba.get_media({
+                        var fba = new FBA(self.runtime.getConfig('services.fba.url'));
+                        fba.get_media({
                             medias: [id], workspaces: [ws]
-                        }))
+                        })
                             .then(function (data) {
                                 $(ele).rmLoading();
                                 $(ele).kbaseMediaEditor({

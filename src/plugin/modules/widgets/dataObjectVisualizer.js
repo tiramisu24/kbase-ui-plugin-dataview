@@ -178,16 +178,25 @@ define([
                 return mapping;
             }
 
+            // TODO: move this to api utils
+            function makeObjectRef(obj) {
+                return [obj.workspaceId, obj.objectId, obj.objectVersion].filter(function (element) {
+                    if (element) {
+                        return true;
+                    }
+                }).join('/');
+            }
+
             function makeWidget(params) {
                 // Translate and normalize params.
-                params.objectVersion = params.ver;
+                // params.objectVersion = params.ver;
 
                 // Get other params from the runtime.
                 return new Promise(function (resolve, reject) {
                     var workspace = new Workspace(runtime.getConfig('services.workspace.url'), {
                         token: runtime.getService('session').getAuthToken()
                     }),
-                        objectRefs = [{ref: params.workspaceId + '/' + params.objectId}];
+                        objectRefs = [{ref: makeObjectRef(params)}];
                     Promise.resolve(workspace.get_object_info_new({
                         objects: objectRefs,
                         ignoreErrors: 1,
@@ -257,7 +266,8 @@ define([
 
             function showError(err) {
                 var content;
-
+                console.log('dov: ERROR');
+                console.log(err);
                 if (typeof err === 'string') {
                     content = err;
                 } else if (err.message) {
@@ -282,6 +292,7 @@ define([
                 });
             }
 
+            var widgetParams;
             function start(params) {
                 return new Promise(function (resolve, reject) {
                     var newParams;
@@ -289,6 +300,7 @@ define([
                         .then(function (result) {
                             theWidget = result.widget;
                             newParams = result.params;
+                            widgetParams = result.params;
                             if (theWidget.init) {
                                 return theWidget.init(config);
                             } else {
@@ -303,6 +315,7 @@ define([
                         })
                         .then(function () {
                             // do nothing...
+                            resolve();
                         })
                         .catch(function (err) {
                             // if attaching the widget failed, we attach a 
@@ -311,6 +324,11 @@ define([
                             showError(err);
                             reject(err);
                         });
+                });
+            }
+            function run(params) {
+                return Promise.try(function () {
+                    return theWidget.run(params);
                 });
             }
             function stop() {
@@ -362,6 +380,7 @@ define([
             return {
                 attach: attach,
                 start: start,
+                run: run,
                 stop: stop,
                 detach: detach,
                 destroy: destroy

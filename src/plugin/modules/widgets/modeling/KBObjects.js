@@ -9,7 +9,8 @@
  browser: true,
  white: true
  */
-define([], function () {
+define([
+], function () {
     'use strict';
     var kbObjects = function (config) {
         this.runtime = config.runtime;

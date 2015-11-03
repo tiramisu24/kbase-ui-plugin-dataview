@@ -13,11 +13,13 @@
  * is in a different widget.
  */
 define([
-    'jquery', 
-    'kb.runtime',
-    'kb.html',
-    'kb.jquery.widget'
-], function ($, R, html) {
+    'jquery',
+    'kb_common_html',
+    'kb_service_cdmi',
+    'kb_service_cdmiEntity',
+    'kb_service_workspace',
+    'kb_widgetBases_kbWidget'
+], function ($, html, CDMI_API, CDMI_EntityAPI, Workspace) {
     'use strict';
     $.KBWidget({
         name: "KBaseGeneSequence",
@@ -29,7 +31,6 @@ define([
             auth: null,
             genomeID: null,
             workspaceID: null,
-            kbCache: null,
             width: 950,
             seq_cell_height: 208,
             genomeInfo: null
@@ -42,8 +43,8 @@ define([
                 return this;
             }
 
-            this.cdmiClient = new CDMI_API(R.getConfig('services.cdmi.url'));
-            this.entityClient = new CDMI_EntityAPI(R.getConfig('services.cdmi.url'));
+            this.cdmiClient = new CDMI_API(this.runtime.getConfig('services.cdmi.url'));
+            this.entityClient = new CDMI_EntityAPI(this.runtime.getConfig('services.cdmi.url'));
 
             this.render();
             if (this.options.workspaceID) {
@@ -79,24 +80,18 @@ define([
             if (this.options.genomeInfo) {
                 self.ready(this.options.genomeInfo);
             } else {
-                if (!this.options.kbCache) {
-                    if (kb)
-                        this.options.kbCache = kb;
-                    else
-                        console.debug("No cache service found. D'oh!");
-                }
                 var obj = this.buildObjectIdentity(this.options.workspaceID, this.options.genomeID);
 
-                var prom = this.options.kbCache.req('ws', 'get_objects', [obj]);
-                // on ws error
-                $.when(prom).fail($.proxy(function (error) {
-                    this.renderError(error);
-                }, this));
-                // on cache success
-                $.when(prom).done($.proxy(function (genome) {
-                    genome = genome[0];
-                    self.ready(genome);
-                }, this));
+                var workspace = new Workspace(this.runtime.getConfig('service.workspace.url'), {
+                    token: this.runtime.service('session').getAuthToken()
+                });
+                workspace.get_objects([obj])
+                    .then(function (genome) {
+                        self.ready(genome[0]);
+                    })
+                    .catch(function (err) {
+                        self.renderError(err);
+                    });
             }
         },
         ready: function (genome) {
@@ -271,6 +266,6 @@ define([
                 .append("<br>" + errString);
             this.$elem.empty();
             this.$elem.append($errorDiv);
-        },
-    })
+        }
+    });
 });

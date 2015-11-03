@@ -12,16 +12,15 @@
  */
 define([
     'jquery',
-    'kb.runtime',
-    'kb.html',
-    'kb.service.cdmi',
-    'kb.service.cdmi-entity',
-    'kb.service.workspace',
-    'kb.service.trees',
+    'kb_common_html',
+    'kb_service_cdmi',
+    'kb_service_cdmiEntity',
+    'kb_service_workspace',
+    'kb_service_trees',
 
-    'kb.jquery.authenticatedwidget'
+    'kb_widgetBases_kbAuthenticatedWidget'
 ],
-    function ($, R, html, CDMI, CDMI_Entity, Workspace, KBaseTrees) {
+    function ($, html, CDMI, CDMI_Entity, Workspace, KBaseTrees) {
         'use strict';
         $.KBWidget({
             name: "KBaseGenomeLineage",
@@ -31,14 +30,11 @@ define([
                 genomeID: null,
                 workspaceID: null,
                 objVer: null,
-                kbCache: null,
                 width: 600,
                 //isInCard: false,
                 genomeInfo: null
             },
             token: null,
-            cdmiURL: R.getConfig('services.cmi.url'),
-            treesURL: R.getConfig('services.trees.url'),
             $infoTable: null,
             pref: null,
             init: function (options) {
@@ -75,8 +71,8 @@ define([
             },
             renderCentralStore: function () {
                 var self = this;
-                this.cdmiClient = new CDMI(this.cdmiURL);
-                this.entityClient = new CDMI_Entity(this.cdmiURL);
+                this.cdmiClient = new CDMI(this.runtime.config('services.cdmi.url'));
+                this.entityClient = new CDMI_Entity(this.runtime.config('services.cdmi.url'));
 
                 this.$infoPanel.hide();
                 this.showMessage(html.loading('loading...'));
@@ -111,8 +107,8 @@ define([
                     var obj = this.getObjectIdentity(this.options.workspaceID, this.options.genomeID);
                     obj.included = ["/taxonomy", "/scientific_name"];
 
-                    var workspace = new Workspace(App.getConfig('services.workspace.url'), {
-                        token: App.getAuthToken()
+                    var workspace = new Workspace(this.runtime.config('services.workspace.url'), {
+                        token: this.runtime.service('session').getAuthToken()
                     });
 
                     workspace.get_object_subset([obj],
@@ -190,7 +186,9 @@ define([
                 var self = this;
                 var tdElem = $('#tax_td_' + self.pref);
                 tdElem.html(html.loading('loading...'));
-                var treesSrv = new KBaseTrees(this.treesURL, {token: App.getAuthToken()});
+                var treesSrv = new KBaseTrees(this.runtime.config('services.trees.url'), {
+                    token: this.runtime.service('session').getAuthToken()
+                });
                 var genomeRef = this.options.workspaceID + "/" + this.options.genomeID;
                 treesSrv.guess_taxonomy_path({query_genome: genomeRef}, function (data) {
                     self.showLinage(data);

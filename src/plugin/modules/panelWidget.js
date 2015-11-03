@@ -97,6 +97,11 @@ define([
                     return widgetSet.start(params);
                 });
             }
+            function run(params) {
+                return Promise.try(function () {
+                    return widgetSet.run(params);
+                });
+            }
             function stop() {
                 return Promise.try(function () {
                     return widgetSet.stop();
@@ -112,6 +117,7 @@ define([
                 init: init,
                 attach: attach,
                 start: start,
+                run: run,
                 stop: stop,
                 detach: detach
             };

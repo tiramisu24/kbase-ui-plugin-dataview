@@ -7,12 +7,12 @@
  */
 define([
     'jquery',
-    'kb.runtime',
-    'kb.html',
-    'kb.service.workspace',
-    'kb.jquery.widget',
-    'kb_widget_dataview_genomeLineage'
-], function ($, R, html, Workspace) {
+    'kb_common_html',
+    'kb_service_workspace',
+    
+    'kb_widgetBases_kbWidget',
+    'kb_dataview_genomes_lineage'
+], function ($, html, Workspace) {
     'use strict';
     $.KBWidget({
         name: "KBaseGenomeWideTaxonomy",
@@ -39,14 +39,15 @@ define([
             taxonomyinfo.KBaseGenomeLineage({
                 genomeID: self.options.genomeID,
                 workspaceID: self.options.workspaceID,
-                genomeInfo: self.options.genomeInfo
+                genomeInfo: self.options.genomeInfo,
+                runtime: self.runtime
             });
             this.prepareTree({ws: self.options.workspaceID, id: self.options.genomeID}, tree);
         },
         prepareTree: function (scope, $div) {
             var objectIdentity = {ref: scope.ws + "/" + scope.id};
-            var workspace = new Workspace(R.getConfig('services.workspace.url'), {
-                token: R.getAuthToken()
+            var workspace = new Workspace(this.runtime.getConfig('services.workspace.url'), {
+                token: this.runtime.service('session').getAuthToken()
             });
             workspace.list_referencing_objects([objectIdentity], function (data) {
                 var treeName = null,

@@ -14,16 +14,15 @@
  */
 define([
     'jquery',
-    'kb.runtime',
-    'kb.html',
-    'kb.service.workspace',
-    'kb.jquery.widget',
-    'kb_widget_dataview_genome_wideOverview',
-    'kb_widget_dataview_genomeLiterature',
-    'kb_widget_dataview_genome_wideTaxonomy',
-    'kb_widget_dataview_genome_wideAssemblyAnnotation'
+    'kb_common_html',
+    'kb_service_workspace',
+    'kb_widgetBases_kbWidget',
+    'kb_dataview_genomes_wideOverview',
+    'kb_dataview_genomes_literature',
+    'kb_dataview_genomes_wideTaxonomy',
+    'kb_dataview_genomes_wideAssemblyAnnotation'
 ],
-    function ($, R, html, Workspace) {
+    function ($, html, Workspace) {
         'use strict';
         $.KBWidget({
             name: "KBaseGenomePage",
@@ -32,12 +31,13 @@ define([
             options: {
                 genomeID: null,
                 workspaceID: null,
-                ver: null,
+                ver: null
             },
             init: function (options) {
                 this._super(options);
-                if (this.options.workspaceID === 'CDS')
+                if (this.options.workspaceID === 'CDS') {
                     this.options.workspaceID = 'KBasePublicGenomesV4';
+                }
                 this.render();
                 return this;
             },
@@ -45,8 +45,8 @@ define([
                 var self = this;
                 var scope = {ws: this.options.workspaceID, id: this.options.genomeID, ver: this.options.ver};
 
-                var workspace = new Workspace(R.getConfig('services.workspace.url'), {
-                    token: R.getAuthToken()
+                var workspace = new Workspace(this.runtime.getConfig('services.workspace.url'), {
+                    token: this.runtime.service('session').getAuthToken()
                 });
 
                 var cell1 = $('<div panel panel-default">');
@@ -87,7 +87,8 @@ define([
                         panel1.KBaseGenomeWideOverview({
                             genomeID: scope.id,
                             workspaceID: scope.ws,
-                            genomeInfo: genomeInfo
+                            genomeInfo: genomeInfo,
+                            runtime: self.runtime
                         });
                     } catch (e) {
                         console.error(e);
@@ -101,7 +102,8 @@ define([
                     try {
                         panel2.KBaseLitWidget({
                             literature: searchTerm,
-                            genomeInfo: genomeInfo
+                            genomeInfo: genomeInfo,
+                            runtime: self.runtime
                         });
                     } catch (e) {
                         console.error(e);
@@ -117,7 +119,8 @@ define([
                         panel4.KBaseGenomeWideTaxonomy({
                             genomeID: scope.id,
                             workspaceID: scope.ws,
-                            genomeInfo: genomeInfo
+                            genomeInfo: genomeInfo,
+                            runtime: self.runtime
                         });
                     } catch (e) {
                         console.error(e);
@@ -141,7 +144,8 @@ define([
                                         genomeID: scope.id,
                                         workspaceID: scope.ws,
                                         ver: scope.ver,
-                                        genomeInfo: genomeInfo
+                                        genomeInfo: genomeInfo,
+                                        runtime: self.runtime
                                     });
                                 } catch (e) {
                                     console.error(e);
@@ -149,7 +153,7 @@ define([
                                 }
                             };
                             var gnm = genomeInfo.data;
-                            if (gnm.contig_ids && gnm.contig_lengths && gnm.contig_ids.length == gnm.contig_lengths.length) {
+                            if (gnm.contig_ids && gnm.contig_lengths && gnm.contig_ids.length === gnm.contig_lengths.length) {
                                 ready();
                             } else {
                                 var contigSetRef = gnm.contigset_ref;
@@ -190,7 +194,7 @@ define([
                     function (error) {
                         console.error("Error loading genome subdata");
                         console.error(error);
-                        console.log(R.getAuthToken());
+                        console.log(self.runtime.service('session').getAuthToken());
                         panel1.empty();
                         self.showError(panel1, error);
                         cell2.empty();

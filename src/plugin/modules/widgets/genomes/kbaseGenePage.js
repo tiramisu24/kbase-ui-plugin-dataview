@@ -12,13 +12,14 @@
  */
 define([
     'jquery',
-    'kb.html',
+    'kb_common_html',
+    'kb_service_workspace',
     
-    'kb.jquery.widget',
-    'kb_widget_dataview_genome_geneInstanceInfo',
-    'kb_widget_dataview_genome_geneBiochemistry',
-    'kb_widget_dataview_genome_geneSequence'
-], function ($, html) {
+    'kb_widgetBases_kbWidget',
+    'kb_dataview_genomes_geneInstanceInfo',
+    'kb_dataview_genomes_geneBiochemistry',
+    'kb_dataview_genomes_geneSequence'
+], function ($, html, Workspace) {
     'use strict';
     $.KBWidget({
         name: "KBaseGenePage",
@@ -27,12 +28,16 @@ define([
         options: {
             featureID: null,
             genomeID: null,
-            workspaceID: null,
+            workspaceID: null
         },
         init: function (options) {
             this._super(options);
-            if (this.options.workspaceID === 'CDS')
+            if (this.options.workspaceID === 'CDS') {
                 this.options.workspaceID = 'KBasePublicGenomesV4';
+            }
+            this.workspace = new Workspace(this.runtime.getConfig('services.workspace.url'), {
+                token: this.runtime.service('session').getAuthToken()
+            });
             this.render();
             return this;
         },
@@ -73,7 +78,6 @@ define([
                         featureID: scope.fid,
                         genomeID: scope.gid,
                         workspaceID: scope.ws,
-                        kbCache: kb,
                         hideButtons: true,
                         genomeInfo: genomeInfo
                     });
@@ -92,7 +96,6 @@ define([
                         featureID: scope.fid,
                         genomeID: scope.gid,
                         workspaceID: scope.ws,
-                        kbCache: kb,
                         genomeInfo: genomeInfo
                     });
                 } catch (e) {
@@ -105,12 +108,11 @@ define([
                     featureID: scope.fid,
                     genomeID: scope.gid,
                     workspaceID: scope.ws,
-                    kbCache: kb,
                     genomeInfo: genomeInfo
                 });
             };
 
-            kb.ws.get_object_subset([{ref: objId, included: included}], function (data) {
+            this.workspace.get_object_subset([{ref: objId, included: included}], function (data) {
                 var genomeInfo = data[0];
                 var featureIdx = null;
                 for (var pos in genomeInfo.data.features) {
@@ -121,7 +123,7 @@ define([
                     }
                 }
                 if (featureIdx) {
-                    kb.ws.get_object_subset([{ref: objId, included: ["/features/" + featureIdx]}], function (data) {
+                    this.workspace.get_object_subset([{ref: objId, included: ["/features/" + featureIdx]}], function (data) {
                         var fInfo = data[0].data;
                         genomeInfo.data.features[featureIdx] = fInfo.features[0];
                         ready(genomeInfo);

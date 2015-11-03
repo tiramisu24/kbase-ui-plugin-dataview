@@ -10,17 +10,16 @@
  white: true
  */
 define([
-    'kb.runtime',
-    'kb.html',
     'jquery',
     'bluebird',
     'uuid',
-    'kb.service.workspace',
-    'kb.service.ujs',
-    'kb.easytree',
-    'kb.jquery.authenticatedwidget'
+    'kb_common_html',
+    'kb_service_workspace',
+    'kb_service_userAndJobState',
+    'kb_dataview_easyTree',
+    'kb_widgetBases_kbAuthenticatedWidget'
 ],
-    function (R, html, $, Promise, uuid, Workspace, UserAndJobState, EasyTree) {
+    function ($, Promise, uuid, html,Workspace, UserAndJobState, EasyTree) {
         'use strict';
         $.KBWidget({
             name: 'kbaseTree',
@@ -32,9 +31,6 @@ define([
                 treeObjVer: null,
                 jobID: null,
                 token: null,
-                kbCache: null,
-                workspaceURL: R.getConfig('services.workspace.url'),
-                ujsServiceURL: R.getConfig('services.user_job_state.url'),
                 width: 1045,
                 height: 600
             },
@@ -47,21 +43,22 @@ define([
 
                 if (!this.options.treeID) {
                     this.renderError("No tree to render!");
-                } else if (!this.options.workspaceID) {
-                    this.renderError("No workspace given!");
-                } else if (!this.options.kbCache && !this.authToken()) {
-                    this.renderError("No cache given, and not logged in!");
-                } else {
-                    if (!this.options.kbCache) {
-                        this.wsClient = new Workspace(this.options.workspaceURL, {token: this.authToken()});
-                    }
-
-                    this.$messagePane = $("<div/>")
-                        .addClass("kbwidget-message-pane kbwidget-hide-message");
-                    this.$elem.append(this.$messagePane);
-
-                    this.render();
+                    return this;
                 }
+
+                if (!this.options.workspaceID) {
+                    this.renderError("No workspace given!");
+                    return this;
+                }
+
+                this.wsClient = new Workspace(this.runtime.getConfig('services.workspace.url'), {
+                    token: this.runtime.service('session').getAuthToken()
+                });
+                this.$messagePane = $("<div/>")
+                    .addClass("kbwidget-message-pane kbwidget-hide-message");
+                this.$elem.append(this.$messagePane);
+
+                this.render();
 
                 return this;
             },
@@ -71,13 +68,15 @@ define([
                     this.loadTree();
                 } else {
                     var self = this;
-                    var jobSrv = new UserAndJobState(self.options.ujsServiceURL, {token: this.authToken()});
+                    var jobSrv = new UserAndJobState(this.runtime.getConfig('services.ujs.url'), {
+                        token: this.runtime.service('session').getAuthToken()
+                    });
                     self.$elem.empty();
 
                     var panel = $('<div class="loader-table"/>');
                     self.$elem.append(panel);
                     var table = $('<table class="table table-striped table-bordered" ' +
-            			'style="margin-left: auto; margin-right: auto;" id="' + self.pref + 'overview-table"/>');
+                        'style="margin-left: auto; margin-right: auto;" id="' + self.pref + 'overview-table"/>');
                     panel.append(table);
                     table.append('<tr><td>Job was created with id</td><td>' + self.options.jobID + '</td></tr>');
                     table.append('<tr><td>Output result will be stored as</td><td>' + self.options.treeID + '</td></tr>');
@@ -118,85 +117,78 @@ define([
                 }
             },
             loadTree: function () {
-                var prom;
                 var objId = this.buildObjectIdentity(this.options.workspaceID, this.options.treeID, this.options.treeObjVer, this.treeWsRef);
-                if (this.options.kbCache) {
-                    prom = this.options.kbCache.req('ws', 'get_objects', [objId]);
-                } else {
-                    prom = this.wsClient.get_objects([objId]);
-                }
-
                 var self = this;
+                this.wsClient.get_objects([objId])
+                    .then(function (objArr) {
+                        self.$elem.empty();
 
-                $.when(prom).done($.proxy(function (objArr) {
-                    self.$elem.empty();
+                        var canvasDivId = "knhx-canvas-div-" + self.pref;
+                        self.canvasId = "knhx-canvas-" + self.pref;
+                        self.$canvas = $('<div id="' + canvasDivId + '">')
+                            .append($('<canvas id="' + self.canvasId + '">'));
 
-                    var canvasDivId = "knhx-canvas-div-" + self.pref;
-                    self.canvasId = "knhx-canvas-" + self.pref;
-                    self.$canvas = $('<div id="' + canvasDivId + '">')
-                        .append($('<canvas id="' + self.canvasId + '">'));
-
-                    if (self.options.height) {
-                        self.$canvas.css({'max-height': self.options.height - 85, 'overflow': 'scroll'});
-                    }
-                    self.$elem.append(self.$canvas);
-
-                    // SKIP FOR NOW
-                    //watchForWidgetMaxWidthCorrection(canvasDivId);
-
-                    if (!self.treeWsRef) {
-                        var info = objArr[0].info;
-                        self.treeWsRef = info[6] + "/" + info[0] + "/" + info[4];
-                    }
-                    var tree = objArr[0].data;
-
-                    var refToInfoMap = {};
-                    var objIdentityList = [];
-                    if (tree.ws_refs) {
-                        var key;
-                        for (key in tree.ws_refs) {
-                            objIdentityList.push({ref: tree.ws_refs[key]['g'][0]});
+                        if (self.options.height) {
+                            self.$canvas.css({'max-height': self.options.height - 85, 'overflow': 'scroll'});
                         }
-                    }
-                    if (objIdentityList.length > 0) {
-                        self.wsClient.get_object_info_new({objects: objIdentityList}, function (data) {
-                            var i;
-                            for (i in data) {
-                                var objInfo = data[i];
-                                refToInfoMap[objIdentityList[i].ref] = objInfo;
+                        self.$elem.append(self.$canvas);
+
+                        // SKIP FOR NOW
+                        //watchForWidgetMaxWidthCorrection(canvasDivId);
+
+                        if (!self.treeWsRef) {
+                            var info = objArr[0].info;
+                            self.treeWsRef = info[6] + "/" + info[0] + "/" + info[4];
+                        }
+                        var tree = objArr[0].data;
+
+                        var refToInfoMap = {};
+                        var objIdentityList = [];
+                        if (tree.ws_refs) {
+                            var key;
+                            for (key in tree.ws_refs) {
+                                objIdentityList.push({ref: tree.ws_refs[key]['g'][0]});
                             }
-                        }, function (err) {
-                            console.log("Error getting genomes info:");
-                            console.log(err);
-                        });
-                    }
-                    new EasyTree(self.canvasId, tree.tree, tree.default_node_labels, function (node) {
-                        if ((!tree.ws_refs) || (!tree.ws_refs[node.id])) {
-                            var node_name = tree.default_node_labels[node.id];
-                            if (node_name.indexOf('/') > 0) {  // Gene label
-                                /* TODO: reroute #genes to #dataview */
-                                var url = "#genes/" + self.options.workspaceID + "/" + node_name;
+                        }
+                        if (objIdentityList.length > 0) {
+                            self.wsClient.get_object_info_new({objects: objIdentityList}, function (data) {
+                                var i;
+                                for (i in data) {
+                                    var objInfo = data[i];
+                                    refToInfoMap[objIdentityList[i].ref] = objInfo;
+                                }
+                            }, function (err) {
+                                console.log("Error getting genomes info:");
+                                console.log(err);
+                            });
+                        }
+                        new EasyTree(self.canvasId, tree.tree, tree.default_node_labels, function (node) {
+                            if ((!tree.ws_refs) || (!tree.ws_refs[node.id])) {
+                                var node_name = tree.default_node_labels[node.id];
+                                if (node_name.indexOf('/') > 0) {  // Gene label
+                                    /* TODO: reroute #genes to #dataview */
+                                    var url = "#genes/" + self.options.workspaceID + "/" + node_name;
+                                    window.open(url, '_blank');
+                                }
+                                return;
+                            }
+                            var ref = tree.ws_refs[node.id]['g'][0];
+                            var objInfo = refToInfoMap[ref];
+                            if (objInfo) {
+                                var url = "#dataview/" + objInfo[7] + "/" + objInfo[1];
                                 window.open(url, '_blank');
                             }
-                            return;
-                        }
-                        var ref = tree.ws_refs[node.id]['g'][0];
-                        var objInfo = refToInfoMap[ref];
-                        if (objInfo) {
-                            var url = "#dataview/" + objInfo[7] + "/" + objInfo[1];
-                            window.open(url, '_blank');
-                        }
-                    }, function (node) {
-                        if (node.id && node.id.indexOf("user") === 0) {
-                            return "#0000ff";
-                        }
-                        return null;
+                        }, function (node) {
+                            if (node.id && node.id.indexOf("user") === 0) {
+                                return "#0000ff";
+                            }
+                            return null;
+                        });
+                        self.loading(true);
+                    })
+                    .catch(function (error) {
+                        this.renderError(error);
                     });
-                    self.loading(true);
-                }, this));
-                $.when(prom).fail($.proxy(function (error) {
-                    this.renderError(error);
-                }, this));
             },
             renderError: function (error) {
                 var errString = "Sorry, an unknown error occurred";

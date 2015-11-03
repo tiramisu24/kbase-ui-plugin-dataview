@@ -14,14 +14,12 @@
  */
 define([
     'jquery',
-    'kb.runtime',
-    'kb.html',
-    'kb.service.cdmi',
-    'kb.service.cdmi-entity',
-    'kb.service.workspace',
-    
-    'kb.jquery.widget'
-], function ($, R, html, CDMI, CDMI_Entity, Workspace) {
+    'kb_common_html',
+    'kb_service_cdmi',
+    'kb_service_cdmiEntity',
+    'kb_service_workspace',
+    'kb_widgetBases_kbWidget'
+], function ($, html, CDMI, CDMI_Entity, Workspace) {
     'use strict';
     $.KBWidget({
         name: "KBaseGenomeOverview",
@@ -30,12 +28,9 @@ define([
         options: {
             genomeID: null,
             workspaceID: null,
-            kbCache: null,
             isInCard: false,
             genomeInfo: null
         },
-        token: null,
-        cdmiURL: R.getConfig('services.cdmi.url'),
         $infoTable: null,
         noContigs: "No Contigs",
         init: function (options) {
@@ -54,8 +49,6 @@ define([
             return this;
         },
         render: function () {
-            var self = this;
-
             this.$infoPanel = $("<div>");
 
             this.$infoTable = $("<table>")
@@ -76,8 +69,8 @@ define([
             return "<tr><th>" + a + "</th><td>" + b + "</td></tr>";
         },
         renderCentralStore: function () {
-            this.cdmiClient = new CDMI(this.cdmiURL);
-            this.entityClient = new CDMI_Entity(this.cdmiURL);
+            this.cdmiClient = new CDMI(this.runtime.getConfig('services.cdmi.url'));
+            this.entityClient = new CDMI_Entity(this.runtime.getConfig('services.cdmi.url'));
 
             this.$infoPanel.hide();
             this.showMessage(html.loading('loading...'));
@@ -175,20 +168,17 @@ define([
             if (self.options.genomeInfo) {
                 self.showData(self.options.genomeInfo.data);
             } else {
-                var obj = this.buildObjectIdentity(this.options.workspaceID, this.options.genomeID);
-
-                var prom = new Workspace(App.getConfig('services.workspace.url'), {
-                    auth: App.getAuthToken()
-                }).get_objects([obj]);
-
-                // var prom = this.options.kbCache.req('ws', 'get_objects', [obj]);
-                $.when(prom).done($.proxy(function (genome) {
-                    // console.log(genome);
-                    self.showData(genome[0].data);
-                }, this));
-                $.when(prom).fail($.proxy(function (error) {
-                    this.renderError(error);
-                }, this));
+                var obj = this.buildObjectIdentity(this.options.workspaceID, this.options.genomeID),
+                    workspace = new Workspace(this.runtime.getConfig('services.workspace.url'), {
+                    token: this.runtime.service('session').getAuthToken()
+                });
+                workspace.get_objects([obj])
+                    .then(function (data) {
+                        self.showData(data[0].data);
+                    })
+                    .catch(function (err) {
+                        self.renderError(err);
+                    });
             }
         },
         showData: function (genome) {
