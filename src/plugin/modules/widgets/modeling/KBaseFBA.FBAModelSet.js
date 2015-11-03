@@ -6,7 +6,7 @@
  white: true
  */
 define([
-    'kb_dataview_modeling_objects'
+    'kb_dataview_widget_modeling_objects'
 ], function (KBObjects) {
     'use strict';
     function KBaseFBA_FBAModelSet(modeltabs) {

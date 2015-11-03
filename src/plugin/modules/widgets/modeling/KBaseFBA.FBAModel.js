@@ -6,11 +6,11 @@
  white: true
  */
 define([
-    'bluebird',
+    'jquery',
     'kb_service_fba',
     'kb_service_workspace',
     'kb_dataview_widget_modeling_objects'
-], function (Promise, FBA, Workspace, KBObjects) {
+], function ($, FBA, Workspace, KBObjects) {
     'use strict';
     function KBaseFBA_FBAModel(modeltabs) {
         var self = this;
@@ -257,8 +257,8 @@ define([
 
 
         this.ReactionTab = function (info) {
-            var rxn = self.rxnhash[info.id];
-            var output = [{
+            var rxn = self.rxnhash[info.id],
+                output = [{
                     "label": "Reaction",
                     "data": rxn.dispid
                 }, {
@@ -292,11 +292,11 @@ define([
                 var fba = new FBA(self.runtime.getConfig('services.fba.url'), {
                     token: self.runtime.service('session').getAuthToken()
                 });
-                return new Promise.resolve(fba.get_reactions({
+                return fba.get_reactions({
                     reactions: [rxn.rxnkbid],
                     biochemistry: self.biochem,
                     biochemistry_workspace: self.biochemws
-                }))
+                })
                     .then(function (data) {
                         if ("deltaG" in data[0]) {
                             output.push({
@@ -370,11 +370,11 @@ define([
                 var fba = new FBA(self.runtime.getConfig('services.fba.url'), {
                     token: self.runtime.service('session').getAuthToken()
                 });
-                return new Promise.resolve(fba.get_compounds({
+                return fba.get_compounds({
                     compounds: [cpd.cpdkbid],
                     biochemistry: self.biochem,
                     biochemistry_workspace: self.biochemws
-                }))
+                })
                     .then(function (data) {
                         if ("deltaG" in data[0]) {
                             output.push({
@@ -472,7 +472,7 @@ define([
             var workspace = new Workspace(this.runtime.getConfig('services.workspace.url'), {
                 token: this.runtime.service('session').getAuthToken()
             });
-            return new Promise.resolve(workspace.get_objects([{ref: ref}]))
+            return workspace.get_objects([{ref: ref}])
                 .then(function (data) {
                     var solutions = data[0].data.gapfillingSolutions;
                     return self.parse_gf_solutions(solutions);
@@ -548,11 +548,11 @@ define([
                 var fba = new FBA(this.runtime.getConfig('services.fba.url'), {
                     token: this.runtime.service('session').getAuthToken()
                 });
-                return new Promise.resolve(fba.get_reactions({
+                return fba.get_reactions({
                     reactions: ids,
                     biochemistry: biochem,
                     biochemistry_workspace: biochemws
-                }))
+                })
                     .then(function (data) {
                         for (var i = 0; i < data.length; i++) {
                             if (data[i]) {

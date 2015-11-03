@@ -27,13 +27,13 @@
  */
 define([
     'jquery',
-    'kb.runtime',
-    'kb.html',
-    'kb.service.cdmi',
-    'kb.service.cdmi-entity',
-    'kb.jquery.widget'
+    'kb_common_html',
+    'kb_service_cdmi',
+    'kb_service_cdmiEntity',
+    'kb_service_workspace',
+    'kb_widgetBases_kbWidget'
 ],
-    function ($, R, html, CDMI, CDMI_Entity) {
+    function ($, html, CDMI, CDMI_Entity, Workspace) {
         'use strict';
         $.KBWidget({
             name: "KBaseWikiDescription",
@@ -44,7 +44,6 @@ define([
              * @type {object}
              * @property {string} genomeID - (required) the genome ID (or genome object ID from the workspace)
              * @property {string} workspaceID - (optional) the id of the workspace the genome is in
-             * @property {object} kbCache - (optional) the cache client used to pull from the workspace
              * @property {string} title - the title of this widget
              * @property {number} maxNumChars - (deprecated) the maximum number of characters of the description to show
              * @property {number} maxTextHeight - the max size of the description text area in pixels
@@ -52,17 +51,12 @@ define([
             options: {
                 genomeID: null,
                 workspaceID: null,
-                kbCache: null,
                 title: "Description",
                 maxNumChars: 900,
                 width: 400,
                 maxTextHeight: 300,
                 genomeInfo: null
             },
-            /**
-             * @type {string} cdmiURL - the default endpoint for the CDMI service
-             */
-            cdmiURL: R.getConfig('services.cdmi.url'),
             /**
              * @function init
              * Initialize the widget. This initializes the CDMI client code.
@@ -78,8 +72,13 @@ define([
                 this.$messagePane = $("<div>");
                 this.$elem.append(this.$messagePane);
 
-                this.cdmiClient = new CDMI(this.cdmiURL);
-                this.entityClient = new CDMI_Entity(this.cdmiURL);
+                this.cdmiClient = new CDMI(this.runtime.getConfig('services.cdmi.url'));
+                
+                this.entityClient = new CDMI_Entity(this.runtime.getConfig('services.cdmi.url'));
+                
+                this.workspaceClient = new Workspace(this.runtime.getConfig('services.workspace.url', {
+                    token: this.runtime.service('session').getAuthToken()
+                }));
 
                 if (this.options.workspaceID) {
                     this.renderWorkspace();
@@ -182,7 +181,7 @@ define([
                                 var $descFooter = $('<p>[<a href="' + desc.wikiUri + '" target="_new">more at Wikipedia</a>]</p>');
 
                                 var imageHtml = 'Unable to find an image. If you have one, you might consider <a href="' + desc.wikiUri + '" target="_new">adding it to Wikipedia</a>.';
-                                if (desc.imageUri != null) {
+                                if (desc.imageUri !== null) {
                                     imageHtml = '<img src="' + desc.imageUri + '"';
                                     if (this.options.width)
                                         imageHtml += 'style="width:' + this.options.width + 'px;"';
@@ -265,7 +264,7 @@ define([
                 this.showMessage(html.loading('loading...'));
                 var obj = this.buildObjectIdentity(this.options.workspaceID, this.options.genomeID);
 
-                obj['included'] = ["/taxonomy", "/scientific_name"];
+                obj.included = ["/taxonomy", "/scientific_name"];
 
                 function onDataLoad(genome) {
                     if (genome['taxonomy']) {
@@ -294,7 +293,7 @@ define([
                 if (self.options.genomeInfo) {
                     onDataLoad(self.options.genomeInfo.data);
                 } else {
-                    self.options.kbCache.ws.get_object_subset([obj],
+                    self.workspaceClient.get_object_subset([obj],
                         function (data) {
                             if (data[0]) {
                                 onDataLoad(data[0]['data']);
@@ -302,8 +301,8 @@ define([
                         },
                         function (error) {
                             var obj = self.buildObjectIdentity(self.options.workspaceID, self.options.genomeID);
-                            obj['included'] = ["/scientific_name"];
-                            self.options.kbCache.ws.get_object_subset([obj], function (data) {
+                            obj.included = ["/scientific_name"];
+                            self.workspaceClient.get_object_subset([obj], function (data) {
                                 if (data[0]) {
                                     onDataLoad(data[0]['data']);
                                 }

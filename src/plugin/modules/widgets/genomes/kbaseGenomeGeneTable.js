@@ -7,11 +7,11 @@
  */
 define([
     'jquery',
-    'kb.html',
-    'kb.service.workspace',
-    'kb.utils',
+    'kb_common_html',
+    'kb_service_workspace',
+
     'datatables_bootstrap',
-    'kb.jquery.authenticatedwidget'
+    'kb_widgetBases_kbAuthenticatedWidget'
 ], function ($, html, Workspace) {
     'use strict';
     $.KBWidget({
@@ -26,7 +26,6 @@ define([
             genome_id: null,
             ws_name: null,
             ver: null,
-            kbCache: null,
             genomeInfo: null
         },
         init: function (options) {
@@ -34,7 +33,6 @@ define([
 
             this.ws_name = this.options.ws_name;
             this.genome_id = this.options.genome_id;
-            this.kbCache = this.options.kbCache;
             this.render();
             return this;
         },
@@ -55,7 +53,7 @@ define([
                     container.append($('<div />')
                         .css("overflow", "auto")
                         .append('<table cellpadding="0" cellspacing="0" border="0" id="' + pref + 'genes-table" ' +
-            		'class="table table-bordered table-striped" style="width: 100%; margin-left: 0px; margin-right: 0px;"/>'));
+                            'class="table table-bordered table-striped" style="width: 100%; margin-left: 0px; margin-right: 0px;"/>'));
                     var genesData = [];
                     var geneMap = {};
                     var contigMap = {};
@@ -69,12 +67,12 @@ define([
                     }
 
                     /*function geneEvents() {
-                        $('.' + pref + 'gene-click').unbind('click');
-                        $('.' + pref + 'gene-click').click(function () {
-                            var geneId = [$(this).data('geneid')];
-                            window.open("#/genes/" + genomeRef + "/" + geneId, "_blank");
-                        });
-                    }*/
+                     $('.' + pref + 'gene-click').unbind('click');
+                     $('.' + pref + 'gene-click').click(function () {
+                     var geneId = [$(this).data('geneid')];
+                     window.open("#/genes/" + genomeRef + "/" + geneId, "_blank");
+                     });
+                     }*/
 
                     for (var genePos in gnm.features) {
                         var gene = gnm.features[genePos];
@@ -94,23 +92,23 @@ define([
                         if (!geneFunc)
                             geneFunc = '-';
                         genesData.push({
-                            id: '<a href="#dataview/' + genomeRef + '?sub=Feature&subid=' + geneId  + '" target="_blank">' + geneId + '</a>',
-                            contig: contigName, 
-                            start: geneStart, 
-                            dir: geneDir, 
-                            len: geneLen, 
-                            type: geneType, 
+                            id: '<a href="#dataview/' + genomeRef + '?sub=Feature&subid=' + geneId + '" target="_blank">' + geneId + '</a>',
+                            contig: contigName,
+                            start: geneStart,
+                            dir: geneDir,
+                            len: geneLen,
+                            type: geneType,
                             func: geneFunc
                         });
                         geneMap[geneId] = gene;
                         var contig = contigMap[contigName];
-                        if (contigName != null && !contig) {
+                        if (contigName !== null && !contig) {
                             contig = {name: contigName, length: 0, genes: []};
                             contigMap[contigName] = contig;
                         }
                         if (contig) {
                             var geneStop = Number(geneStart);
-                            if (geneDir == '+')
+                            if (geneDir === '+')
                                 geneStop += Number(geneLen);
                             if (contig.length < geneStop) {
                                 contig.length = geneStop;
@@ -159,19 +157,19 @@ define([
                 showData(self.options.genomeInfo.data);
             } else {
                 var objId = {ref: genomeRef};
-                if (this.options.kbCache)
-                    prom = this.options.kbCache.req('ws', 'get_objects', [objId]);
-                else
-                    prom = kb.ws.get_objects([objId]);
 
-                $.when(prom).done($.proxy(function (data) {
-                    var gnm = data[0].data;
-                    showData(gnm);
-                }, this));
-                $.when(prom).fail($.proxy(function (data) {
-                    container.empty();
-                    container.append('<p>[Error] ' + data.error.message + '</p>');
-                }, this));
+                var workspace = new Workspace(self.runtime.getConfig('services.workspace.url', {
+                    token: self.runtime.service('session').getAuthToken()
+                }));
+                workspace.get_objects([objId])
+                    .then(function (data) {
+                        showData(data[0]);
+                    })
+                    .catch(function (err) {
+                        container.empty();
+                        container.append('<p>[Error] ' + err.error.message + '</p>');
+                    });
+
             }
             return this;
         },

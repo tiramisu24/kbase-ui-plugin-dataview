@@ -45,14 +45,14 @@
 
 define([
     'jquery',
-    'kb.jquery.widget',
     'd3',
-    'kb.runtime',
-    'kb.html',
-    'kb.service.cdmi',
+    'kb_common_html',
+    'kb_service_cdmi',
     'kb_plugin_dataview',
-    'kb_widget_dataview_genome_contigBrowserButtons'
-], function ($, _W, d3, R, html, CDMI, Plugin) {
+    
+    'kb_widgetBases_kbWidget',
+    'kb_dataview_genomes_contigBrowserButtons'
+], function ($, d3, html, CDMI, Plugin) {
     'use strict';
     $.KBWidget({
         name: "KBaseMultiContigBrowser",
@@ -110,7 +110,6 @@ define([
         seedOntology: [],
         seedTermsUniq: [],
         seedColors: [],
-        cdmiURL: R.getConfig('services.cdmi.url'),
         tooltip: null,
         operonFeatures: [],
         $messagePane: null,
@@ -175,7 +174,8 @@ define([
             this.$featureInfoPanel = $('<div class="col-md-3"/>').html("<b>Click on a feature to view details</b>");
             $maindiv.append(this.$featureInfoPanel);
 
-            this.cdmiClient = new CDMI(this.cdmiURL);
+            this.cdmiClient = new CDMI(this.runtime.getConfig('services.cdmi.url'));
+
             // DISABLED v
             // no protein info client available atm
             // this.proteinInfoClient = new ProteinInfo(this.proteinInfoURL);
@@ -536,7 +536,7 @@ define([
 
         setGenome: function (genomeID) {
             this.options.genomeID = genomeID;
-            var genomeList = cdmiAPI.genomes_to_contigs([genomeID], function (genomeList) {
+            var genomeList = this.cdmiClient.genomes_to_contigs([genomeID], function (genomeList) {
                 setContig(this.genomeList[genomeID][0]);
             });
         },

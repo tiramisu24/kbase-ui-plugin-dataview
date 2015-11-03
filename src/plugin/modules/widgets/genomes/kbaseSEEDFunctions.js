@@ -16,13 +16,12 @@
 define([
     'jquery',
     'd3',
-    'kb.service.workspace',
-    'kb.runtime',
+    'kb_service_workspace',
     'kb_plugin_dataview',
     
-    'kb.jquery.widget',
+    'kb_widgetBases_kbWidget',
 ],
-    function ($, d3, Workspace, R, Plugin) {
+    function ($, d3, Workspace, Plugin) {
         'use strict';
         $.KBWidget({
             name: "KBaseSEEDFunctions",
@@ -32,7 +31,6 @@ define([
                 objNameOrId: null,
                 wsNameOrId: null,
                 objVer: null,
-                kbCache: null,
                 width: 900,
                 genomeInfo: null
             },
@@ -68,7 +66,7 @@ define([
                 this.subsysToGeneMap = [];
                 this.maxCount = 0;
 
-                if (R.isLoggedIn()) {
+                if (this.runtime.service('session').isLoggedIn()) {
                     // if we are logged in, then somehow render gets called later...
                 } else {
                     // if we are not logged in, then render
@@ -424,8 +422,8 @@ define([
             },
             loggedInCallback: function (event, auth) {
                 this.authToken = auth;
-                this.wsClient = new Workspace(R.getConfig('services.workspace.url'), {
-                    token: R.getAuthToken()
+                this.wsClient = new Workspace(this.runtime.getConfig('services.workspace.url'), {
+                    token: this.runtime.service('session').getAuthToken()
                 });
                 this.render();
                 return this;

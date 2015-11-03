@@ -6,9 +6,12 @@
  white: true
  */
 define([
-    'kb_dataview_widget_modeling_objects'
+    'jquery',
+    'kb_dataview_widget_modeling_objects',
+    
+    'kb_dataview_widget_modeling_tabTable'
 ],
-    function (KBObjects) {
+    function ($, KBObjects) {
         'use strict';
         function KBasePhenotypes_PhenotypeSet(modeltabs) {
             var self = this;

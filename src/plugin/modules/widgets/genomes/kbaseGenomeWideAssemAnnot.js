@@ -7,11 +7,12 @@
  */
 define([
     'jquery',
-    'kb.jquery.widget',
-    'kb_widget_dataview_genome_multiContigBrowser',
-    'kb_widget_dataview_genome_seedFunctions',
-    'kb_widget_dataview_genome_geneTable'
-], function ($, _W) {
+    
+    'kb_widgetBases_kbWidget',
+    'kb_dataview_genomes_multiContigBrowser',
+    'kb_dataview_genomes_seedFunctions',
+    'kb_dataview_genomes_geneTable'
+], function ($) {
     'use strict';
     $.KBWidget({
         name: "KBaseGenomeWideAssemAnnot",
@@ -21,8 +22,6 @@ define([
             genomeID: null,
             workspaceID: null,
             ver: null,
-            loadingImage: "assets/img/ajax-loader.gif",
-            kbCache: null,
             genomeInfo: null,
             contigSetInfo: null
         },
@@ -41,9 +40,8 @@ define([
                 genomeID: self.options.genomeID,
                 workspaceID: self.options.workspaceID,
                 ver: self.options.ver,
-                kbCache: self.options.kbCache,
-                loadingImage: self.options.loadingImage,
-                genomeInfo: self.options.genomeInfo
+                genomeInfo: self.options.genomeInfo,
+                runtime: self.runtime
             });
             var row1 = $('<div class="row">');
             self.$elem.append(row1);
@@ -55,17 +53,15 @@ define([
                 objNameOrId: self.options.genomeID,
                 wsNameOrId: self.options.workspaceID,
                 objVer: null,
-                kbCache: self.options.kbCache,
-                loadingImage: self.options.loadingImage,
-                genomeInfo: self.options.genomeInfo
+                genomeInfo: self.options.genomeInfo,
+                runtime: self.runtime
             });
             genetable.KBaseGenomeGeneTable({
                 genome_id: self.options.genomeID,
                 ws_name: self.options.workspaceID,
                 ver: self.options.ver,
-                kbCache: self.options.kbCache,
-                loadingImage: self.options.loadingImage,
-                genomeInfo: self.options.genomeInfo
+                genomeInfo: self.options.genomeInfo,
+                runtime: self.runtime
             });
         },
         getData: function () {

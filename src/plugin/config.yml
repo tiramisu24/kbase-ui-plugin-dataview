@@ -10,9 +10,26 @@ source:
     ## sources are relative to build/plugins/PACKAGE/source/javascript
     ## NB: need to quote file names, otherwise 
     modules:
+        # Local external dependencies
+        # NB: we REALLY don't want these
         -
             module: kb_dataview_googlepalette
             file: googlepalette
+        -
+            module: kb_dataview_knhx
+            file: lib/knhx
+        -
+            module: kb_dataview_popit
+            file: lib/popit
+        -
+            module: kb_dataview_canvastext
+            file: lib/canvastext
+        -
+            module: kb_dataview_easyTree
+            file: lib/easyTree
+            
+        # Common dataview components
+            
         -
             module: kb_dataview_widget_panel
             file: panelWidget
@@ -38,7 +55,8 @@ source:
         
         -
             module: kb_dataview_widget_contigSet
-            file: widgets/contigset/kbaseContigSetView
+            # file: widgets/contigset/kbaseContigSetView
+            file: widgets/contigset/contigSetWidget
             
         # MODELING
         -
@@ -60,8 +78,13 @@ source:
             module: kb_dataview_widget_modeling_fba_fbaModelSet
             file: widgets/modeling/KBaseFBA.FBAModelSet
         -
-            module: kb_dataview_widget_modeling_phenotypSet
+            module: kb_dataview_widget_modeling_phenotypeSet
             file: widgets/modeling/KBasePhenotypes.PhenotypeSet
+            
+        # SEARCH (but in modeling dir)
+        -
+            module: kb_dataview_widget_search_genomeSet
+            file: widgets/modeling/KBaseSearch.GenomeSet
             
         # ASSEMBLY
         -
@@ -81,7 +104,7 @@ source:
             file: widgets/assembly/kbaseAssemblyView
         # GENOMES
         -
-            module: kb_dataview_widget_genome_genomeComparison
+            module: kb_dataview_widget_genomes_genomeComparison
             file: widgets/protcmp/kbaseGenomeComparisonViewer
         # GENOME COMPARISON
         -
@@ -121,6 +144,84 @@ source:
         -
             module: kb_dataview_expression_expressionSeries
             file: widgets/expression/kbaseExpressionSeries
+            
+        # KBASE FILE
+        
+        -
+            module: kb_dataview_file_pairedEndLibrary
+            file: assembly/kbaseFilePairedEndLibrary
+            
+        # KBASE GENOMES
+        
+        # GENOME
+        -
+            module: kb_dataview_genomes_genome
+            file: widgets/genomes/kbaseGenomePage
+        -
+            module: kb_dataview_genomes_wideOverview
+            file: widgets/genomes/kbaseGenomeWideOverview
+        -
+            module: kb_dataview_genomes_overview
+            file: widgets/genomes/kbaseGenomeOverview
+            css: true
+        -
+            module: kb_dataview_genomes_wikiDescription
+            file: widgets/genomes/kbaseWikiDescription
+        -
+            module: kb_dataview_genomes_literature
+            file: widgets/genomes/kbaseLitWidget
+        -
+            module:  kb_dataview_genomes_genePage
+            file: widgets/genomes/kbaseGenePage
+        -
+            module: kb_dataview_genomes_geneTable
+            file: widgets/genomes/kbaseGenomeGeneTable
+        -
+            module: kb_dataview_genomes_geneInstanceInfo
+            file: widgets/genomes/kbaseGeneInstanceInfo
+        -
+            module: kb_dataview_genomes_geneSequence
+            file: widgets/genomes/kbaseGeneSequence
+        -
+            module: kb_dataview_genomes_geneBiochemistry
+            file: widgets/genomes/kbaseGeneBiochemistry            
+        -
+            module: kb_dataview_genomes_lineage
+            file: widgets/genomes/kbaseGenomeLineage
+        -
+            module: kb_dataview_genomes_wideTaxonomy
+            file: widgets/genomes/kbaseGenomeWideTaxonomy
+        -
+            module: kb_dataview_genomes_wideAssemblyAnnotation
+            file: widgets/genomes/kbaseGenomeWideAssemAnnot
+        -
+            module: kb_dataview_genomes_multiContigBrowser
+            file: widgets/genomes/kbaseMultiContigBrowser
+            css: true
+        -
+            module: kb_dataview_genomes_seedFunctions
+            file: widgets/genomes/kbaseSEEDFunctions
+            css: true
+        -
+            module: kb_dataview_contigset_contigSetView
+            file: widgets/contigset/kbaseContigSetView
+        -
+            module: kb_dataview_genomes_contigBrowserButtons
+            file: widgets/genomes/kbaseContigBrowserButtons
+        -
+            module: kb_dataview_genomes_pangenome
+            file: widgets/genomes/kbasePanGenome
+        -
+            module: kb_dataview_genomes_annotationSetTable
+            file: widgets/genomes/kbaseAnnotationSetTable
+            
+        # TREES
+        
+        -
+            module: kb_dataview_trees_tree
+            file: widgets/trees/kbaseTree
+            
+        
     styles:
         - 
             file: dataview
@@ -152,8 +253,10 @@ install:
         -
             module: kb_dataview_widget_contigSet
             name: kb_dataview_contigSet
-            type: kbwidget
+            type: factory
         # MODELING
+        # TODO: convert first four to work like last two -- they depend on tab table,
+        # not the other way round.
         -
             module: kb_dataview_widget_modeling_tabTable
             name: kb_dataview_biochem_media
@@ -173,6 +276,13 @@ install:
         -
             module: kb_dataview_widget_modeling_phenotypeSet
             name: kb_dataview_phenotypeSet
+            type: kbwidget
+            
+        # SEARCH (but in modeling dir)
+        
+        -
+            module: kb_dataview_widget_search_genomeSet
+            name: kb_dataview_search_genomeSet
             type: kbwidget
             
             
@@ -196,7 +306,7 @@ install:
             
         # GENOMES
         -
-            module: kb_dataview_widget_genome_genomeComparison
+            module: kb_dataview_widget_genomes_genomeComparison
             name: kb_dataview_genomeComparison
             type: kbwidget
             
@@ -231,7 +341,96 @@ install:
             module: kb_dataview_expression_expressionSeries
             name: kb_dataview_expressionSeries
             type: kbwidget
+            
+        # KBASE FILE
+        -
+            module: kb_dataview_file_pairedEndLibrary
+            name: kb_dataview_file_pairedEndLibrary
+            type: kbwidget
         
+        # KBASE GENOMES
+        -
+            module: kb_dataview_genomes_genome
+            name: kb_dataview_genomes_genome
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_wideOverview
+            name: kb_dataview_genomes_wideOverview
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_overview
+            name: kb_dataview_genomes_overview
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_wikiDescription
+            name: kb_dataview_genomes_wikiDescription
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_literature
+            name: kb_dataview_genomes_literature
+            type: kbwidget
+        -
+            module:  kb_dataview_genomes_genePage
+            name: kb_dataview_genomes_genePage
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_geneTable
+            name: kb_dataview_genomes_geneTable
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_geneInstanceInfo
+            name: kb_dataview_genomes_geneInstanceInfo
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_geneSequence
+            name: kb_dataview_genomes_geneSequence
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_geneBiochemistry
+            name: kb_dataview_genomes_geneBiochemistry
+            type:   kbwidget        
+        -
+            module: kb_dataview_genomes_lineage
+            name: kb_dataview_genomes_lineage
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_wideTaxonomy
+            name: kb_dataview_genomes_wideTaxonomy
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_wideAssemblyAnnotation
+            name: kb_dataview_genomes_wideAssemblyAnnotation
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_multiContigBrowser
+            name: kb_dataview_genomes_multiContigBrowser
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_seedFunctions
+            name: kb_dataview_genomes_seedFunctions
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_pangenome
+            name: kb_dataview_genomes_pangenome
+            type: kbwidget
+        -
+            module: kb_dataview_genomes_annotationSetTable
+            name: kb_dataview_genomes_annotationSetTable
+            type: kbwidget
+            
+            
+        -
+            module: kb_dataview_contigset_contigSetView
+            name: kb_dataview_contigset_contigSetView
+            type: kbwidget
+            
+        # TREES
+        
+        -
+            module: kb_dataview_trees_tree
+            name: kb_dataview_trees_tree
+            type: kbwidget
+            
     routes:
         -
             path: 
@@ -623,7 +822,33 @@ install:
                         -
                             from: objectName 
                             to: name
-        #
+        # FBA
+        -
+            type: 
+                module: KBaseFBA
+                name: FBA
+                version: any
+            icon:  
+                type: kbase
+                classes: ['icon-metabolism', 'kb-data-icon-dnudge']
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_fba
+                        config:
+                            jqueryName: kbaseTabTable
+                    panel: true
+                    options: 
+                        -
+                            from: workspaceName 
+                            to: ws
+                        -
+                            from: objectName 
+                            to: obj
+                        -
+                            from: objectType 
+                            to: type
         -
             type: 
                 module: KBaseFBA
@@ -650,7 +875,209 @@ install:
                         -
                             from: objectType 
                             to: type
+        -
+            type:
+                module: KBaseFBA
+                name: FBAModelSet
+                version: any
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_fbaModelSet
+                        config:
+                                jqueryName: kbaseTabTable
+                    panel: true
+                    options: 
+                        -
+                            from: workspaceName 
+                            to: ws
+                        -
+                            from: objectName 
+                            to: obj
+                        -
+                            from: objectType 
+                            to: type
+        # SEARCH 
+        
+        -
+            type:
+                module: KBaseSearch
+                name: GenomeSet
+                version: any
+            icon:   
+                type: fontAwesome
+                classes: ['fa-list-ul']
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_search_genomeSet
+                        config:
+                            jqueryName: kbaseTabTable
+                    panel: true
+                    options: 
+                        -
+                            from: workspaceName 
+                            to: ws
+                        -
+                            from: objectName 
+                            to: obj
+                        -
+                            from: objectType 
+                            to: type                            
             
-            
-            
+        # KBASE FILE
+        -
+            type:
+                module: KBaseFile
+                name: PairedEndLibrary
+                version: any
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_file_pairedEndLibrary
+                        config:
+                            jqueryName:  kbaseFilePairedEndLibrary
+                    panel: true
+                    options: 
+                        -
+                            from: workspaceId
+                            to: workspaceId
+                        -
+                            from: objectId
+                            to: objId
+                        -
+                            from: objectVersion
+                            to: objVer 
+                            optional: true
+                            
+        -
+            type:
+                module: KBaseGeneFamilies
+                name: DomainAlignments
+                version: any
+            icon:  
+                type: fontAwesome
+                classes: ['fa-sliders']
+                
+        # KBASE GENOMES
+        
+        -
+            type:
+                module: KBaseGenomes
+                name: Genome
+                version: any
+            icon:   
+                type: kbase
+                classes: ['icon-genome', 'kb-data-icon-dnudge']
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_genomes_genome
+                        config:
+                            jqueryName: KBaseGenomePage
+                    panel: false
+                    # Options object to build. Maps
+                    options: 
+                        -
+                            from: objectId 
+                            to: genomeID
+                        -
+                            from: workspaceId 
+                            to: workspaceID
+
+                    sub: 
+                        Feature: 
+                            widget:
+                                name: kb_dataview_widget_genome_genePage
+                                config:
+                                    jqueryName: KBaseGenePage
+                            panel: false
+                            options: 
+                                -
+                                    from: objectId 
+                                    to: genomeID
+                                -
+                                    from: workspaceId 
+                                    to: objectId
+                                    
+        -
+            type:
+                module: KBaseGenomes
+                name: Pangenome
+                version: any
+            icon:   
+                type: fontAwesome
+                classes: ['fa-bullseye']
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_genomes_pangenome
+                        config:
+                            jqueryName: kbasePanGenome
+                    panel: true
+                    options: 
+                        -
+                            from: workspaceName 
+                            to: ws
+                        -
+                            from: objectName 
+                            to: name     
+        -
+            type:
+                module: KBaseGenomes
+                name: MetagenomeAnnotation
+                version: any
+            icon:
+                type: fontAwesome
+                classes: ['fa-comment-o']
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_genomes_annotationSetTable
+                        config:
+                            jqueryName: AnnotationSetTable
+                    panel: true
+                    options: 
+                        -
+                            from: workspaceId 
+                            to: ws
+                        -
+                            from: objectId 
+                            to: id                
+
+        # TREES
+        
+        -
+            type:
+                module: KBaseTrees
+                name: Tree
+                version: any
+            icon:   
+                type: kbase
+                classes: ['icon-tree', 'kb-data-icon-dnudge']
+            viewers:
+                -
+                    title: Data View
+                    widget:
+                        name: kb_dataview_trees_tree
+                        config:
+                            jqueryName: kbaseTree
+                    panel: true
+                    options: 
+                        -
+                            from: workspaceId 
+                            to: workspaceID
+                        -
+                            from: objectId 
+                            to: treeID
+                        -
+                            from: objectVersion 
+                            to: treeObjVer
+                            
                             

@@ -10,39 +10,39 @@
  */
 define([
     'jquery',
-    'kb.runtime',
-    'kb.html',
-    'kb.service.workspace',
-    'kb.jquery.authenticatedwidget',
+    'kb_common_html',
+    'kb_service_workspace',
+    
+    'kb_widgetBases_kbAuthenticatedWidget',
     'datatables_bootstrap'
 ],
-    function ($, R, html, Workspace) {
+    function ($, html, Workspace) {
         'use strict';
         $.KBWidget({
             name: 'AnnotationSetTable',
             parent: "kbaseAuthenticatedWidget",
             version: '1.0.0',
-            token: null,
             options: {
                 id: null,
                 ws: null
             },
             init: function (options) {
                 this._super(options);
-                this.ws_url = R.getConfig('services.workspace.url');
                 return this;
             },
             render: function () {
                 var self = this;
                 var container = this.$elem;
                 container.empty();
-                if (self.token === null) {
+                if (!this.runtime.service('session').isLoggedIn()) {
                     container.append("<div>[Error] You're not logged in</div>");
                     return;
                 }
                 container.append(html.loading('loading data...'));
 
-                var kbws = new Workspace(self.ws_url, {'token': self.token});
+                var kbws = new Workspace(this.runtime.getConfig('services.workspace.url'), {
+                    token: this.runtime.service('session').getAuthToken()
+                });
                 kbws.get_objects([{ref: self.options.ws + "/" + self.options.id}], function (data) {
                     container.empty();
                     // parse data
@@ -78,23 +78,6 @@ define([
                         var table = html.makeTable(options);
                         container.html(table);
                         $('#' + options.generated.id).dataTable();
-
-                        /*
-                         * var tlen = 0;
-                         if (window.hasOwnProperty('rendererTable') && rendererTable.length) {
-                         tlen = rendererTable.length;
-                         }
-                         var tableAnn = standaloneTable.create({index: tlen});
-                         tableAnn.settings.target = document.getElementById("annotationTable" + tlen);
-                         tableAnn.settings.data = {header: cnames, data: tdata};
-                         tableAnn.settings.filter = {1: {type: "text"}};
-                         var mw = [120];
-                         for (var i = 1; i < cnames.length; i++) {
-                         mw.push(130);
-                         }
-                         tableAnn.settings.minwidths = mw;
-                         tableAnn.render(tlen);
-                         */
                     }
                 }, function (data) {
                     container.empty();
@@ -107,12 +90,10 @@ define([
                 return self;
             },
             loggedInCallback: function (event, auth) {
-                this.token = auth.token;
                 this.render();
                 return this;
             },
             loggedOutCallback: function (event, auth) {
-                this.token = null;
                 this.render();
                 return this;
             }

@@ -9,7 +9,11 @@
 /**
  * Requires bootstrap 3 for buttons
  */
-define(['jquery', 'kb.jquery.widget', 'bootstrap'],
+define([
+    'jquery', 
+    'kb_widgetBases_kbWidget', 
+    'bootstrap'
+],
     function ($) {
         'use strict';
         $.KBWidget({

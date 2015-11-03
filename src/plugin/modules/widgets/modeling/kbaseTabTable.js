@@ -16,7 +16,7 @@ define([
     'kb_dataview_widget_modeling_biochem_media',
     'kb_dataview_widget_modeling_fba_fba',
     'kb_dataview_widget_modeling_fba_fbaModel',
-    //'kb_dataview_widget_modeling_fbaModelSet',
+    'kb_dataview_widget_modeling_fba_fbaModelSet',
     //'kb_dataview_widget_modeling_phenotypeSet',
     //'kb_dataview_widget_modeling_phenotypeSimulationSet',
     //'kb_dataview_widget_modeling_genomeSet',
@@ -84,13 +84,13 @@ define([
                     var param = {ref: input.ws + '/' + input.obj};
 
                 this.workspace = new Workspace(this.runtime.getConfig('services.workspace.url'), {
-                    token: self.token
+                    token: this.runtime.service('session').getAuthToken()
                 });
                 this.fba = new FBA(this.runtime.getConfig('services.fba.url'), {
-                    token:self.token
+                    token: this.runtime.service('session').getAuthToken()
                 });
 
-                Promise.resolve(this.workspace.get_object_info_new({objects: [param], includeMetadata: 1}))
+                this.workspace.get_object_info_new({objects: [param], includeMetadata: 1})
                     .then(function (res) {
                         self.obj.setMetadata(res[0]);
 
@@ -109,8 +109,9 @@ define([
                         }
                     })
                     .catch(function (err) {
-                        console.log('ERROR');
+                        console.log('ERROR getting object info (new)');
                         console.log(err);
+                        // tabPane.append('<b>Error</b><p>' + String(err) + '</p>');
                     });
 
                 //
@@ -122,7 +123,7 @@ define([
                     var param = {ref: input.ws + '/' + input.obj};
                 }
 
-                Promise.resolve(this.workspace.get_objects([param]))
+                this.workspace.get_objects([param])
                     .then(function (data) {
                         var setMethod = self.obj.setData(data[0].data);
 
@@ -136,7 +137,7 @@ define([
                         }
                     })
                     .catch(function (err) {
-                        console.log('ERROR');
+                        console.log('ERROR getting objects');
                         console.log(err);
                     });
 
@@ -158,7 +159,7 @@ define([
                     }
 
                     // get human readable info from workspaces
-                    return new Promise.resolve(self.workspace.get_object_info_new({objects: refs}))
+                    return self.workspace.get_object_info_new({objects: refs})
                         .then(function (data) {
                             refs.forEach(function (ref, i) {
                                 // if (ref in referenceLookup) return
@@ -199,7 +200,7 @@ define([
                         // preprocess data to get workspace info on any references in class
                         var prom = preProcessDataTable(tabSpec);
                         if (prom) {
-                            prom.done(function () {
+                            prom.then(function () {
                                 createDataTable(tabSpec, tabPane);
                             });
                         } else {
@@ -268,18 +269,19 @@ define([
                         if (info.method && info.method !== 'undefined') {
                             var res = self.obj[info.method](info);
 
-                            if (res && 'done' in res) {
+                            if (res) {
                                 content = $('<div>').loading();
-                                $.when(res).done(function (rows) {
-                                    content.rmLoading();
-                                    var table = self.verticalTable({rows: rows});
-                                    content.append(table);
-                                });
+                                Promise.resolve(res)
+                                    .then(function (rows) {
+                                        content.rmLoading();
+                                        var table = self.verticalTable({rows: rows});
+                                        content.append(table);
+                                    })
+                                    .catch(function (err) {
+                                        content.append('ERROR');
+                                    })
                             } else if (res === undefined) {
                                 content.append('<br>No data found for ' + info.id);
-                            } else {
-                                var table = self.verticalTable({rows: res});
-                                content.append(table);
                             }
 
                             tabs.addTab({name: info.id, content: content, removable: true});
@@ -341,17 +343,21 @@ define([
                                 id + '</a>';
                         } else if (type === 'wstype' && format === 'dispWSRef') {
                             var ref = refLookup[d[key]];
-                            return '<a href="' + DATAVIEW_URL + ref.link +
-                                '" target="_blank" ' +
-                                '" class="id-click"' +
-                                '" data-ws="' + ref.ws +
-                                '" data-id="' + ref.name +
-                                '" data-ref="' + d[key] +
-                                '" data-type="' + ref.type +
-                                '" data-action="openPage"' +
-                                '" data-method="' + method +
-                                '" data-name="' + ref.name + '">' +
-                                ref.name + '</a>';
+                            if (ref && ref.link) {
+                                return '<a href="' + DATAVIEW_URL + ref.link +
+                                    '" target="_blank" ' +
+                                    '" class="id-click"' +
+                                    '" data-ws="' + ref.ws +
+                                    '" data-id="' + ref.name +
+                                    '" data-ref="' + d[key] +
+                                    '" data-type="' + ref.type +
+                                    '" data-action="openPage"' +
+                                    '" data-method="' + method +
+                                    '" data-name="' + ref.name + '">' +
+                                    ref.name + '</a>';
+                            } else {
+                                return 'no link';
+                            }
                         }
 
                         var value = d[key];
@@ -418,12 +424,13 @@ define([
                                 var cell = $('<td data-ref="' + ref + '">loading...</td>');
                                 r.append(cell);
 
-                                getLink(ref).done(function (info) {
-                                    var name = info.url.split('/')[1];
-                                    var ref = info.ref;
-                                    table.find("[data-ref='" + ref + "']")
-                                        .html('<a href="' + DATAVIEW_URL + info.url + '" target="_blank">' + name + '</a>');
-                                });
+                                getLink(ref)
+                                    .then(function (info) {
+                                        var name = info.url.split('/')[1];
+                                        var ref = info.ref;
+                                        table.find("[data-ref='" + ref + "']")
+                                            .html('<a href="' + DATAVIEW_URL + info.url + '" target="_blank">' + name + '</a>');
+                                    });
 
                             } else {
                                 r.append('<td>' + data[row.key] + '</td>');
@@ -504,16 +511,16 @@ define([
 
                     var cpd_ids = cpds.left.concat(cpds.right);
                     Promise.resolve(this.fba.get_compounds({compounds: cpd_ids}))
-                    .then(function (d) {
-                        var map = {};
-                        for (var i in d) {
-                            map [d[i].id ] = d[i].name;
-                        }
+                        .then(function (d) {
+                            var map = {};
+                            for (var i in d) {
+                                map [d[i].id ] = d[i].name;
+                            }
 
-                        $('.cpd-id').each(function () {
-                            $(this).html(map[$(this).data('cpd')]);
+                            $('.cpd-id').each(function () {
+                                $(this).html(map[$(this).data('cpd')]);
+                            });
                         });
-                    });
 
                     return panel;
                 };
@@ -528,7 +535,7 @@ define([
                 }
 
                 function getLink(ref) {
-                    return new Promise.resolve(self.workspace.get_object_info_new({objects: [{ref: ref}]}))
+                    return self.workspace.get_object_info_new({objects: [{ref: ref}]})
                         .then(function (data) {
                             var a = data[0];
                             return {url: a[7] + '/' + a[1], ref: a[6] + '/' + a[0] + '/' + a[4]};

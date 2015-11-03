@@ -12,13 +12,14 @@
  */
 define([
     'jquery',
-    'kb.runtime',
-    'kb.html',
-    'kb.service.workspace',
-    'kb.jquery.authenticatedwidget',
-    'kb.jquery.kb-tabs'
+    'kb_common_html',
+    'kb_service_workspace',
+    
+    'kb_widgetBases_kbAuthenticatedWidget',
+    'kb_widget_kbTabs',
+    'datatables_bootstrap'
 ],
-    function ($, R, html, Workspace) {
+    function ($, html, Workspace) {
         'use strict';
         $.KBWidget({
             name: "kbasePanGenome",
@@ -31,8 +32,6 @@ define([
                 width: 1000
             },
             pref: null,
-            token: null,
-            kbws: null,
             geneIndex: {}, // {genome_ref -> {feature_id -> feature_index}}
             genomeNames: {}, // {genome_ref -> genome_name}
             genomeRefs: {}, // {genome_ref -> workspace/genome_object_name}
@@ -40,9 +39,10 @@ define([
             init: function (options) {
                 this._super(options);
 
-                this.wsUrl = R.getConfig('services.workspace.url');
+                this.workspace = new Workspace(this.runtime.config('services.workspace.url', {
+                    token: this.runtime.service('session').getAuthToken()
+                }));
                 this.pref = this.genUUID();
-                this.token = this.authToken();
                 this.geneIndex = {};
                 this.genomeNames = {};
                 this.genomeRefs = {};
@@ -53,34 +53,34 @@ define([
                 return this;
             },
             render: function () {
-                var self = this;
+                var self = this,
+                    name = this.options.name,
+                    container = this.$elem;
 
-                var name = this.options.name;
-
-                var container = this.$elem;
-
-                if (!this.token) {
+                if (!this.runtime.service('session').isLoggedIn()) {
                     container.empty();
                     container.append("<div>[Error] You're not logged in</div>");
                     return;
                 }
 
-                this.kbws = new Workspace(self.wsUrl, {'token': self.token});
-
-                var prom = this.kbws.get_objects([{workspace: this.options.ws, name: name}]);
-                $.when(prom).done(function (data) {
-                    if (self.loaded) {
-                        return;
-                    }
-                    var data2 = data[0].data;
-                    self.cacheGeneFunctions(data2.genome_refs, function () {
-                        buildTable(data2);
+                this.workspace.get_objects([{
+                        workspace: this.options.ws,
+                        name: name
+                    }])
+                    .then(function (data) {
+                        if (self.loaded) {
+                            return;
+                        }
+                        var data2 = data[0].data;
+                        self.cacheGeneFunctions(data2.genome_refs, function () {
+                            buildTable(data2);
+                        });
+                    })
+                    .catch(function (err) {
+                        container.empty();
+                        container.append('<div class="alert alert-danger">' +
+                            err.error.message + '</div>');
                     });
-                }).fail(function (e) {
-                    container.empty();
-                    container.append('<div class="alert alert-danger">' +
-                        e.error.message + '</div>');
-                });
 
                 function buildTable(data) {
                     self.loaded = true;
@@ -302,31 +302,32 @@ define([
                 return this;
             },
             cacheGeneFunctions: function (genomeRefs, callback) {
-                var self = this;
-                var req = [];
-                for (var i in genomeRefs) {
-                    req.push({ref: genomeRefs[i], included: ["scientific_name", "features/[*]/id"]});
-                }
-                var prom = this.kbws.get_object_subset(req);
-                $.when(prom).done(function (data) {
-                    for (var genomePos in genomeRefs) {
-                        var ref = genomeRefs[genomePos];
-                        self.genomeNames[ref] = data[genomePos].data.scientific_name;
-                        self.genomeRefs[ref] = data[genomePos].info[7] + "/" + data[genomePos].info[1];
-                        var geneIdToIndex = {};
-                        for (var genePos in data[genomePos].data.features) {
-                            var gene = data[genomePos].data.features[genePos];
-                            geneIdToIndex[gene.id] = genePos;
+                var self = this,
+                    req = genomeRefs.map(function (ref) {
+                        return {ref: ref, included: ['scientific_name', 'features/[*]/id']};
+                    });
+                this.workspace.get_object_subset(req)
+                    .then(function (data) {
+                        for (var genomePos in genomeRefs) {
+                            var ref = genomeRefs[genomePos];
+                            self.genomeNames[ref] = data[genomePos].data.scientific_name;
+                            self.genomeRefs[ref] = data[genomePos].info[7] + "/" + data[genomePos].info[1];
+                            var geneIdToIndex = {};
+                            for (var genePos in data[genomePos].data.features) {
+                                var gene = data[genomePos].data.features[genePos];
+                                geneIdToIndex[gene.id] = genePos;
+                            }
+                            self.geneIndex[ref] = geneIdToIndex;
                         }
-                        self.geneIndex[ref] = geneIdToIndex;
-                    }
-                    callback();
-                }).fail(function (e) {
-                    //console.log("Error caching genes: " + e.error.message);
-                    this.$elem.empty();
-                    this.$elem.append('<div class="alert alert-danger">' +
-                        e.error.message + '</div>');
-                });
+                        callback();
+                    })
+                    .catch(function (err) {
+                        console.log('ERROR cacheGeneFunctions');
+                        console.log(err);
+                        this.$elem.empty();
+                        this.$elem.append('<div class="alert alert-danger">' +
+                            err.error.message + '</div>');
+                    });
             },
             buildOrthoTable: function (orth_id, ortholog) {
                 var self = this;
@@ -338,27 +339,28 @@ define([
                     var featurePos = self.geneIndex[genomeRef][featureId];
                     req.push({ref: genomeRef, included: ["features/" + featurePos]});
                 }
-                var prom = this.kbws.get_object_subset(req);
-                $.when(prom).done(function (data) {
-                    var genes = [];
-                    for (var i in data) {
-                        var feature = data[i].data.features[0];
-                        var genomeRef = req[i].ref;
-                        feature["genome_ref"] = genomeRef;
-                        var ref = self.genomeRefs[genomeRef];
-                        var genome = self.genomeNames[genomeRef];
-                        var id = feature.id;
-                        var func = feature['function'];
-                        if (!func)
-                            func = '-';
-                        var seq = feature.protein_translation;
-                        var len = seq ? seq.length : 'no translation';
-                        genes.push({ref: ref, genome: genome, id: id, func: func, len: len, original: feature});
-                    }
-                    self.buildOrthoTableLoaded(orth_id, genes, tab);
-                }).fail(function (e) {
-                    console.log("Error caching genes: " + e.error.message);
-                });
+                this.workspace.get_object_subset(req)
+                    .then(function (data) {
+                        var genes = [];
+                        for (var i in data) {
+                            var feature = data[i].data.features[0];
+                            var genomeRef = req[i].ref;
+                            feature["genome_ref"] = genomeRef;
+                            var ref = self.genomeRefs[genomeRef];
+                            var genome = self.genomeNames[genomeRef];
+                            var id = feature.id;
+                            var func = feature['function'];
+                            if (!func)
+                                func = '-';
+                            var seq = feature.protein_translation;
+                            var len = seq ? seq.length : 'no translation';
+                            genes.push({ref: ref, genome: genome, id: id, func: func, len: len, original: feature});
+                        }
+                        self.buildOrthoTableLoaded(orth_id, genes, tab);
+                    })
+                    .catch(function (e) {
+                        console.log("Error caching genes: " + e.error.message);
+                    });
                 return tab;
             },
             buildOrthoTableLoaded: function (orth_id, genes, tab) {
@@ -438,16 +440,17 @@ define([
                 }
                 var featureSet = {description: 'Feature set exported from pan-genome "' +
                         this.options.name + '", otholog "' + orth_id + '"', elements: elements};
-                this.kbws.save_objects({workspace: this.options.ws, objects:
-                        [{type: "KBaseSearch.FeatureSet", name: target_obj_name, data: featureSet}]},
-                    function (data) {
+                this.workspace.save_objects({
+                    workspace: this.options.ws,
+                    objects: [{type: "KBaseSearch.FeatureSet", name: target_obj_name, data: featureSet}]
+                })
+                    .then(function (data) {
                         alert("Feature set object containing " + size + " genes " +
                             "was successfuly exported");
-                    },
-                    function (err) {
+                    })
+                    .catch(function (err) {
                         alert("Error: " + err.error.message);
-                    }
-                );
+                    });
             },
             getData: function () {
                 return {title: "Pangenome", id: this.options.name, workspace: this.options.ws};
