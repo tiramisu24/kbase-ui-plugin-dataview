@@ -477,7 +477,7 @@ define([
                     }
                 }
                 return panel({
-                    title: 'Referenced by',
+                    title: 'References',
                     body: content,
                     parent: parent
                 });
