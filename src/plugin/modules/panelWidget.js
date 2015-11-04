@@ -47,7 +47,7 @@ define([
         }
 
         function widget(config) {
-            var mount, container, children = [], runtime = config.runtime,
+            var mount, container, runtime = config.runtime,
                 widgetSet = WidgetSet.make({runtime: runtime}),
                 rendered;
 
@@ -62,10 +62,7 @@ define([
                                 icon: 'sitemap',
                                 content: div({id: widgetSet.addWidget('kb_dataview_provenance')})
                             }),
-                            html.makePanel({
-                                title: 'Data View',
-                                content: div({id: widgetSet.addWidget('kb_dataview_dataObjectVisualizer')})
-                            })
+                            div({id: widgetSet.addWidget('kb_dataview_dataObjectVisualizer')})
                         ])
                     ])
                 ]);
