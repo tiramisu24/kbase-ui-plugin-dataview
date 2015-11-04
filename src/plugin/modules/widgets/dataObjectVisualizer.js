@@ -16,144 +16,9 @@ define([
     function ($, Promise, _, Workspace, html, APIUtils) {
         "use strict";
 
-
-
-        // Returns id for the 
-        function createBSPanel($node, title) {
-            var id = html.genId(),
-                div = html.tag('div'),
-                span = html.tag('span');
-            $node.html(div({class: 'panel panel-default '}, [
-                div({class: 'panel-heading'}, [
-                    span({class: 'panel-title'}, title)
-                ]),
-                div({class: 'panel-body'}, [
-                    div({id: id})
-                ])
-            ]));
-            return $('#' + id);
-        }
-
-        function xmakeWidget(runtime, params) {
-            // Translate and normalize params.
-            params.objectVersion = params.ver;
-
-            // Get other params from the runtime.
-            // params.workspaceURL = R.getConfig('services.workspace.url');
-            // params.authToken = R.getAuthToken();
-
-            return new Promise(function (resolve, reject) {
-                var workspace = new Workspace(runtime.getConfig('services.workspace.url'), {
-                    token: runtime.getService('session').getAuthToken()
-                }),
-                    objectRefs = [{ref: params.workspaceId + '/' + params.objectId}];
-                Promise.resolve(workspace.get_object_info_new({
-                    objects: objectRefs,
-                    ignoreErrors: 1,
-                    includeMetadata: 1
-                }))
-                    .then(function (data) {
-                        if (data.length === 0) {
-                            reject('Object not found');
-                            return;
-                        }
-                        if (data.length > 1) {
-                            reject('Too many (' + data.length + ') objects found.');
-                            return;
-                        }
-                        if (data[0] === null) {
-                            reject('Null object returned');
-                            return;
-                        }
-
-                        var wsobject = APIUtils.object_info_to_object(data[0]);
-                        var type = APIUtils.parseTypeId(wsobject.type),
-                            mapping = findMapping(type, params);
-                        if (!mapping) {
-                            reject('Not Found', 'Sorry, cannot find widget for ' + type.module + '.' + type.name);
-                            return;
-                        }
-
-                        // These params are from the found object.
-                        var widgetParams = {
-                            workspaceId: params.workspaceId,
-                            objectId: params.objectId,
-                            objectName: wsobject.name,
-                            workspaceName: wsobject.ws,
-                            objectVersion: wsobject.version,
-                            objectType: wsobject.type,
-                            type: wsobject.type
-                        };
-
-
-                        // Create params.
-                        if (mapping.options) {
-                            mapping.options.forEach(function (item) {
-                                var from = widgetParams[item.from];
-                                if (!from && item.optional !== true) {
-                                    throw 'Missing param, from ' + item.from + ', to ' + item.to;
-                                }
-                                widgetParams[item.to] = from;
-                            });
-                        }
-                        // Handle different types of widgets here.
-                        var w = runtime.getService('widget').makeWidget(mapping.widget.name, mapping.widget.options);
-                        resolve({
-                            widget: w,
-                            params: widgetParams
-                        });
-
-//                        
-//                        var type = mapping.type || 'kbwidget';
-//                        switch (type) {
-//                            case 'kbwidget':
-//                                var w = KBWidgetAdapter.make({
-//                                    module: mapping.module,
-//                                    // TODO: don't actually know how the jquery object is specified in the mapping
-//                                    jquery_object: mapping.jquery_object || mapping.widget,
-//                                    panel: mapping.panel,
-//                                    title: mapping.title
-//                                });
-//                                resolve({
-//                                    widget: w,
-//                                    params: widgetParams
-//                                });
-//                                break;
-//                                // case 'widgetBase':
-//                            case 'widgetBase':
-//                                // The widgetBase type is based on standard prototypal
-//                                // object inheritance and ES5 object building.
-//                                // The object (perhaps via prototypes) is expected
-//                                // to itself implement the widget api...
-//                                require([mapping.module], function (W) {
-//                                    resolve({
-//                                        widget:  Object.create(W),
-//                                        params: widgetParams
-//                                    })
-//                                });
-//                                break;
-//                            case 'widgetFactory':
-//                                require([mapping.module], function (W) {
-//                                    resolve({
-//                                        widget: W.make(),
-//                                        params: widgetParams
-//                                    });
-//                                });
-//                                break;
-//                            default:
-//                                reject('Invalid type ' + type + ' in widget mapping')
-//                        }
-                    })
-                    .catch(function (err) {
-                        reject(err);
-                    });
-            });
-        }
-
-
         function factory(config) {
             var mount, container, $container, runtime = config.runtime,
-                theWidget;
+                theWidget, widgetContainer, panelInstalled;
 
 
             function findMapping(type, params) {
@@ -233,7 +98,11 @@ define([
                                 objectType: wsobject.type,
                                 type: wsobject.type
                             };
-
+                            
+                            // handle sub
+                            if (params.sub) {
+                                widgetParams[params.sub.toLowerCase() + 'ID'] = params.subid;
+                            }
 
                             // Create params.
                             if (mapping.options) {
@@ -250,7 +119,8 @@ define([
                                 .then(function (result) {
                                     resolve({
                                         widget: result,
-                                        params: widgetParams
+                                        params: widgetParams,
+                                        mapping: mapping
                                     });
                                 })
                                 .catch(function (err) {
@@ -266,7 +136,7 @@ define([
 
             function showError(err) {
                 var content;
-                console.log('dov: ERROR');
+                console.log('ERROR');
                 console.log(err);
                 if (typeof err === 'string') {
                     content = err;
@@ -301,6 +171,20 @@ define([
                             theWidget = result.widget;
                             newParams = result.params;
                             widgetParams = result.params;
+                            if (result.mapping.panel) {
+                                var temp = container.appendChild(document.createElement('div')),
+                                    widgetParentId = html.genId(),
+                                    div = html.tag('div');
+                                temp.innerHTML = html.makePanel({
+                                    title: 'Data View',
+                                    content: div({id: widgetParentId})
+                                });
+                                // These are global.
+                                panelInstalled = true;
+                                widgetContainer = document.getElementById(widgetParentId);
+                            } else {
+                                widgetContainer = container;
+                            }
                             if (theWidget.init) {
                                 return theWidget.init(config);
                             } else {
@@ -308,7 +192,7 @@ define([
                             }
                         })
                         .then(function () {
-                            return theWidget.attach(container);
+                            return theWidget.attach(widgetContainer);
                         })
                         .then(function () {
                             return theWidget.start(newParams);
@@ -393,4 +277,3 @@ define([
             }
         };
     });
-
