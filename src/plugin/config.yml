@@ -481,7 +481,7 @@ install:
 
                     jqueryWidget: CollectionView
                     # If a bootstrap panel is requested to wrap this widget.
-                    panel: true
+                    panel: false
                     # Mapping of standard options to the widget option properties.
                     # By standard, I mean those defined in the GenericVisualizer widget.
                     options:
