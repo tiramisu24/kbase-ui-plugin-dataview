@@ -28,7 +28,6 @@ define([
         options: {
             featureID: null,
             embedInCard: false,
-            auth: null,
             genomeID: null,
             workspaceID: null,
             genomeInfo: null
@@ -41,8 +40,8 @@ define([
                 return this;
             }
 
-            this.cdmiClient = new CDMI_API(this.cdmiURL);
-            this.entityClient = new CDMI_EntityAPI(this.cdmiURL);
+            this.cdmiClient = new CDMI_API(this.runtime.getConfig('services.cdmi.url'));
+            this.entityClient = new CDMI_EntityAPI(this.runtime.getConfig('services.cdmi.url'));
 
             this.render();
             if (this.options.workspaceID) {
@@ -220,10 +219,10 @@ define([
 
             this.$messagePane.empty()
                 .append(span)
-                .removeClass("kbwidget-hide-message");
+                .removeClass('hide');
         },
         hideMessage: function () {
-            this.$messagePane.addClass("kbwidget-hide-message");
+            this.$messagePane.addClass('hide');
         },
         makeErrorString: function (error) {
             if (typeof error === "string") {

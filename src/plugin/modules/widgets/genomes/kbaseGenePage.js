@@ -14,7 +14,6 @@ define([
     'jquery',
     'kb_common_html',
     'kb_service_workspace',
-    
     'kb_widgetBases_kbWidget',
     'kb_dataview_genomes_geneInstanceInfo',
     'kb_dataview_genomes_geneBiochemistry',
@@ -79,7 +78,8 @@ define([
                         genomeID: scope.gid,
                         workspaceID: scope.ws,
                         hideButtons: true,
-                        genomeInfo: genomeInfo
+                        genomeInfo: genomeInfo,
+                        runtime: self.runtime
                     });
                 } catch (e) {
                     console.error(e);
@@ -96,7 +96,8 @@ define([
                         featureID: scope.fid,
                         genomeID: scope.gid,
                         workspaceID: scope.ws,
-                        genomeInfo: genomeInfo
+                        genomeInfo: genomeInfo,
+                        runtime: self.runtime
                     });
                 } catch (e) {
                     console.error(e);
@@ -108,11 +109,15 @@ define([
                     featureID: scope.fid,
                     genomeID: scope.gid,
                     workspaceID: scope.ws,
-                    genomeInfo: genomeInfo
+                    genomeInfo: genomeInfo,
+                    runtime: self.runtime
                 });
             };
 
-            this.workspace.get_object_subset([{ref: objId, included: included}], function (data) {
+            self.workspace.get_object_subset([{
+                    ref: objId,
+                    included: included
+                }], function (data) {
                 var genomeInfo = data[0];
                 var featureIdx = null;
                 for (var pos in genomeInfo.data.features) {
@@ -123,7 +128,7 @@ define([
                     }
                 }
                 if (featureIdx) {
-                    this.workspace.get_object_subset([{ref: objId, included: ["/features/" + featureIdx]}], function (data) {
+                    self.workspace.get_object_subset([{ref: objId, included: ["/features/" + featureIdx]}], function (data) {
                         var fInfo = data[0].data;
                         genomeInfo.data.features[featureIdx] = fInfo.features[0];
                         ready(genomeInfo);

@@ -18,7 +18,6 @@ define([
     'kb_service_cdmi',
     'kb_service_cdmiEntity',
     'kb_service_workspace',
-    
     'kb_widgetBases_kbWidget'
 ], function ($, html, CDMI_API, CDMI_EntityAPI, Workspace) {
     'use strict';
@@ -30,7 +29,6 @@ define([
             featureID: null,
             workspaceID: null,
             genomeID: null,
-            auth: null,
             hideButtons: false,
             width: 350,
             genomeInfo: null
@@ -118,108 +116,58 @@ define([
             var self = this;
 
             // Data fetching!
-            var jobsList = [];
             var data = {};
             // Fids to feature data job
-            jobsList.push(this.cdmiClient.fids_to_feature_data([self.options.featureID],
-                function (featureData) {
+
+            this.cdmiClient.fids_to_feature_data([self.options.featureID])
+                .then(function (featureData) {
                     data.featureData = featureData[self.options.featureID];
-                },
-                this.clientError
-                ));
-            // Fids to genomes job
-            jobsList.push(this.cdmiClient.fids_to_genomes([self.options.featureID],
-                function (genome) {
+                    return this.cdmiClient.fids_to_genomes([self.options.featureID]);
+                })
+                .then(function (genome) {
                     data.genome = genome[self.options.featureID];
-                },
-                this.clientError
-                ));
-            // Fids to DNA sequence job
-            jobsList.push(this.cdmiClient.fids_to_dna_sequences([this.options.featureID],
-                function (dnaSeq) {
+                    return  this.cdmiClient.fids_to_dna_sequences([this.options.featureID]);
+                })
+                .then(function (dnaSeq) {
                     data.dnaSeq = dnaSeq[self.options.featureID];
-                },
-                this.clientError
-                ));
-            // Fids to protein families job
-            //jobsList.push(this.cdmiClient.fids_to_protein_families([this.options.featureID],
-            //    function(families) {
-            //        data.families = families[self.options.featureID];
-            //    },
-            //    this.clientError
-            //));
-
-            $.when.apply($, jobsList).done(function () {
-                self.$infoTable.empty();
-                self.$infoTable.append(self.makeRow("Function", data.featureData.feature_function));
-                self.$infoTable.append(self.makeRow("Genome", $("<div/>")
-                    .append(data.featureData.genome_name)
-                    .append("<br/>")
-                    .append(self.makeGenomeButton(data.genome))));
-                var len = data.featureData.feature_length + " bp";
-                if (data.featureData.protein_translation) {
-                    len += ", " + data.featureData.protein_translation.length + " aa";
-                }
-                self.$infoTable.append(self.makeRow("Length", len));
-                self.$infoTable.append(self.makeRow("Location", $("<div/>")
-                    .append(self.parseLocation(data.featureData.feature_location))));
-                //.append(self.parseLocation(data.featureData.feature_location))
-                //.append(self.makeContigButton(data.featureData.feature_location))));
-                self.$infoTable.append(self.makeRow("Aliases", data.featureData.feature_aliases.join(", ")));
-
-
-
-                //self.$infoTable.append(self.makeRow("GC Content", self.calculateGCContent(data.dnaSeq).toFixed(2) + "%"));
-
-                //if (data.families && data.families.length != 0) {
-                //    self.cdmiClient.protein_families_to_functions(data.families,
-                //        function(families) {
-                //            var familyStr = '';
-                //            for (var fam in families) {
-                //                familyStr += fam + ": " + families[fam] + "<br/>";
-                //            }
-                //            self.$infoTable.append(self.makeRow("Protein Families", familyStr));
-                //        },
-                //        self.clientError
-                //    );
-                //}
-                //else
-                //    self.$infoTable.append(self.makeRow("Protein Families", "None found"));
-
-                self.$buttonPanel.find("button#domains").click(
-                    function (event) {
+                    self.$infoTable.empty();
+                    self.$infoTable.append(self.makeRow("Function", data.featureData.feature_function));
+                    self.$infoTable.append(self.makeRow("Genome", $("<div/>")
+                        .append(data.featureData.genome_name)
+                        .append("<br/>")
+                        .append(self.makeGenomeButton(data.genome))));
+                    var len = data.featureData.feature_length + " bp";
+                    if (data.featureData.protein_translation) {
+                        len += ", " + data.featureData.protein_translation.length + " aa";
+                    }
+                    self.$infoTable.append(self.makeRow("Length", len));
+                    self.$infoTable.append(self.makeRow("Location", $("<div/>")
+                        .append(self.parseLocation(data.featureData.feature_location))));
+                    self.$infoTable.append(self.makeRow("Aliases", data.featureData.feature_aliases.join(", ")));
+                    self.$buttonPanel.find("button#domains").click(function (event) {
                         self.trigger("showDomains", {event: event, featureID: self.options.featureID});
-                    }
-                );
-                //self.$buttonPanel.find("button#operons").click(
-                //    function(event) { 
-                //        self.trigger("showOperons", { event: event, featureID: self.options.featureID }) 
-                //    }
-                //);
+                    });
 
-                self.$buttonPanel.find("button#sequence").click(
-                    function (event) {
+                    self.$buttonPanel.find("button#sequence").click(function (event) {
                         self.trigger("showSequence", {event: event, featureID: self.options.featureID});
-                    }
-                );
-                self.$buttonPanel.find("button#biochemistry").click(
-                    function (event) {
+                    });
+                    self.$buttonPanel.find("button#biochemistry").click(function (event) {
                         self.trigger("showBiochemistry", {event: event, featureID: self.options.featureID});
-                    }
-                );
-                self.$buttonPanel.find("button#structure").click(
-                    function (event) {
+                    });
+                    self.$buttonPanel.find("button#structure").click(function (event) {
                         self.trigger("showStructureMatches", {event: event, featureID: self.options.featureID});
-                    }
-                );
-                self.hideMessage();
-                self.$infoPanel.show();
-            });
+                    });
+                    self.hideMessage();
+                    self.$infoPanel.show();
+                })
+                .catch(function (err) {
+                    self.renderError(err);
+                });
         },
         renderWorkspace: function () {
             var self = this;
             this.$infoPanel.hide();
-            this.showMessage("<img src='" + this.options.loadingImage + "'>");
+            this.showMessage(html.loading());
 
             if (self.options.genomeInfo) {
                 self.ready(self.options.genomeInfo);
@@ -338,7 +286,7 @@ define([
                     //return true.  We use this as a hack to see if we have gene info for this feature for WS objects.
                     this.cdmiClient.fids_to_proteins([self.options.featureID],
                         function (prot) {
-                            if (prot[self.options.featureID] == feature['md5']) {
+                            if (prot[self.options.featureID] === feature['md5']) {
                                 //ok the fid and md5 match, so go to the CDS to get domain info...  what a hack!
                                 self.$buttonPanel.find("button#domains").off("click");
                                 self.$buttonPanel.find("button#domains").click(function (event) {
@@ -505,10 +453,10 @@ define([
 
             this.$messagePane.empty()
                 .append(span)
-                .removeClass("kbwidget-hide-message");
+                .removeClass('hide');
         },
         hideMessage: function () {
-            this.$messagePane.addClass("kbwidget-hide-message");
+            this.$messagePane.addClass('hide');
         },
         getData: function () {
             return {

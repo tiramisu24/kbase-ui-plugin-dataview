@@ -10,44 +10,67 @@
  */
 define([
     'jquery',
-    'bluebird',
     'kb_service_workspace',
     'kb_common_html',
     // no parameters
     'datatables_bootstrap',
     'kb_widgetBases_kbAuthenticatedWidget'
 ],
-    function ($, Promise, Workspace, html) {
+    function ($, Workspace, html) {
         'use strict';
         $.KBWidget({
             name: 'CollectionView',
             parent: 'kbaseAuthenticatedWidget',
             version: '1.0.0',
-            token: null,
             options: {
                 id: null,
                 ws: null
             },
             init: function (options) {
-                console.log('** INIT **');
+                var div = html.tag('div'),
+                    titleId = html.genId(),
+                    bodyId = html.genId();
                 this._super(options);
+                this.$elem.html(html.makePanel({
+                    title: div({id: titleId}),
+                    content: div({id: bodyId})
+                }));
+                this.$title = $('#' + titleId);
+                this.$body = $('#' + bodyId);
                 return this;
             },
+            showError: function (error) {
+                var message;
+                try {
+                    if (typeof error === 'string') {
+                        message = error;
+                    } else {
+                        if (error.error) {
+                            message = error.error.message;
+                        } else if (error.message) {
+                            message = error.message;
+                        } else {
+                            message = 'Unknown error: ' + error;
+                        }
+                    }
+                } catch (ex) {
+                    message = 'Unknown error processing another error: ' + ex;
+                }
+                this.$title.html('Error');
+                this.$body.html(message);
+            },
             render: function () {
-                console.log('** RENDERING? **');
-                var self = this,
-                    container = this.$elem;
-                container.empty();
-                if (self.token === null) {
-                    container.append('<div>[Error] You are not logged in</div>');
+                var self = this;
+                if (!this.runtime.service('session').getAuthToken()) {
+                    this.showError('You are not logged in');
                     return;
                 }
-                container.append(html.loading('loading data...'));
+                this.$title.html('Metagenome Collection');
+                this.$body.html(html.loading('loading data...'));
 
                 var workspace = new Workspace(this.runtime.config('services.workspace.url'), {token: this.token}),
                     title;
-                console.log('ws url: ' + this.runtime.config('services.workspace.url'));
-                Promise.resolve(workspace.get_objects([{ref: self.options.ws + '/' + self.options.id}]))
+                workspace.get_objects([{ref: self.options.ws + '/' + self.options.id}])
                     .then(function (data) {
                         if (data.length === 0) {
                             throw new Error('Object ' + self.options.id + ' does not exist in workspace ' + self.options.ws);
@@ -64,13 +87,10 @@ define([
                                 return {ref: member.URL};
                             });
                         title = collectionObject.name;
-                        console.log('Got here, now getting members...');
-                        console.log(idList);
                         if (idList.length > 0) {
-                            return new Promise.resolve(workspace.get_objects(idList));
-                        } else {
-                            throw new Error('Collection is empty');
+                            return workspace.get_objects(idList);
                         }
+                        throw new Error('Collection is empty');
                     })
                     .then(function (resData) {
                         var rows = resData.map(function (item) {
@@ -89,30 +109,15 @@ define([
                             options = {
                                 columns: ['ID', 'Name', 'Project', 'PI', 'Biome', 'Sequence Type', 'Sequencing Method', 'bp Count', 'Created'],
                                 rows: rows,
-                                classes: ['table', 'table-striped'],
+                                classes: ['table', 'table-striped']
                             },
-                            table = html.makeTable(options),
-                            div = html.tag('div'),
-                            h4 = html.tag('h4'),
-                            content = div([
-                                h4('<h4>Metagenome Collection ' + title),
-                                table
-                            ]);
-                        container.html(content);
+                        table = html.makeTable(options);
+                        self.$title.html('Metagenome Collection ' + title);
+                        self.$body.html(table);
                         $('#' + options.generated.id).dataTable();
                     })
                     .catch(function (err) {
-                        var message;
-                        if (err.error) {
-                            message = err.error.message;
-                        } else if (err.message) {
-                            message = err.message;
-                        } else {
-                            message = 'Unknown error';
-                        }
-                        container.html($('<p>')
-                            .css({'padding': '10px 20px'})
-                            .text('[Error] ' + message));
+                        self.showError(err);
                     });
                 return self;
             },

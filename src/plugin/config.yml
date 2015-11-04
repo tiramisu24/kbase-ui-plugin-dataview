@@ -467,7 +467,7 @@ install:
                     # if set true, this will be set as the default vis widget for this type.
                     default: true
                     # This the title for the widget
-                    title: 'Data View 3'                
+                    title: 'Data View'                
                     # This is the widget id name as specified in the plugin
                     # it should follow standard namespacing. It should also be 
                     # defined above in the modules.
@@ -992,7 +992,7 @@ install:
                     sub: 
                         Feature: 
                             widget:
-                                name: kb_dataview_widget_genome_genePage
+                                name: kb_dataview_genomes_genePage
                                 config:
                                     jqueryName: KBaseGenePage
                             panel: false
@@ -1002,8 +1002,10 @@ install:
                                     to: genomeID
                                 -
                                     from: workspaceId 
-                                    to: objectId
-                                    
+                                    to: workspaceID
+                                -
+                                    from: featureID
+                                    to: featureID
         -
             type:
                 module: KBaseGenomes

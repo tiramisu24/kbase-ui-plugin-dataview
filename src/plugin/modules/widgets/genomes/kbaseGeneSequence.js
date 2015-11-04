@@ -28,7 +28,6 @@ define([
         options: {
             featureID: null,
             embedInCard: false,
-            auth: null,
             genomeID: null,
             workspaceID: null,
             width: 950,
@@ -56,7 +55,7 @@ define([
         },
         render: function () {
             this.$messagePane = $("<div/>")
-                .addClass("kbwidget-message-pane kbwidget-hide-message");
+                .addClass("kbwidget-message-pane hide");
             this.$elem.append(this.$messagePane);
 
             this.$infoPanel = $("<div>").css("overflow", "auto");
@@ -247,10 +246,10 @@ define([
 
             this.$messagePane.empty()
                 .append(span)
-                .removeClass("kbwidget-hide-message");
+                .removeClass('hide');
         },
         hideMessage: function () {
-            this.$messagePane.addClass("kbwidget-hide-message");
+            this.$messagePane.addClass('hide');
         },
         renderError: function (error) {
             errString = "Sorry, an unknown error occurred";
