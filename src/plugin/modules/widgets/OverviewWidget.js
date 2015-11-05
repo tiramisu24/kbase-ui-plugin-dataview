@@ -39,9 +39,9 @@ define([
             }
 
             function fetchVersions() {
-                return Promise.resolve(workspaceClient.get_object_history({
+                return workspaceClient.get_object_history({
                     ref: objectRef
-                }))
+                })
                     .then(function (dataList) {
                         var versions = dataList.map(function (version) {
                             return APIUtils.object_info_to_object(version);
@@ -53,7 +53,7 @@ define([
             }
 
             function fetchOutgoingReferences() {
-                return Promise.resolve(workspaceClient.get_object_provenance([{ref: objectRef}]))
+                return workspaceClient.get_object_provenance([{ref: objectRef}])
                     .then(function (provdata) {
                         var refs = provdata[0].refs,
                             provenace = provdata[0].provenance;
@@ -80,10 +80,10 @@ define([
                     var objIds = refs.map(function (ref) {
                         return {ref: ref};
                     });
-                    return Promise.resolve(workspaceClient.get_object_info_new({
+                    return workspaceClient.get_object_info_new({
                         objects: objIds,
                         ignoreErrors: 1
-                    }))
+                    })
                         .then(function (dataList) {
                             var objects = dataList.filter(function (data) {
                                 if (data) {
@@ -101,9 +101,9 @@ define([
                 });
             }
             function checkRefCount() {
-                return Promise.resolve(workspaceClient.list_referencing_object_counts([{
+                return workspaceClient.list_referencing_object_counts([{
                         ref: objectRef
-                    }]))
+                    }])
                     .then(function (sizes) {
                         if (sizes[0] > 100) {
                             state.set('too_many_inc_refs', true);
@@ -131,9 +131,9 @@ define([
                 });
             }
             function fetchReferences() {
-                return Promise.resolve(workspaceClient.list_referencing_objects([{
+                return workspaceClient.list_referencing_objects([{
                         ref: objectRef
-                    }]))
+                    }])
                     .then(function (dataList) {
                         var refs = [];
                         if (dataList[0]) {
@@ -151,47 +151,18 @@ define([
             function createDataIcon(object_info) {
                 try {
                     var typeId = object_info[2],
-                        type = runtime.service('type').parseTypeId(typeId);
-                    var icon = runtime.service('type').getIcon({type: type});
-
-                    var code = 0;
-                    for (var i = 0; i < type.length; code += type.charCodeAt(i++))
-                        ;
-                    var colors = [
-                        "#F44336",
-                        "#E91E63",
-                        "#9C27B0",
-                        "#3F51B5",
-                        "#2196F3",
-                        "#673AB7",
-                        "#FFC107",
-                        "#0277BD",
-                        "#00BCD4",
-                        "#009688",
-                        "#4CAF50",
-                        "#33691E",
-                        "#2E7D32",
-                        "#AEEA00",
-                        "#03A9F4",
-                        "#FF9800",
-                        "#FF5722",
-                        "#795548",
-                        "#006064",
-                        "#607D8B"
-                    ];
-                    var color = colors[code % colors.length];
-
-                    var div = html.tag('div'),
+                        type = runtime.service('type').parseTypeId(typeId),
+                        icon = runtime.service('type').getIcon({type: type}),
+                        div = html.tag('div'),
                         span = html.tag('span'),
                         i = html.tag('i');
-                    var logo = div([
+                        
+                    return div([
                         span({class: 'fa-stack fa-2x'}, [
-                            i({class: 'fa fa-circle fa-stack-2x', style: {color: color}}),
+                            i({class: 'fa fa-circle fa-stack-2x', style: {color: icon.color}}),
                             i({class: 'fa-inverse fa-stack-1x ' + icon.classes.join(' ')})
                         ])
                     ]);
-
-                    return logo;
                 } catch (err) {
                     console.error('When fetching icon config: ', err);
                     return '';
@@ -204,12 +175,12 @@ define([
                 //    state.set('sub', this.getParam('sub'));
                 //}
 
-                return Promise.resolve(workspaceClient.get_object_info_new({
+                return workspaceClient.get_object_info_new({
                     objects: [{
                             ref: objectRef
                         }],
                     includeMetadata: 1
-                }))
+                })
                     .then(function (data) {
                         if (!data || data.length === 0) {
                             state.set('status', 'notfound');
@@ -219,6 +190,8 @@ define([
                         var obj = APIUtils.object_info_to_object(data[0]);
                         state.set('object', obj);
 
+                        runtime.send('ui', 'setTitle', 'Data View for ' + obj.name);
+
                         // create the data icon
                         state.set('dataicon', createDataIcon(data[0]));
                     })
@@ -226,10 +199,10 @@ define([
                         // The narrative this lives in.
                         // YUCK!
                         var isIntegerId = /^\d+$/.test(workspaceId);
-                        return Promise.resolve(workspaceClient.get_workspace_info({
+                        return workspaceClient.get_workspace_info({
                             id: isIntegerId ? workspaceId : null,
                             workspace: isIntegerId ? null : workspaceId
-                        }))
+                        })
                             .then(function (data) {
                                 state.set('workspace', APIUtils.workspace_metadata_to_object(data));
                             });
@@ -251,9 +224,9 @@ define([
                     })
                     .then(function () {
                         // Other narratives this user has.
-                        Promise.resolve(workspaceClient.list_workspace_info({
+                        workspaceClient.list_workspace_info({
                             perm: 'w'
-                        }))
+                        })
                             .then(function (data) {
                                 var objects = data.map(function (x) {
                                     return APIUtils.workspace_metadata_to_object(x);
@@ -372,7 +345,7 @@ define([
                         h4({class: 'panel-title'}, [
                             span({dataToggle: 'collapse', dataParent: '#' + content.parent, dataTarget: '#' + bodyId, ariaExpanded: 'false', ariaControls: bodyId, class: 'collapsed', style: {cursor: 'pointer'}}, [
                                 span({class: 'fa angle-right'}),
-                                content.title                                
+                                content.title
                             ])
                         ])
                     ]),
@@ -469,7 +442,7 @@ define([
                             return tr([
                                 td(a({href: ['#dataview', ref.wsid, ref.id, ref.version].join('/')}, ref.name)),
                                 td(a({href: ['#spec', 'type', ref.type].join('/')}, ref.typeName)),
-                                td(['Saved on ', dateFormat(ref.save_date), ' by ', a({href: ['#people', ref.saved_by].join('/')},  ref.saved_by)])
+                                td(['Saved on ', dateFormat(ref.save_date), ' by ', a({href: ['#people', ref.saved_by].join('/')}, ref.saved_by)])
                             ]);
                         })));
                     } else {
@@ -496,7 +469,7 @@ define([
                             tr([
                                 th('Last Updated'),
                                 td([
-                                    dateFormat(state.get('object.save_date')),' by ', a({href: ['#people', state.get('object.saved_by')].join('/')}, state.get('object.saved_by'))
+                                    dateFormat(state.get('object.save_date')), ' by ', a({href: ['#people', state.get('object.saved_by')].join('/')}, state.get('object.saved_by'))
                                 ])
                             ]),
                             renderPermalinkRow()
