@@ -503,6 +503,7 @@ install:
             viewers:
                 -
                     name: Data View
+                    panel: true
                     widget: 
                         name: kb_dataview_abundanceDataHeatmap
                         config:
