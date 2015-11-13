@@ -1,10 +1,5 @@
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
+/*global define*/
+/*jslint browser:true, white:true*/
 define([
     'promise',
     'kb_service_utils',
@@ -156,7 +151,7 @@ define([
                         div = html.tag('div'),
                         span = html.tag('span'),
                         i = html.tag('i');
-                        
+
                     return div([
                         span({class: 'fa-stack fa-2x'}, [
                             i({class: 'fa fa-circle fa-stack-2x', style: {color: icon.color}}),
@@ -521,6 +516,15 @@ define([
                             if (content) {
                                 content.innerHTML = render();
                             }
+
+                            runtime.send('ui', 'addButton', {
+                                name: 'copy',
+                                label: '+ New Narrative',
+                                style: 'primary',
+                                icon: 'plus-square',
+                                url: '#narrativemanager/new?copydata=' + objectRef,
+                                external: true
+                            });
                         })
                         .catch(function (err) {
                             console.log('ERROR');
