@@ -14,7 +14,7 @@ define([
     'jquery',
     'kb/common/html',
     'kb/service/client/workspace',
-    'kb/widget/bases/legacy/widget',
+    'kb/widget/legacy/widget',
     'kb_dataview_genomes_geneInstanceInfo',
     'kb_dataview_genomes_geneBiochemistry',
     'kb_dataview_genomes_geneSequence'

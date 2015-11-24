@@ -18,7 +18,7 @@ define([
     'kb/service/client/workspace',
     'kb/service/client/trees',
 
-    'kb/widget/bases/legacy/authenticatedWidget'
+    'kb/widget/legacy/authenticatedWidget'
 ],
     function ($, html, CDMI, CDMI_Entity, Workspace, KBaseTrees) {
         'use strict';

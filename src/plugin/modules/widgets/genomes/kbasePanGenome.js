@@ -15,8 +15,8 @@ define([
     'kb/common/html',
     'kb/service/client/workspace',
     
-    'kb/widget/bases/legacy/authenticatedWidget',
-    'kb/widget/bases/legacy/tabs',
+    'kb/widget/legacy/authenticatedWidget',
+    'kb/widget/legacy/tabs',
     'datatables_bootstrap'
 ],
     function ($, html, Workspace) {

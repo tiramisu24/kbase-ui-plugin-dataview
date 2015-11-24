@@ -16,8 +16,8 @@ define([
     'kb/common/utils',
     'kb/service/client/workspace',
     'kb/service/workspaceClient',
-    'kb/widget/bases/legacy/widget',
-    'kb/widget/bases/legacy/tabs',
+    'kb/widget/legacy/widget',
+    'kb/widget/legacy/tabs',
     
     'datatables_bootstrap'
 ], function ($, Promise, html, Utils, Workspace, workspaceClient) {

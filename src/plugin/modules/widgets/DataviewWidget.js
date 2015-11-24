@@ -2,13 +2,12 @@ define([
     'nunjucks',
     'jquery',
     'promise',
-    'kb_runtime',
     'kb.utils',
     'kb.alert',
     'kb.html',
     'kb_plugin_dataview'
 ],
-    function (nunjucks, $, Promise, R, Utils, Alert, html, Plugin) {
+    function (nunjucks, $, Promise, Utils, Alert, html, Plugin) {
         "use strict";
         var widget = Object.create({}, {
             // The init function interfaces this object with the caller, and sets up any 

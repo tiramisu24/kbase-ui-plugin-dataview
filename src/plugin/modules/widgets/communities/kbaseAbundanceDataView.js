@@ -15,7 +15,7 @@ define([
     'kb_dataview_communities_graph', 
     
     'datatables_bootstrap',
-    'kb/widget/bases/legacy/authenticatedWidget', 
+    'kb/widget/legacy/authenticatedWidget', 
 ],
     function ($, Workspace, html, Graph) {
         'use strict';

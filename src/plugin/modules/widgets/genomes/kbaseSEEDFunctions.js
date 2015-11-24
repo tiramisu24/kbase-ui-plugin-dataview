@@ -19,7 +19,7 @@ define([
     'kb/service/client/workspace',
     'kb_plugin_dataview',
     
-    'kb/widget/bases/legacy/widget',
+    'kb/widget/legacy/widget',
 ],
     function ($, d3, Workspace, Plugin) {
         'use strict';

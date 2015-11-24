@@ -18,7 +18,7 @@ define([
     'kb_dataview_communities_plot',
     
     // these don't need a parameter
-    'kb/widget/bases/legacy/authenticatedWidget',
+    'kb/widget/legacy/authenticatedWidget',
     'kb/widget/legacy/tabs',
     'datatables_bootstrap'
 ], function ($, GooglePalette, Workspace, html, Graph, Plot) {

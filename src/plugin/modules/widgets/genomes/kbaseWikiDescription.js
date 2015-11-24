@@ -31,7 +31,7 @@ define([
     'kb/service/client/cdmi',
     'kb/service/client/cdmiEntity',
     'kb/service/client/workspace',
-    'kb/widget/bases/legacy/widget'
+    'kb/widget/legacy/widget'
 ],
     function ($, html, CDMI, CDMI_Entity, Workspace) {
         'use strict';

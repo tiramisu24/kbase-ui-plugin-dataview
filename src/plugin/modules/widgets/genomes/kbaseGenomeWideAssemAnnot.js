@@ -8,7 +8,7 @@
 define([
     'jquery',
     
-    'kb/widget/bases/legacy/widget',
+    'kb/widget/legacy/widget',
     'kb_dataview_genomes_multiContigBrowser',
     'kb_dataview_genomes_seedFunctions',
     'kb_dataview_genomes_geneTable'

@@ -11,7 +11,7 @@
  */
 define([
     'jquery', 
-    'kb/widget/bases/legacy/widget', 
+    'kb/widget/legacy/widget', 
     'bootstrap'
 ],
     function ($) {
