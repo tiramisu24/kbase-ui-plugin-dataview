@@ -12,7 +12,7 @@
  */
 define([
     'jquery',
-    'kb_common_html',
+    'kb/common/html',
     'kb_service_workspace',
     'kb_widgetBases_kbWidget',
     'kb_dataview_genomes_geneInstanceInfo',

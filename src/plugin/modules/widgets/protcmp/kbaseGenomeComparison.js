@@ -12,7 +12,7 @@
  */
 define([
     'jquery', 
-    'kb_common_html',
+    'kb/common/html',
     'kb_service_workspace', 
     'd3', 
     'kb_widgetBases_kbAuthenticatedWidget'

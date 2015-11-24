@@ -7,7 +7,7 @@
  */
 define([
     'jquery',
-    'kb_common_html',
+    'kb/common/html',
     'kb_service_workspace',
 
     'datatables_bootstrap',

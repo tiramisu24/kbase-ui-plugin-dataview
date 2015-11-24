@@ -14,7 +14,7 @@
  */
 define([
     'jquery',
-    'kb_common_html',
+    'kb/common/html',
     'kb_service_cdmi',
     'kb_service_cdmiEntity',
     'kb_service_workspace',

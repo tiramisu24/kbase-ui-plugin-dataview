@@ -13,7 +13,7 @@ define([
     'jquery',
     'kb_dataview_googlepalette',
     'kb_service_workspace',
-    'kb_common_html',
+    'kb/common/html',
     'kb_dataview_communities_graph',
     'kb_dataview_communities_plot',
     

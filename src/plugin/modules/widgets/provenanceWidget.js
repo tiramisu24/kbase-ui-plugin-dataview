@@ -4,8 +4,8 @@ define([
     'bluebird',
     'jquery',
     'd3',
-    'kb_common_html',
-    'kb_common_dom',
+    'kb/common/html',
+    'kb/common/dom',
     'kb_service_workspace',
     'd3_sankey'
 ],

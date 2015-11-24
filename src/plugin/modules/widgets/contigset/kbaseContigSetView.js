@@ -14,7 +14,7 @@ define([
     'jquery',
     'bluebird',
     'kb_service_workspace',
-    'kb_common_html',
+    'kb/common/html',
     
     'datatables_bootstrap',
     'kb_widgetBases_kbAuthenticatedWidget',

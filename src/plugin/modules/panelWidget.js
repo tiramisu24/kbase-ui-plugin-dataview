@@ -8,9 +8,9 @@
 define([
     'jquery',
     'bluebird',
-    'kb_common_html',
-    'kb_widgetAdapters_objectWidget',
-    'kb_common_widgetSet',
+    'kb/common/html',
+    'kb/widget/adapters/objectWidget',
+    'kb/widget/widgetSet',
         //'kb_widgetAdapters_kbWidgetAdapter',
         //'kb_dataview_widget_provenance',
         //'kb_dataview_widget_download'

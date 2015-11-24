@@ -9,7 +9,7 @@ define([
     'jquery', 
     'underscore', 
     'd3', 
-    'kb_common_html',
+    'kb/common/html',
     
     'kb_widgetBases_kbWidget', 
     'datatables_bootstrap'

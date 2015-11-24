@@ -11,7 +11,7 @@
 define([
     'jquery', 
     'kb_service_workspace', 
-    'kb_common_html', 
+    'kb/common/html', 
     'kb_dataview_communities_graph', 
     
     'datatables_bootstrap',
