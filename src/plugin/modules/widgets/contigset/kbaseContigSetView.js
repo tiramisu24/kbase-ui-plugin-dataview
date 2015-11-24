@@ -13,7 +13,7 @@
 define([
     'jquery',
     'bluebird',
-    'kb_service_workspace',
+    'kb/service/client/workspace',
     'kb/common/html',
     
     'datatables_bootstrap',

@@ -14,8 +14,8 @@ define([
     'bluebird',
     'kb/common/html',
     'kb/common/utils',
-    'kb_service_workspace',
-    'kb_service_workspaceClient',
+    'kb/service/client/workspace',
+    'kb/service/workspaceClient',
     'kb/widget/bases/legacy/widget',
     'kb/widget/bases/legacy/tabs',
     

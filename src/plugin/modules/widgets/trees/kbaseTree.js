@@ -14,8 +14,8 @@ define([
     'bluebird',
     'uuid',
     'kb/common/html',
-    'kb_service_workspace',
-    'kb_service_userAndJobState',
+    'kb/service/client/workspace',
+    'kb/service/client/userAndJobState',
     'kb_dataview_easyTree',
     'kb/widget/bases/legacy/authenticatedWidget'
 ],

@@ -10,7 +10,7 @@
  */
 define([
     'jquery',
-    'kb_service_workspace',
+    'kb/service/client/workspace',
     'kb/common/html',
     // no parameters
     'datatables_bootstrap',

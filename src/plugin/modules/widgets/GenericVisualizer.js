@@ -8,9 +8,9 @@
 define([
     'jquery',
     'bluebird',
-    'kb_service_workspace',
+    'kb/service/client/workspace',
     'kb/common/html',
-    'kb_service_utils',
+    'kb/service/utils',
     'kb_types'
 ],
     function ($, Promise, Workspace, html, APIUtils, Types, KBWidgetAdapter) {

@@ -6,7 +6,7 @@ define([
     'd3',
     'kb/common/html',
     'kb/common/dom',
-    'kb_service_workspace',
+    'kb/service/client/workspace',
     'd3_sankey'
 ],
     function (Promise, $, d3, html, dom, Workspace) {

@@ -12,9 +12,9 @@
 define([
     'jquery',
     'kb/common/html',
-    'kb_service_workspace',
-    'kb_service_fba',
-    'kb_service_workspaceClient',
+    'kb/service/client/workspace',
+    'kb/service/client/fba',
+    'kb/service/workspaceClient',
     'kb/widget/bases/legacy/widget',
     'kb/widget/bases/legacy/tabs',
     // 'kb_widget_mediaEditor', 

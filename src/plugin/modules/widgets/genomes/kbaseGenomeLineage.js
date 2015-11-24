@@ -13,10 +13,10 @@
 define([
     'jquery',
     'kb/common/html',
-    'kb_service_cdmi',
-    'kb_service_cdmiEntity',
-    'kb_service_workspace',
-    'kb_service_trees',
+    'kb/service/client/cdmi',
+    'kb/service/client/cdmiEntity',
+    'kb/service/client/workspace',
+    'kb/service/client/trees',
 
     'kb/widget/bases/legacy/authenticatedWidget'
 ],

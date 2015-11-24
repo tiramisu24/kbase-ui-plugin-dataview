@@ -8,8 +8,8 @@
 define([
     'jquery',
     'bluebird',
-    'kb_service_workspace',
-    'kb_service_fba',
+    'kb/service/client/workspace',
+    'kb/service/client/fba',
     'kb_dataview_widget_modeling_objects',
     'kb/widget/bases/legacy/tabs',
     'kb/widget/bases/legacy/authenticatedWidget',

@@ -2,11 +2,11 @@
 /*jslint browser:true, white:true*/
 define([
     'promise',
-    'kb_service_utils',
+    'kb/service/utils',
     'kb/common/utils',
     'kb/common/html',
     'kb/common/dom',
-    'kb_service_workspace',
+    'kb/service/client/workspace',
     'kb/common/state'
 ],
     function (Promise, APIUtils, Utils, html, dom, Workspace, stateFactory) {

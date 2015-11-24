@@ -8,7 +8,7 @@
 define([
     'jquery',
     'kb/common/html',
-    'kb_service_workspace',
+    'kb/service/client/workspace',
 
     'datatables_bootstrap',
     'kb/widget/bases/legacy/authenticatedWidget'

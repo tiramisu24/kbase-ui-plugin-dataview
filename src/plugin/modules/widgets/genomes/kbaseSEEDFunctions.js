@@ -16,7 +16,7 @@
 define([
     'jquery',
     'd3',
-    'kb_service_workspace',
+    'kb/service/client/workspace',
     'kb_plugin_dataview',
     
     'kb/widget/bases/legacy/widget',

@@ -8,7 +8,7 @@
 define([
     'jquery',
     'kb/common/html',
-    'kb_service_workspace',
+    'kb/service/client/workspace',
     
     'kb/widget/bases/legacy/widget',
     'kb_dataview_genomes_lineage'

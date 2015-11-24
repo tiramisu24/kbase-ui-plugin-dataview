@@ -9,9 +9,9 @@ define([
     'jquery',
     'bluebird',
     'underscore',
-    'kb_service_workspace',
+    'kb/service/client/workspace',
     'kb/common/html',
-    'kb_service_utils'
+    'kb/service/utils'
 ],
     function ($, Promise, _, Workspace, html, APIUtils) {
         "use strict";

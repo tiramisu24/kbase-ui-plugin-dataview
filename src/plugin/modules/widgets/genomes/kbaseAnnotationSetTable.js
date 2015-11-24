@@ -11,7 +11,7 @@
 define([
     'jquery',
     'kb/common/html',
-    'kb_service_workspace',
+    'kb/service/client/workspace',
     
     'kb/widget/bases/legacy/authenticatedWidget',
     'datatables_bootstrap'
