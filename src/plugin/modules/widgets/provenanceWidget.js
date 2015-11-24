@@ -597,7 +597,15 @@ define([
                 $container.find('#loading-mssg').hide();
                 $container.append("<br><b>Error in building object graph!</b><br>");
                 $container.append("<i>Error was:</i></b> &nbsp ");
-                $container.append(err.error.message + "<br>");
+                var message;
+                if (err.message) {
+                    message = err.message;
+                } else if (err.error && err.error.message) {
+                    message = err.error.message;
+                } else {
+                    message = 'unknown error (check console)'
+                }
+                $container.append(message + "<br>");
                 console.error("Error in building object graph!");
                 console.error(err);
             }
