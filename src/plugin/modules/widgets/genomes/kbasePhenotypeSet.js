@@ -15,8 +15,8 @@ define([
     'kb_service_workspace',
     'kb_service_fba',
     'kb_service_workspaceClient',
-    'kb_widgetBases_kbWidget',
-    'kb_widget_kbTabs',
+    'kb/widget/bases/legacy/widget',
+    'kb/widget/bases/legacy/tabs',
     // 'kb_widget_mediaEditor', 
     'datatables_bootstrap'
 ],

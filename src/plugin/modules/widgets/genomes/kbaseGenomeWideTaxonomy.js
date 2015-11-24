@@ -10,7 +10,7 @@ define([
     'kb/common/html',
     'kb_service_workspace',
     
-    'kb_widgetBases_kbWidget',
+    'kb/widget/bases/legacy/widget',
     'kb_dataview_genomes_lineage'
 ], function ($, html, Workspace) {
     'use strict';

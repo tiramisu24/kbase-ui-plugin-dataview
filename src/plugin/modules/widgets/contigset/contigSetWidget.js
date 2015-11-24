@@ -5,7 +5,7 @@ define([
     'jquery',
     'numeral',
     'kb/common/html',
-    'kb_widgetBases_dataWidget',
+    'kb/widget/bases/dataWidget',
     'kb_service_workspace',
     'datatables_bootstrap'
 ], function (Promise, $, numeral, html, DataWidget, Workspace) {

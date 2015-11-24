@@ -14,7 +14,7 @@ define([
     'kb/common/html',
     // no parameters
     'datatables_bootstrap',
-    'kb_widgetBases_kbAuthenticatedWidget'
+    'kb/widget/bases/legacy/authenticatedWidget'
 ],
     function ($, Workspace, html) {
         'use strict';

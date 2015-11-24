@@ -50,7 +50,7 @@ define([
     'kb_service_cdmi',
     'kb_plugin_dataview',
     
-    'kb_widgetBases_kbWidget',
+    'kb/widget/bases/legacy/widget',
     'kb_dataview_genomes_contigBrowserButtons'
 ], function ($, d3, html, CDMI, Plugin) {
     'use strict';

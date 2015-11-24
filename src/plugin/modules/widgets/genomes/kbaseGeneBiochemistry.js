@@ -18,7 +18,7 @@ define([
     'kb_service_cdmi',
     'kb_service_cdmiEntity',
     'kb_service_workspace',
-    'kb_widgetBases_kbWidget'
+    'kb/widget/bases/legacy/widget'
 ], function ($, html, CDMI_API, CDMI_EntityAPI, Workspace) {
     'use strict';
     $.KBWidget({

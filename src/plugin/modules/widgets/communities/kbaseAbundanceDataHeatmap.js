@@ -16,7 +16,7 @@ define([
     'kb_dataview_communities_heatmap',
     // no parameters
     'datatables_bootstrap',
-    'kb_widgetBases_kbAuthenticatedWidget'
+    'kb/widget/bases/legacy/authenticatedWidget'
 ],
     function ($, Promise, Workspace, html, Heatmap) {
         'use strict';

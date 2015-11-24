@@ -11,7 +11,7 @@ define([
     'd3', 
     'kb/common/html',
     
-    'kb_widgetBases_kbWidget', 
+    'kb/widget/bases/legacy/widget', 
     'datatables_bootstrap'
 ], function ($, _, d3, html) {
     'use strict';

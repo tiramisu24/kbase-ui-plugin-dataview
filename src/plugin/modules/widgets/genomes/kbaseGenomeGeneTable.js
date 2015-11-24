@@ -11,7 +11,7 @@ define([
     'kb_service_workspace',
 
     'datatables_bootstrap',
-    'kb_widgetBases_kbAuthenticatedWidget'
+    'kb/widget/bases/legacy/authenticatedWidget'
 ], function ($, html, Workspace) {
     'use strict';
     $.KBWidget({

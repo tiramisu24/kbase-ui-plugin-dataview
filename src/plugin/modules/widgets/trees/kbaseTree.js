@@ -17,7 +17,7 @@ define([
     'kb_service_workspace',
     'kb_service_userAndJobState',
     'kb_dataview_easyTree',
-    'kb_widgetBases_kbAuthenticatedWidget'
+    'kb/widget/bases/legacy/authenticatedWidget'
 ],
     function ($, Promise, uuid, html,Workspace, UserAndJobState, EasyTree) {
         'use strict';

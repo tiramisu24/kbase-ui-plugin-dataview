@@ -15,7 +15,7 @@ define([
     'kb/common/html',
     'kb_service_workspace', 
     'd3', 
-    'kb_widgetBases_kbAuthenticatedWidget'
+    'kb/widget/bases/legacy/authenticatedWidget'
 ],
     function ($, html, Workspace, d3) {
         'use strict';

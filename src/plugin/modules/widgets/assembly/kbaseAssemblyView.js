@@ -14,7 +14,7 @@ define([
     'jquery',
     'kb/common/html',
     'kb_service_workspace',
-    'kb_widgetBases_kbAuthenticatedWidget'
+    'kb/widget/bases/legacy/authenticatedWidget'
 ], function ($, html, Workspace) {
     'use strict';
     $.KBWidget({
