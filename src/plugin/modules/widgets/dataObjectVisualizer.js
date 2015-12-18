@@ -57,28 +57,25 @@ define([
                 // params.objectVersion = params.ver;
 
                 // Get other params from the runtime.
-                return new Promise(function (resolve, reject) {
+                return Promise.try(function () {
                     var workspace = new Workspace(runtime.getConfig('services.workspace.url'), {
                         token: runtime.getService('session').getAuthToken()
                     }),
                         objectRefs = [{ref: makeObjectRef(params)}];
-                    Promise.resolve(workspace.get_object_info_new({
+                    return workspace.get_object_info_new({
                         objects: objectRefs,
                         ignoreErrors: 1,
                         includeMetadata: 1
-                    }))
+                    })
                         .then(function (data) {
                             if (data.length === 0) {
-                                reject('Object not found');
-                                return;
+                                throw new Error('Object not found');
                             }
                             if (data.length > 1) {
-                                reject('Too many (' + data.length + ') objects found.');
-                                return;
+                                throw new Error('Too many (' + data.length + ') objects found.');
                             }
                             if (data[0] === null) {
-                                reject('Null object returned');
-                                return;
+                                throw new Error('Null object returned');
                             }
 
                             var wsobject = APIUtils.object_info_to_object(data[0]);
@@ -98,7 +95,7 @@ define([
                                 objectType: wsobject.type,
                                 type: wsobject.type
                             };
-                            
+
                             // handle sub
                             if (params.sub) {
                                 widgetParams[params.sub.toLowerCase() + 'ID'] = params.subid;
@@ -115,21 +112,14 @@ define([
                                 });
                             }
                             // Handle different types of widgets here.
-                            runtime.getService('widget').makeWidget(mapping.widget.name, mapping.widget.config)
+                            return runtime.getService('widget').makeWidget(mapping.widget.name, mapping.widget.config)
                                 .then(function (result) {
-                                    resolve({
+                                    return {
                                         widget: result,
                                         params: widgetParams,
                                         mapping: mapping
-                                    });
-                                })
-                                .catch(function (err) {
-                                    reject(err);
+                                    };
                                 });
-
-                        })
-                        .catch(function (err) {
-                            reject(err);
                         });
                 });
             }

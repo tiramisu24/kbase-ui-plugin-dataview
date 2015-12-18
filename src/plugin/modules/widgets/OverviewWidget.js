@@ -219,7 +219,7 @@ define([
                     })
                     .then(function () {
                         // Other narratives this user has.
-                        workspaceClient.list_workspace_info({
+                        return workspaceClient.list_workspace_info({
                             perm: 'w'
                         })
                             .then(function (data) {
