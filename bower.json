@@ -1,7 +1,6 @@
 {
   "name": "kbase-ui-plugin-dataview",
-  "version": "1.0.0",
-  "main": "path/to/main.css",
+  "version": "0.1.2",
   "ignore": [
     ".jshintrc",
     "**/*.txt"
