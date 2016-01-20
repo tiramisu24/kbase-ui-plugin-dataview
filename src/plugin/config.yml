@@ -221,6 +221,10 @@ source:
             module: kb_dataview_trees_tree
             file: widgets/trees/kbaseTree
             
+        # GENERIC
+        -
+            module: kb_dataview_genericObject
+            file: widgets/genericDataObject
         
     styles:
         - 
@@ -430,6 +434,12 @@ install:
             module: kb_dataview_trees_tree
             name: kb_dataview_trees_tree
             type: kbwidget
+            
+        # GENERIC
+        -
+            module: kb_dataview_genericObject
+            name: kb_dataview_genericObject
+            type: factory
             
     routes:
         -
