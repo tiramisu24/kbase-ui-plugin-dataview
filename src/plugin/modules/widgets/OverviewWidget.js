@@ -516,15 +516,40 @@ define([
                             if (content) {
                                 content.innerHTML = render();
                             }
-
+                            
                             runtime.send('ui', 'addButton', {
-                                name: 'copy',
+                                name: 'newNarrative',
                                 label: '+ New Narrative',
-                                style: 'primary',
                                 icon: 'plus-square',
+                                style: 'primary',
                                 url: '#narrativemanager/new?copydata=' + objectRef,
                                 external: true
                             });
+
+                            runtime.send('ui', 'addButton', {
+                                name: 'downloadObject',
+                                label: 'Download',
+                                style: 'default',
+                                widget: 'kbaseDownloadPanel',
+                                icon: 'download',
+                                params: {
+                                    ref: objectRef
+                                },
+                                callback: function () {
+                                    alert('So you want to download ' + objectRef);
+                                }
+                            });
+                            
+//                             Navbar.addDropdown({
+//                                place: 'end',
+//                                name: 'download',
+//                                style: 'default',
+//                                icon: 'download',
+//                                label: 'Download',
+//                                widget: 'kbaseDownloadPanel',
+//                                params: {'ws': this.getState('workspace.id'), 'obj': this.getState('object.id'), 'ver': this.getState('object.version')}
+//                            });
+
                         })
                         .catch(function (err) {
                             console.log('ERROR');
