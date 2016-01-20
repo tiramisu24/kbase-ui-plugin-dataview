@@ -150,6 +150,7 @@ define([
                                 objIdentityList.push({ref: tree.ws_refs[key]['g'][0]});
                             }
                         }
+                        
                         if (objIdentityList.length > 0) {
                             self.wsClient.get_object_info_new({objects: objIdentityList}, function (data) {
                                 var i;
