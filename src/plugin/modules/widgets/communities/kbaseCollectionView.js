@@ -58,6 +58,8 @@ define([
                 }
                 this.$title.html('Error');
                 this.$body.html(message);
+                console.error('ERROR in kbaseCollectionView.js');
+                console.error(error);
             },
             render: function () {
                 var self = this;
