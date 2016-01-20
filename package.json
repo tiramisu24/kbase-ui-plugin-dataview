@@ -1,8 +1,0 @@
-{
-    "name": "kbase-ui-plugin-dataview",
-    "version": "0.0.1",
-    "keywords": ["kbase", "plugin"],
-    "author": "PLUGIN AUTHOR",
-    "contributors": [],
-    "dependencies": {}
-}
