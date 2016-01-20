@@ -20,7 +20,6 @@ define([
             var mount, container, $container, runtime = config.runtime,
                 theWidget, widgetContainer, panelInstalled;
 
-
             function findMapping(type, params) {
                 // var mapping = typeMap[objectType];
                 var mapping = runtime.getService('type').getViewer({type: type});
@@ -38,6 +37,16 @@ define([
                         //} else {
                         //    console.error('Something was in sub, but no sub.sub or sub.subid found', params.sub);
                         //    return $('<div>');
+                    }
+                } else {
+                    // Now we have a default mapping.
+                    mapping = {
+                        title: 'Generic Object View',
+                        widget: {
+                            name: 'kb_dataview_genericObject'
+                        },
+                        panel: true,
+                        options: []
                     }
                 }
                 return mapping;
@@ -82,8 +91,7 @@ define([
                             var type = APIUtils.parseTypeId(wsobject.type),
                                 mapping = findMapping(type, params);
                             if (!mapping) {
-                                reject('Not Found', 'Sorry, cannot find widget for ' + type.module + '.' + type.name);
-                                return;
+                                throw new Error('Sorry, cannot find widget for ' + type.module + '.' + type.name);
                             }
                             // These params are from the found object.
                             var widgetParams = {
@@ -202,51 +210,29 @@ define([
             }
             function run(params) {
                 return Promise.try(function () {
-                    return theWidget.run(params);
+                    if (theWidget && theWidget.run) {
+                        return theWidget.run(params);
+                    }
                 });
             }
             function stop() {
-                return new Promise(function (resolve, reject) {
+                return Promise.try(function () {
                     if (theWidget && theWidget.stop) {
-                        theWidget.stop()
-                            .then(function () {
-                                resolve();
-                            })
-                            .catch(function (err) {
-                                reject(err);
-                            });
-                    } else {
-                        resolve();
+                        return theWidget.stop();
                     }
                 });
             }
             function detach() {
-                return new Promise(function (resolve, reject) {
+               return Promise.try(function () {
                     if (theWidget && theWidget.detach) {
-                        theWidget.detach()
-                            .then(function () {
-                                resolve();
-                            })
-                            .catch(function (err) {
-                                reject(err);
-                            });
-                    } else {
-                        resolve();
+                        return theWidget.detach();
                     }
                 });
             }
             function destroy() {
-                return new Promise(function (resolve) {
-                    if (theWidget && theWidget.destroy) {
-                        theWidget.destroy()
-                            .then(function () {
-                                resolve();
-                            })
-                            .catch(function (err) {
-                                reject(err);
-                            });
-                    } else {
-                        resolve();
+                return Promise.try(function () {
+                    if (theWidget && theWidget.detach) {
+                        return theWidget.detach();
                     }
                 });
             }
