@@ -196,7 +196,7 @@ define([
                     div({class: 'panel-body'}, [
                         div({class: 'container-fluid'}, [
                             div({class: 'col-md-8'}, [span({dataPlace: 'content'})]),
-                            div({class: 'col-md-4'}, div({dataPlace: 'selectedNarrative'))
+                            div({class: 'col-md-4'}, div({dataPlace: 'selectedNarrative'}))
                         ])
                     ])
                 ])
