@@ -1,0 +1,98 @@
+## YAML Template.
+---
+types:
+    KBaseGenomes.ContigSet:
+        -
+            name: FASTA
+            external_type: FASTA.DNA.Assembly
+            transform_options:
+            output_file_name: "?.fasta"
+            
+    KBaseGenomes.Genome:
+        -
+            name: GENBANK
+            external_type: Genbank.Genome
+            transform_options: {}
+            
+    KBaseAssembly.SingleEndLibrary: 
+         -
+            name: FASTA/FASTQ
+            external_type: SequenceReads
+            transform_options: {}
+    KBaseAssembly.PairedEndLibrary: 
+        -
+            name: FASTA/FASTQ
+            external_type: SequenceReads
+            transform_options: {}
+                    
+    KBaseFile.SingleEndLibrary: 
+        -
+            name: FASTA/FASTQ
+            external_type: SequenceReads
+            transform_options: {}
+
+    KBaseFile.PairedEndLibrary: 
+        -
+            name: FASTA/FASTQ
+            external_type: SequenceReads
+            transform_options: {}
+
+    KBaseFBA.FBAModel: 
+        -
+            name: SBML
+            external_type: SBML.FBAModel
+            transform_options: {}
+        -
+            name: TSV
+            external_type: TSV.FBAModel
+            transform_options: {}
+        -
+            name: EXCEL
+            external_type: Excel.FBAModel
+            transform_options: {}
+
+    KBaseFBA.FBA: 
+        -
+            name: TSV
+            external_type: TSV.FBA
+            transform_options: {}
+        -
+            name: EXCEL
+            external_type: Excel.FBA
+            transform_options: {}
+
+    KBaseBiochem.Media: 
+        -
+            name: TSV
+            external_type: TSV.Media
+            transform_options: {}
+        -
+            name: EXCEL
+            external_type: Excel.Media
+            transform_options: {}
+
+    KBasePhenotypes.PhenotypeSet: 
+        -
+            name: TSV
+            external_type: TSV.PhenotypeSet
+            transform_options: {}
+
+    KBasePhenotypes.PhenotypeSimulationSet: 
+        -
+            name: TSV
+            external_type: TSV.PhenotypeSimulationSet
+            transform_options: {}
+        -
+            name: EXCEL
+            external_type: Excel.PhenotypeSimulationSet
+            transform_options: {}
+            
+    KBaseGenomes.Pangenome: 
+        -
+            name: TSV
+            external_type: TSV.Pangenome
+            transform_options: {}
+        -
+            name: EXCEL
+            external_type: Excel.Pangenome
+            transform_options: {}

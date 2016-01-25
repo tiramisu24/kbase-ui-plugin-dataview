@@ -501,7 +501,9 @@ define([
                     workspaceId = params.workspaceId;
                     objectId = params.objectId;
                     objectVersion = params.objectVersion;
-                    objectRef = APIUtils.makeWorkspaceObjectRef(workspaceId, objectId, objectVersion);
+                    console.log('PARAMS');
+                    console.log(params);
+                    objectRef = APIUtils.makeWorkspaceObjectRef(params.objectInfo.wsid, params.objectInfo.id, params.objectInfo.version);
                     if (!workspaceId) {
                         throw 'Workspace ID is required';
                     }
@@ -516,40 +518,6 @@ define([
                             if (content) {
                                 content.innerHTML = render();
                             }
-                            
-                            runtime.send('ui', 'addButton', {
-                                name: 'newNarrative',
-                                label: '+ New Narrative',
-                                icon: 'plus-square',
-                                style: 'primary',
-                                url: '#narrativemanager/new?copydata=' + objectRef,
-                                external: true
-                            });
-
-                            runtime.send('ui', 'addButton', {
-                                name: 'downloadObject',
-                                label: 'Download',
-                                style: 'default',
-                                widget: 'kbaseDownloadPanel',
-                                icon: 'download',
-                                params: {
-                                    ref: objectRef
-                                },
-                                callback: function () {
-                                    alert('So you want to download ' + objectRef);
-                                }
-                            });
-                            
-//                             Navbar.addDropdown({
-//                                place: 'end',
-//                                name: 'download',
-//                                style: 'default',
-//                                icon: 'download',
-//                                label: 'Download',
-//                                widget: 'kbaseDownloadPanel',
-//                                params: {'ws': this.getState('workspace.id'), 'obj': this.getState('object.id'), 'ver': this.getState('object.version')}
-//                            });
-
                         })
                         .catch(function (err) {
                             console.log('ERROR');
@@ -624,137 +592,3 @@ define([
             }
         };
     });
-
-
-
-//                            Navbar.addDropdown({
-//                                place: 'end',
-//                                name: 'download',
-//                                style: 'default',
-//                                icon: 'download',
-//                                label: 'Download',
-//                                widget: 'kbaseDownloadPanel',
-//                                params: {'ws': this.getState('workspace.id'), 'obj': this.getState('object.id'), 'ver': this.getState('object.version')}
-//                            });
-//
-//                            Navbar
-//                                .addButton({
-//                                    name: 'copy',
-//                                    label: '+ New Narrative',
-//                                    style: 'primary',
-//                                    icon: 'plus-square',
-//                                    url: '/functional-site/#/narrativemanager/new?copydata=' + dataRef,
-//                                    external: true
-//                                })
-/*.addButton({
- name: 'download',
- label: 'Download',
- style: 'primary',
- icon: 'download',
- callback: function () {
- alert('download object');
- }.bind(this)
- })*/;
-
-
-
-//                            var narratives = this.getState('writableNarratives');
-//                            if (narratives) {
-//                                var items = [], i;
-//                                for (i = 0; i < narratives.length; i++) {
-//                                    var narrative = narratives[i];
-//                                    items.push({
-//                                        name: 'narrative_' + i,
-//                                        icon: 'file',
-//                                        label: narrative.metadata.narrative_nice_name,
-//                                        external: true,
-//                                        callback: (function (narrative) {
-//                                            var widget = this;
-//                                            return function (e) {
-//                                                e.preventDefault();
-//                                                widget.copyObjectToNarrative(narrative);
-//                                            };
-//                                        }.bind(this))(narrative)
-//                                    });
-//                                }
-//                                Navbar.addDropdown({
-//                                    place: 'end',
-//                                    name: 'options',
-//                                    style: 'default',
-//                                    icon: 'copy',
-//                                    label: 'Copy',
-//                                    items: items
-//                                });
-//                            }
-//                            break;
-//                        case 'notfound':
-//                            Navbar
-//                                .setTitle('<span style="color: red;">This Object was Not Found</span>')
-//                                .clearButtons();
-//                            this.places.content.html(this.renderTemplate('error'));
-//                            break;
-//                        case 'denied':
-//                            Navbar
-//                                .setTitle('<span style="color: red;">Access Denied to this Object</span>')
-//                                .clearButtons();
-//                            this.places.content.html(this.renderTemplate('error'));
-//                            break;
-//                        case 'error':
-//                            Navbar
-//                                .setTitle('<span style="color: red;">An Error has Occurred Accessing this Object</span>')
-//                                .clearButtons();
-//                            this.places.content.html(this.renderTemplate('error'));
-//                            break;
-//                        default:
-//                            Navbar
-//                                .setTitle('An Error has Occurred Accessing this Object')
-//                                .clearButtons();
-//                            state.set('error', {
-//                                type: 'internal',
-//                                code: 'invalidstatus',
-//                                shortMessage: 'The internal status "' + this.getState('status') + '" is not suppored'
-//                                    // originalMessage: err.message
-//                            });
-//                            this.places.content.html(this.renderTemplate('error'));
-//                            break;
-//                    }
-//
-//                }
-//            },
-
-/**
- copy the current ws object to the given narrative.
- TODO: omit the workspace for the current data object.
- */
-//            function copyObjectToNarrative(narrativeWs) {
-//                var from = this.getObjectRef();
-//                var to = narrativeWs.id + '';
-//                var name = this.getState('object.name');
-//
-//                Promise.resolve(this.workspaceClient.copy_object({
-//                    from: {ref: from},
-//                    to: {wsid: to, name: name}
-//                }))
-//                    .then(function (data) {
-//                        if (data) {
-//
-//                            var narrativeUrl = this.makeUrl('/narrative/' + APIUtils.makeWorkspaceObjectId(narrativeWs.id, narrativeWs.metadata.narrative));
-//                            this.alert.addSuccessMessage('Success', 'Successfully copied this data object to Narrative <i>' +
-//                                narrativeWs.metadata.narrative_nice_name + '</i>.  <a href="' + narrativeUrl + '" target="_blank">Open this Narrative</a>');
-//                        } else {
-//                            this.alert.addErrorMessage('Error', 'An unknown error occurred copying the data.');
-//                        }
-//                    }.bind(this))
-//                    .catch(function (err) {
-//                        if (err.error && err.error.message) {
-//                            var msg = err.error.message;
-//                        } else {
-//                            var msg = '';
-//                        }
-//                        this.alert.addErrorMessage('Error', 'Error copying the data object to the selected Narrative. ' + msg);
-//                        console.log('ERROR');
-//                        console.log(err);
-//                    }.bind(this))
-//                    .done();
-//
-//            }

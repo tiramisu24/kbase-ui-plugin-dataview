@@ -38,6 +38,15 @@ source:
             module: kb_dataview_widget_provenance
             file: widgets/provenanceWidget
             # widget: kb_dataview_provenance
+            
+        -
+            module: kb_dataview_downloadWidget
+            file: widgets/download/downloadWidget
+            css: true
+        -
+            module: kb_dataview_copyWidget
+            file: widgets/copy/copyWidget
+            css: true
         #-
         #    module: kb_widget_dataview_download
        #     file: widgets/kbaseDownloadPanel
@@ -246,6 +255,16 @@ install:
             module: kb_dataview_widget_provenance
             name: kb_dataview_provenance
             type: factory
+        -
+            module: kb_dataview_downloadWidget
+            name: kb_dataview_download
+            type: factory
+        -
+            module: kb_dataview_copyWidget
+            name: kb_dataview_copy
+            type: factory
+            
+        # COMMUNITIES
         -
             module: kb_dataview_dataObjectVisualizer
             name: kb_dataview_dataObjectVisualizer
