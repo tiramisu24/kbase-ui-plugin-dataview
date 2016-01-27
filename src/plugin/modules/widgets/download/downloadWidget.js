@@ -1,6 +1,7 @@
 /*global define*/
 /*jslint white:true,browser:true */
 define([
+    'numeral',
     'kb/common/html',
     'kb/common/dom',
     'plugins/dataview/modules/places',
@@ -10,7 +11,7 @@ define([
     'kb/service/client/userAndJobState',
     'kb/service/utils',
     'plugins/dataview/modules/poller'
-], function (html, dom, Places, typeSupport, WorkspaceClient, TransformClient, UserAndJobState, apiUtils, Poller) {
+], function (numeral, html, dom, Places, typeSupport, WorkspaceClient, TransformClient, UserAndJobState, apiUtils, Poller) {
     'use strict';
     function factory(config) {
         var parent, container, runtime = config.runtime,
@@ -23,7 +24,7 @@ define([
                 root: container
             }),
             toggleState = 'hidden',
-            poller = Poller.make({interval: 5000}),
+            poller = Poller.make({interval: 1000}),
             state = {
                 downloads: {}
             };
@@ -44,18 +45,50 @@ define([
                                 ]),
                                 p({id: places.add('comment')})
                             ]),
-                            div({class: 'col-md-4'}, [span({id: places.add('content')})]),
-                            div({class: 'col-md-8'}, [span({id: places.add('downloads')})])
+                            div({class: 'col-md-12'}, [span({id: places.add('content')})]),
+                            div({class: 'col-md-12', style: {marginTop: '1em'}}, [
+                                div({class: 'panel panel-default'}, [
+                                    div({class: 'panel-heading'}, [
+                                        div({class: 'panel-title'}, 'Requested Transforms')
+                                    ]),
+                                    div({class: 'panel-body'}, [
+                                        div({id: places.add('downloads')})
+                                    ])
+                                ])                                
+                            ])                            
                         ])
                     ])
                 ])
             ]);
         }
         var layout = renderLayout();
+        
+        function renderElapsed(elapsed) {
+            if (elapsed === undefined) {
+                return '';
+            } 
+            return numeral(elapsed).format('00:00:00');
+        }
+        
+        function renderDownloadButton(url) {
+            if (url === undefined) {
+                return '';
+            }
+            return span([
+                a({class: 'btn btn-primary', href: url, target: '_self'}, 'Download File')
+            ]);
+        }
 
         function renderDownloads() {
             var content = table({class: 'table table-bordered', style: {width: '100%'}}, [
-                tr([th('Format'), th('Requested?'), th('Completed?'), th('Available?'), th('Error?'), th('Message')]),
+                tr([th({width: '20%'}, 'Format'), 
+                    th({width: '10%'},'Requested?'), 
+                    th({width: '10%'},'Completed?'), 
+                    th({width: '10%'},'Available?'), 
+                    th({width: '10%'},'Error?'), 
+                    th({width: '10%'},'Elapsed'), 
+                    th({width: '10%'},'Download'), 
+                    th({width: '20%'},'Message')]),
                 Object.keys(state.downloads).map(function (key) {
                     var download = state.downloads[key],
                         formatName = state.downloadConfig[download.formatId].name;
@@ -66,6 +99,8 @@ define([
                         td(download.completed ? 'Y' : 'n'),
                         td(download.available ? 'Y' : 'n'),
                         td(download.error ? 'ERROR' : ''),
+                        td(renderElapsed(download.elapsed)),
+                        td(renderDownloadButton(download.url)),
                         td(download.message || '')]);
                 }).join('')
             ]);
@@ -76,7 +111,7 @@ define([
             var content = form([
                 table([
                     tr([
-                        td('Export as '),
+                        td('Transform to: '),
                         td(span({class: 'kb-btn-group', dataToggle: 'buttons'},
                             downloadConfig.map(function (downloader, i) {
                                 return label({class: 'kb-checkbox-control'}, [
@@ -229,19 +264,6 @@ define([
             return downloadUrl;
         }
 
-//        function downloadJsonDirectly() {
-//            var url = runtime.getConfig('services.data_import_export_url') + '/download',
-//                query = 
-//            
-//            
-//             var url = self.exportURL + '/download?ws=' + encodeURIComponent(self.wsId) +
-//                            '&id=' + encodeURIComponent(self.objId) + '&token=' + encodeURIComponent(self.token) +
-//                            '&url=' + encodeURIComponent(self.wsUrl) + '&wszip=1' +
-//                            '&name=' + encodeURIComponent(self.objId + '.JSON.zip');
-//                        self.downloadFile(url);
-//        }
-
-
         function transformAndDownload(download) {
             var downloadSpec = state.downloadConfig[download.formatId],
                 args = {
@@ -257,7 +279,7 @@ define([
                 transformClient = new TransformClient(runtime.getConfig('services.transform.url'), {
                     token: runtime.service('session').getAuthToken()
                 }),
-                workspaceObjectName = state.params.objectId + nameSuffix;
+                workspaceObjectName = state.params.objectInfo.name + nameSuffix;
 
             transformClient.download(args)
                 .then(function (downloadResult) {
@@ -289,7 +311,8 @@ define([
                                         }
                                         throw new Error(status);
                                     }
-                                    download.message = 'Waiting... ' + elapsed / 1000 + ' seconds elapsed';
+                                    download.elapsed = elapsed/1000;
+                                    download.message = 'Waiting...';
                                     renderDownloads();
                                     return false;
                                 })
@@ -310,10 +333,8 @@ define([
                                     // download.message = 'Conversion to format completed, downloading...';
 
                                     var url = downloadUjsResults(ujsResults, workspaceObjectName, downloadSpec.unzip);
-                                    download.message = span([
-                                        a({class: 'btn btn-default', href: url, target: '_self'}, 'Download File')
-                                    ]);
-                                    
+                                    download.url = url;
+                                    download.message = 'ready';                                    
                                     download.available = true;
 
                                     renderDownloads();
@@ -326,7 +347,6 @@ define([
                         },
                         whenError: function (err) {
                             download.error = true;
-                            ;
                             var msg;
                             if (err.message) {
                                 msg = err.message;
@@ -376,9 +396,8 @@ define([
             download.completed = true;
             download.available = true;
             var url = downloadFromWorkspace(state.params.objectInfo.ws, state.params.objectInfo.name, runtime.getConfig('services.workspace.url'));
-            download.message = span([
-                a({class: 'btn btn-default', href: url, target: '_self'}, 'Download File')
-            ]);
+            download.url = url;
+            download.message = 'ready';
             renderDownloads();
         }
 
@@ -477,7 +496,7 @@ define([
                         //setErrorMessage('Download not supported for this type: ' + type);
                         //console.log(objectInfo);
                        // return;
-                       places.setContent('comment', 'This type does not export Transform conversions, but the default JSON format is available.');
+                       places.setContent('comment', 'This object type does not support Transform conversions, but the default JSON format is available.');
                        typeDownloadConfig = [];
                     }
 
