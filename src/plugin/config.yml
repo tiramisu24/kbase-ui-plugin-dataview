@@ -31,13 +31,14 @@ source:
         # Common dataview components
             
         -
+            module: kb_dataview_widget_provenancePanel
+            file: provenancePanel
+        -
             module: kb_dataview_widget_panel
             file: panelWidget
-            # widget: kb_dataview_panel
         -
             module: kb_dataview_widget_provenance
             file: widgets/provenanceWidget
-            # widget: kb_dataview_provenance
             
         -
             module: kb_dataview_downloadWidget
@@ -158,7 +159,7 @@ source:
         
         -
             module: kb_dataview_file_pairedEndLibrary
-            file: assembly/kbaseFilePairedEndLibrary
+            file: widgets/assembly/kbaseFilePairedEndLibrary
             
         # KBASE GENOMES
         
@@ -246,6 +247,10 @@ install:
         -
             module: kb_dataview_widget_panel
             name: kb_dataview_panel
+            type: factory
+        -
+            module: kb_dataview_widget_provenancePanel
+            name: kb_dataview_provenancePanel
             type: factory
         -
             module: kb_dataview_widget_overview
@@ -481,6 +486,18 @@ install:
                 sub: {}
                 subid: {}            
             widget: kb_dataview_panel
+        -
+            path: ['provenance', {type: param, name: workspaceId}, {type: param, name: objectId}]
+            queryParams:
+                sub: {}
+                subid: {}            
+            widget: kb_dataview_provenancePanel            
+        -
+            path: ['provenance', {type: param, name: workspaceId}, {type: param, name: objectId}, {type: param, name: objectVersion}]
+            queryParams:
+                sub: {}
+                subid: {}            
+            widget: kb_dataview_provenancePanel
     types:
         # COMMUNITIES
         -

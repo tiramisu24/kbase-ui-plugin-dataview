@@ -336,13 +336,13 @@ define([
                             // Oh, no!
                             alert("Cannot expand this node.");
                         } else {
-                            if (d.info[1].indexOf(' ') >= 0) {
+                            //if (d.info[1].indexOf(' ') >= 0) {
+                            //    // TODO: Fix this
+                            //    window.location.href = "#provenance/" + encodeURI(d.info[7] + "/" + d.info[0]);
+                            //} else {
                                 // TODO: Fix this
-                                window.location.href = "#/objgraphview/" + encodeURI(d.info[7] + "/" + d.info[0]);
-                            } else {
-                                // TODO: Fix this
-                                window.location.href = "#/objgraphview/" + encodeURI(d.info[7] + "/" + d.info[1]);
-                            }
+                                runtime.navigate("provenance/" + encodeURI(d.info[6] + "/" + d.info[0] + '/' + d.info[4]));
+                            //}
                         }
                     })
                     .on('mouseover', nodeMouseover);
