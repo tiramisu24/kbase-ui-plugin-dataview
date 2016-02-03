@@ -283,19 +283,35 @@ define([
                 ]);
             }
             function renderTypeRow() {
-                return tr([
-                    th('Type'),
-                    td([
-                        (function () {
-                            if (state.get('sub.sub')) {
-                                return get('sub.sub') + ' in ';
-                            } else {
-                                return '';
-                            }
-                        }()),
-                        a({href: '#spec/type/' + state.get('object.type'), target: '_blank'}, state.get('object.typeName'))
+                return [
+                    tr([
+                        th('Module'),
+                        td([
+                            (function () {
+                                if (state.get('sub.sub')) {
+                                    return get('sub.sub') + ' in ';
+                                } else {
+                                    return '';
+                                }
+                            }()),
+                            state.get('object.typeModule')
+                        ])
+                    ]),
+                    tr([
+                        th('Type'),
+                        td([
+                            (function () {
+                                if (state.get('sub.sub')) {
+                                    return get('sub.sub') + ' in ';
+                                } else {
+                                    return '';
+                                }
+                            }()),
+                            a({href: '#spec/type/' + state.get('object.type'), target: '_blank'}, state.get('object.typeName'))
+                        ])
                     ])
-                ]);
+                ];
+
             }
             function renderNarrativeRow() {
                 if (state.get('workspace.metadata.narrative_nice_name')) {
@@ -501,8 +517,6 @@ define([
                     workspaceId = params.workspaceId;
                     objectId = params.objectId;
                     objectVersion = params.objectVersion;
-                    console.log('PARAMS');
-                    console.log(params);
                     objectRef = APIUtils.makeWorkspaceObjectRef(params.objectInfo.wsid, params.objectInfo.id, params.objectInfo.version);
                     if (!workspaceId) {
                         throw 'Workspace ID is required';
@@ -520,8 +534,7 @@ define([
                             }
                         })
                         .catch(function (err) {
-                            console.log('ERROR');
-                            console.log(err);
+                            console.error(err);
                             if (err.status && err.status === 500) {
                                 // User probably doesn't have access -- but in any case we can just tell them
                                 // that they don't have access.
