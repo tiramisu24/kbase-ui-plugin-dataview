@@ -351,7 +351,9 @@ define([
         }
 
         function stop() {
-            runtime.drop(toggleListener);
+            if (toggleListener) {
+                runtime.drop(toggleListener);
+            }
             // remove event listeners
         }
 
