@@ -111,7 +111,7 @@ define([
 
                 //d3.text("assets/data/subsys.txt", function(text) {
                 //d3.text("/static/subsys.txt", function(text) {
-                d3.text(Plugin.plugin.path + "/data/subsys.txt", function (text) {
+                d3.text(Plugin.plugin.fullPath + "/data/subsys.txt", function (text) {
                     var data = d3.tsv.parseRows(text),
                         totalGenesWithFunctionalRoles = 0,
                         i, j, geneCount, nodeHierarchy, parentHierarchy, node, gene;

@@ -984,11 +984,7 @@ define([
             }
 
             // read subsys.txt into seedOntology and seedTermsUniq objs
-            d3.text(Plugin.plugin.path + "/data/subsys.txt", function (text) {
-                console.log('IN'); 
-                console.log(Plugin.plugin.path);
-                console.log('GOT');
-                console.log(text);
+            d3.text(Plugin.plugin.fullPath + "/data/subsys.txt", function (text) {
                 var data = d3.tsv.parseRows(text);
 
                 var seedRole = "";
