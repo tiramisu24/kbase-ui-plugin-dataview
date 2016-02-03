@@ -84,6 +84,9 @@ define([
                             if (objectList.length > 1) {
                                 throw new Error('Too many objects found: ' + objectRef + ', ' + objectList.length);
                             }
+                            if (objectList[0] === null) {
+                                throw new Error('Object not found with reference ' + objectRef);
+                            }
                             return apiUtils.object_info_to_object(objectList[0]);
                         });
                 })
