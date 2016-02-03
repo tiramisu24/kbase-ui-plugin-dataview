@@ -5,7 +5,8 @@ define([
 ], function (html) {
     'use strict';
     function factory(config) {
-        var root = config.root, places = {};
+        var root = config.root, places = {},
+            div = html.tag('div');
         
         // IMPLEMENTATION
         
@@ -18,6 +19,9 @@ define([
                 id: id
             };
             return id;
+        }
+        function addPlaceHolder(name) {
+            return div({id: addPlace(name)});
         }
         function getPlace(name) {
             var place =  places[name];
@@ -45,7 +49,8 @@ define([
             add: addPlace,
             get: getPlace,
             getNode: getPlaceNode,
-            setContent: setPlaceContent
+            setContent: setPlaceContent,
+            addPlaceHolder: addPlaceHolder
         };
     }
         
