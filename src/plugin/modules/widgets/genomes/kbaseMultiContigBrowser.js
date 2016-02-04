@@ -200,7 +200,9 @@ define([
                     self.$featureInfoPanel.empty();
                     var $infoTable = $("<table>").addClass("table table-striped table-bordered");
                     if (d.id) {
-                        $infoTable.append(self.addInfoRow("Feature ID", '<a href="#/genes/' + self.options.workspaceID + '/' + self.options.genomeID + '/' + d.id + '" target="_blank">' + d.id + '</a>'));
+                        
+                        
+                        $infoTable.append(self.addInfoRow("Feature ID", '<a href="#dataview/' + self.options.workspaceID + '/' + self.options.genomeID + "?sub=Feature&subid=" +  d.id + '" target="_blank">' + d.id + '</a>'));
                     }
                     if (d.type) {
                         $infoTable.append(self.addInfoRow("Type", d.type));
