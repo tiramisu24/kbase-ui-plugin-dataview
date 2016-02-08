@@ -41,8 +41,6 @@ define([
                     .then(function (doContinue) {
                         if (doContinue) {
                             ensureRunning();
-                        } else {
-                            console.log('DONE');
                         }
                     });
             }, interval);
@@ -51,8 +49,6 @@ define([
         function processTasks() {            
             return runTasks(tasks)
                 .then(function (newTasks) {
-                    console.log('new tasks');
-                console.log(newTasks);
                     tasks = newTasks;
                     if (tasks.length === 0) {
                         return false;
@@ -81,8 +77,6 @@ define([
                             var value = isCompleted.value();
                             // value being true if isComplted is happy that
                             // the task is completed.
-                            ///console.log('Yay, completed');
-                            //console.log(value);
                             if (value) {
                                 task.status = 'completed';
                                 return Promise.all([task, Promise.resolve(task.task.whenCompleted()).reflect()]);
@@ -102,7 +96,6 @@ define([
                     }));
                 })
                 .then(function (results) {
-                    console.log(results);
                     var newTasks = results.filter(function (result) {
                         var task = result[0];
                         if (task.status === 'completed') {
