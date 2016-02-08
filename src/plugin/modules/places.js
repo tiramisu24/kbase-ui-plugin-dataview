@@ -44,13 +44,21 @@ define([
             var place = getPlaceNode(name);
             place.innerHTML = content;
         }
+        function appendPlaceContent(name, content) {
+            var place = getPlaceNode(name),
+                temp = document.createElement('div');
+            
+            temp.innerHTML = content;
+            place.appendChild(temp.firstChild)
+        }
         
         return {
             add: addPlace,
             get: getPlace,
             getNode: getPlaceNode,
             setContent: setPlaceContent,
-            addPlaceHolder: addPlaceHolder
+            addPlaceHolder: addPlaceHolder,
+            appendContent: appendPlaceContent
         };
     }
         
