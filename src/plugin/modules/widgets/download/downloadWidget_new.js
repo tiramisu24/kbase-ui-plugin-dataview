@@ -11,8 +11,10 @@ define([
     'kb/service/client/userAndJobState',
     'kb/service/utils',
     'plugins/dataview/modules/poller',
-    'kb_plugin_dataview'
-], function (numeral, html, dom, Places, typeSupport, WorkspaceClient, TransformClient, UserAndJobState, apiUtils, Poller, Plugin) {
+    'kb_plugin_dataview',
+    'plugins/dataview/modules/toggler',
+    'plugins/dataview/modules/widgets/download/mainComponent'
+], function (numeral, html, dom, Places, typeSupport, WorkspaceClient, TransformClient, UserAndJobState, apiUtils, Poller, Plugin, Toggler, MainComponent) {
     'use strict';
     function factory(config) {
         var parent, container, runtime = config.runtime,
@@ -29,7 +31,8 @@ define([
             state = {
                 mode: 'new',
                 downloads: {}
-            };
+            },
+        reactive, toggler;
 
         /*
          * Modes
@@ -101,6 +104,8 @@ define([
             return base + '/report-an-issue';
         }
 
+        // Little delegated Event Listening service.
+
         var listeners = {};
         function addListener(listener) {
             listeners[listener.id + '.' + listener.type] = listener;
@@ -123,6 +128,11 @@ define([
             });
         }
 
+        /*
+         * Buttons and possibly other controls are generated from a spec, and
+         * the call back registered with the event mechanism. They can be identified
+         * by name so that code can change their state. E.g. disable, enable, 
+         */
         var buttons = {};
         function addButton(spec) {
             var buttonId = html.genId(),
@@ -152,14 +162,14 @@ define([
             if (spec.name) {
                 buttons[spec.name] = buttonId;
             }
-            
+
             var width = spec.width || '100%';
 
             return  button({
-                    style: {width: width},
-                    class: klass.join(' '),
-                    id: buttonId
-                }, spec.label);
+                style: {width: width},
+                class: klass.join(' '),
+                id: buttonId
+            }, spec.label);
         }
 
         function disableButton(name) {
@@ -171,11 +181,11 @@ define([
             if (!listener) {
                 return;
             }
-            
+
             if (listener.disabled) {
                 return;
             }
-            
+
             var node = document.getElementById(buttonId);
             if (!node) {
                 return;
@@ -188,8 +198,8 @@ define([
             node.classList.add('disabled');
             listener.disabled = true;
         }
-        
-         function enableButton(name) {
+
+        function enableButton(name) {
             var buttonId = buttons[name];
             if (!buttonId) {
                 return;
@@ -201,7 +211,7 @@ define([
             if (!listener.disabled) {
                 return;
             }
-            
+
             var node = document.getElementById(buttonId);
             if (!node) {
                 return;
@@ -216,6 +226,40 @@ define([
         function removeButton(spec) {
 
         }
+
+        var checkboxes = {};
+        function addCheckbox(spec) {
+            var checkboxId = html.genId(),
+                handler = function (e) {
+                    e.preventDefault();
+                    spec.handler();
+                },
+                klass = ['btn', 'btn-' + spec.type],
+                listener = {
+                    id: checkboxId,
+                    type: 'change',
+                    handler: handler
+                },
+                name = spec.name || 'checkbox_' + spec.value;
+
+            addListener(listener);
+
+            if (name) {
+                checkboxes[name] = checkboxId;
+            }
+
+            return label({class: 'kb-checkbox-control'}, [
+                input({
+                    type: 'checkbox', 
+                    autocomplete: 'off', 
+                    checked: spec.checked, 
+                    value: spec.value
+                }),
+                spec.label
+            ]);
+        }
+
+
 
         function makeUrl(path, query) {
             var fullPath = Plugin.plugin.fullPath + '/' + path.join('/'),
@@ -309,9 +353,6 @@ define([
 
         function renderDownloads() {
             // removeListeners();
-            if (Object.keys(state.downloads).length === 0) {
-                return '';
-            }
             var content = table({class: 'table table-bordered', style: {width: '100%'}}, [
                 tr([th({width: '10%'}, 'Format'),
                     th({width: '10%'}, 'Started?'),
@@ -344,64 +385,86 @@ define([
 
         function renderDownloadForm(downloadConfig) {
             var content = form([
-                    table([
-                        tr([
-                            td('Transform to: '),
-                            td(span({class: 'kb-btn-group', dataToggle: 'buttons'},
-                                downloadConfig.map(function (downloader, i) {
-                                    return label({class: 'kb-checkbox-control'}, [
-                                        input({type: 'checkbox', autocomplete: 'off', checked: false, value: String(i)}),
-                                        downloader.name
-                                    ]);
-                                }).join(' ')))
-                        ]),
-                        tr([
-                            td(),
-                            td([
-                                div({class: 'btn-toolbar', role: 'toolbar'}, [
-                                    div({class: 'btn-group', role: 'group'}, [
-                                        addButton({
-                                            name: 'transform',
-                                            type: 'primary',
-                                            handler: function () {
-                                                doStartTransform();
-                                                disableButton('transform');
-                                                enableButton('stop');
-                                            },
-                                            label: 'Transform',
-                                            width: '10em',
-                                            disabled: true
-                                        }),
-                                        addButton({
-                                            name: 'stop',
-                                            type: 'danger',
-                                            handler: function () {
-                                                doStopTransform();
-                                                disableButton('stop');
-                                                enableButton('reset');
-                                            },
-                                            label: 'Stop',
-                                            disabled: true,
-                                            width: '10em'
-                                        }),
-                                        addButton({
-                                            name: 'reset',
-                                            type: 'default',
-                                            handler: function () {
-                                                doReset();
-                                                disableButton('reset');
-                                                enableButton('transform');
-                                            },
-                                            label: 'Reset',
-                                            disabled: true,
-                                            width: '10em'
-                                        })
-                                    ])
+                table([
+                    tr([
+                        td('Transform to: '),
+                        td(span({class: 'kb-btn-group', dataToggle: 'buttons'},
+                            downloadConfig.map(function (downloader, i) {
+                                var formatId = String(i);
+                                return addCheckbox({
+                                    type: 'default',
+                                    checked: false,
+                                    value: String(i),
+                                    handler: function (e) {
+                                        // update the downloads list                                            
+                                        if (e.target.checked) {
+                                            state.downloads[formatId] = {
+                                                formatId: i,
+                                                requested: false,
+                                                completed: false,
+                                                available: false
+                                            };
+                                        } else {
+                                            delete state.downloads[formatId];
+                                        }
+                                        renderDownloads();
+                                        if (Object.keys(state.downloads).length === 0) {
+                                            disableButton('transform');
+                                        } else {
+                                            enableButton('transform');
+                                        }
+                                    },
+                                    label: downloader.name
+                                })
+                            }).join(' ')))
+                    ]),
+                    tr([
+                        td(),
+                        td([
+                            div({class: 'btn-toolbar', role: 'toolbar'}, [
+                                div({class: 'btn-group', role: 'group'}, [
+                                    addButton({
+                                        name: 'transform',
+                                        type: 'primary',
+                                        handler: function () {
+                                            doStartTransform();
+                                            disableButton('transform');
+                                            enableButton('stop');
+                                        },
+                                        label: 'Transform',
+                                        width: '10em',
+                                        disabled: true
+                                    }),
+                                    addButton({
+                                        name: 'stop',
+                                        type: 'danger',
+                                        handler: function () {
+                                            doStopTransform();
+                                            disableButton('stop');
+                                            enableButton('reset');
+                                        },
+                                        label: 'Stop',
+                                        disabled: true,
+                                        width: '10em'
+                                    }),
+                                    addButton({
+                                        name: 'reset',
+                                        type: 'default',
+                                        handler: function () {
+                                            doReset();
+                                            disableButton('reset');
+                                            enableButton('transform');
+                                        },
+                                        label: 'Reset',
+                                        disabled: true,
+                                        width: '10em'
+                                    })
                                 ])
                             ])
                         ])
                     ])
-                ]),
+                ])
+            ]),
                 events = [{
                         type: 'change',
                         selector: 'input',
@@ -431,30 +494,8 @@ define([
             };
         }
 
-        function show() {
-            var node = places.getNode('main');
-            node.classList.remove('hidden');
-            return true;
-        }
 
-        function hide() {
-            var node = places.getNode('main');
-            node.classList.add('hidden');
-            return true;
-        }
 
-        function toggle() {
-            switch (toggleState) {
-                case 'hidden':
-                    show();
-                    toggleState = 'showing';
-                    break;
-                case 'showing':
-                    hide();
-                    toggleState = 'hidden';
-                    break;
-            }
-        }
 
         // Downloader stuff
 
@@ -468,14 +509,6 @@ define([
                 shockNodeId = parts[0];
             }
             return shockNodeId;
-        }
-
-        function encodeQuery(query) {
-            return Object.keys(query).map(function (key) {
-                return [key, String(query[key])].map(function (element) {
-                    return encodeURIComponent(element);
-                }).join('=');
-            }).join('&');
         }
 
         function makeDownloadUrl(ujsResults, workspaceObjectName, unzip) {
@@ -640,6 +673,8 @@ define([
             renderDownloads();
         }
 
+        // Button Actions
+
         function doStartTransform() {
             // gather the selected download types.
             Object.keys(state.downloads).forEach(function (id) {
@@ -652,25 +687,16 @@ define([
                 }
             });
         }
-        
+
         function doStopTransform() {
             alert('Cannot do this yet');
         }
-        
+
         function doReset() {
             alert('Not implemented yet');
         }
 
-        // API
-
-        function init(config) {
-        }
-
-        function attach(node) {
-            parent = node;
-            container = node.appendChild(document.createElement('div'));
-            addEventManager(['click', 'load']);
-        }
+        // Utils
 
         function getRef(params) {
             var ref = params.objectInfo.ws + '/' + params.objectInfo.name;
@@ -682,6 +708,14 @@ define([
 
         function setErrorMessage(message) {
             places.setContent('content', message);
+        }
+
+        function encodeQuery(query) {
+            return Object.keys(query).map(function (key) {
+                return [key, String(query[key])].map(function (element) {
+                    return encodeURIComponent(element);
+                }).join('=');
+            }).join('&');
         }
 
         function qsa(node, selector) {
@@ -696,18 +730,29 @@ define([
             return Array.prototype.slice.call(result);
         }
 
-        function ingestParams(params) {
-            // TODO: validate
-            state.params = params;
+        // API
+
+        function init(config) {
+        }
+
+        function attach(node) {
+            parent = node;
+            container = node.appendChild(document.createElement('div'));
+            addEventManager(['click', 'load']);
+            // reactive = Reactive.make({node: container});
         }
 
         function start(params) {
-            ingestParams(params);
+            state.params = params;
             container.innerHTML = layout;
+            toggler = Toggler.make({
+                node: places.getNode('main'),
+                hide: true
+            });
 
             // listen for events
             runtime.recv('downloadWidget', 'toggle', function () {
-                toggle();
+                toggler.toggle();
             });
         }
 
