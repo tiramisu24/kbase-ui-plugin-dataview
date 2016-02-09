@@ -6,26 +6,20 @@
  white: true
  */
 define([
-    'jquery',
     'bluebird',
     'kb/common/html',
-    'kb/widget/adapters/objectWidget',
     'kb/widget/widgetSet',
     'kb/service/utils',
     'kb/service/client/workspace'
-        //'kb_widgetAdapters_kbWidgetAdapter',
-        //'kb_dataview_widget_provenance',
-        //'kb_dataview_widget_download'
 ],
-    function ($, Promise, html, widgetAdapter, WidgetSet, apiUtils, Workspace) {
+    function (Promise, html, WidgetSet, apiUtils, Workspace) {
         'use strict';
 
         function renderBSCollapsiblePanel(config) {
             var div = html.tag('div'),
                 span = html.tag('span'),
-                h4 = html.tag('h4');
-
-            var panelId = html.genId(),
+                h4 = html.tag('h4'),
+                panelId = html.genId(),
                 headingId = html.genId(),
                 collapseId = html.genId();
 
@@ -47,8 +41,6 @@ define([
                 ])
             ]);
         }
-
-
 
         function widget(config) {
             var mount, container, runtime = config.runtime,
@@ -89,7 +81,7 @@ define([
                             }
                             return apiUtils.object_info_to_object(objectList[0]);
                         });
-                })
+                });
             }
 
             function renderPanel() {
@@ -120,77 +112,72 @@ define([
             }
 
             function init(config) {
-                return Promise.try(function () {
-                    rendered = renderPanel();
-                    return widgetSet.init(config);
-                });
+                rendered = renderPanel();
+                return widgetSet.init(config);
             }
 
             function attach(node) {
-                return Promise.try(function () {
-                    mount = node;
-                    container = document.createElement('div');
-                    mount.appendChild(container);
-                    container.innerHTML = rendered.content;
-                    return widgetSet.attach(node);
-                });
+                mount = node;
+                container = document.createElement('div');
+                mount.appendChild(container);
+                container.innerHTML = rendered.content;
+                return widgetSet.attach(node);
             }
 
             function start(params) {
-                return Promise.try(function () {
-                    return getObjectInfo(params)
-                        .then(function (objectInfo) {
-                            params.objectInfo = objectInfo;
-                        
-                            runtime.send('ui', 'setTitle', rendered.title);
-                            
-                            runtime.send('ui', 'addButton', {
-                                name: 'downloadObject',
-                                label: 'Download',
-                                style: 'default',
-                                icon: 'download',
-                                toggle: true,
-                                params: {
-                                    ref: objectInfo.ref
-                                },
-                                callback: function () {
-                                    runtime.send('downloadWidget', 'toggle');
-                                }
-                            });
-                            
-                            runtime.send('ui', 'addButton', {
-                                name: 'copyObject',
-                                label: 'Copy',
-                                style: 'default',
-                                icon: 'copy',
-                                toggle: true,
-                                params: {
-                                    ref: objectInfo.ref
-                                },
-                                callback: function () {
-                                    runtime.send('copyWidget', 'toggle');
-                                }
-                            });
-                            
-                            return widgetSet.start(params);
+                return getObjectInfo(params)
+                    .then(function (objectInfo) {
+                        params.objectInfo = objectInfo;
+                        return widgetSet.start(params);
+                    })
+                    .then(function (objectInfo) {
+                        runtime.send('ui', 'setTitle', rendered.title);
+
+                        runtime.send('ui', 'addButton', {
+                            name: 'downloadObject',
+                            label: 'Download',
+                            style: 'default',
+                            icon: 'download',
+                            toggle: true,
+                            params: {
+                                ref: objectInfo.ref
+                            },
+                            callback: function () {
+                                runtime.send('downloadWidget', 'toggle');
+                            }
                         });
-                });
+
+                        runtime.send('ui', 'addButton', {
+                            name: 'copyObject',
+                            label: 'Copy',
+                            style: 'default',
+                            icon: 'copy',
+                            toggle: true,
+                            params: {
+                                ref: objectInfo.ref
+                            },
+                            callback: function () {
+                                runtime.send('copyWidget', 'toggle');
+                            }
+                        });
+
+                    });
             }
 
             function run(params) {
-                return Promise.try(function () {
-                    return widgetSet.run(params);
-                });
+                return widgetSet.run(params);
             }
             function stop() {
-                return Promise.try(function () {
-                    return widgetSet.stop();
-                });
+                return widgetSet.stop();
             }
             function detach() {
-                return Promise.try(function () {
-                    return widgetSet.detach();
-                });
+                return widgetSet.detach()
+                    .finally(function () {
+                        if (mount && container) {
+                            mount.removeChild(container);
+                            container.innerHTML = '';
+                        }
+                    });
             }
 
             return {
