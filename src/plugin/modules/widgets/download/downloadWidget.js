@@ -21,9 +21,7 @@ define([
             table = tag('table'), tr = tag('tr'), td = tag('td'), th = tag('th'), p = tag('p'),
             form = tag('form'),
             span = tag('span'), iframe = tag('iframe'),
-            places = Places.make({
-                root: container
-            }),
+            places,
             toggleState = 'hidden',
             poller = Poller.make({interval: 1000}),
             state = {
@@ -87,10 +85,9 @@ define([
                 ])
             ]);
         }
-        var layout = renderLayout();
 
         function renderElapsed(elapsed) {
-            if (elapsed === undefined) {
+            if (typeof elapsed !== 'number') {
                 return '';
             }
             return numeral(elapsed).format('00:00:00');
@@ -113,7 +110,7 @@ define([
         }
         function eventListener(e) {
             var listener = listeners[e.target.id + '.' + e.type];
-            if (listener) {
+            if (listener && listener.handler) {
                 listener.handler(e);
             }
         }
@@ -142,8 +139,8 @@ define([
                 klass.push('disabled');
                 listener.disabled = true;
                 listener.disabledHandler = listener.handler;
-                listener.handler = function () {
-                    alert('This button is disabled');
+                listener.handler = function (e) {
+                    e.preventDefault();
                 };
             }
 
@@ -152,14 +149,14 @@ define([
             if (spec.name) {
                 buttons[spec.name] = buttonId;
             }
-            
+
             var width = spec.width || '100%';
 
             return  button({
-                    style: {width: width},
-                    class: klass.join(' '),
-                    id: buttonId
-                }, spec.label);
+                style: {width: width},
+                class: klass.join(' '),
+                id: buttonId
+            }, spec.label);
         }
 
         function disableButton(name) {
@@ -171,25 +168,25 @@ define([
             if (!listener) {
                 return;
             }
-            
+
             if (listener.disabled) {
                 return;
             }
-            
-            var node = document.getElementById(buttonId);
-            if (!node) {
+
+            var buttonNode = document.getElementById(buttonId);
+            if (!buttonNode) {
                 return;
             }
 
             listener.disabledHandler = listener.handler;
-            listener.handler = function () {
-                alert('This button is disabled');
+            listener.handler = function (e) {
+                e.preventDefault;
             };
-            node.classList.add('disabled');
+            buttonNode.classList.add('disabled');
             listener.disabled = true;
         }
-        
-         function enableButton(name) {
+
+        function enableButton(name) {
             var buttonId = buttons[name];
             if (!buttonId) {
                 return;
@@ -201,15 +198,15 @@ define([
             if (!listener.disabled) {
                 return;
             }
-            
-            var node = document.getElementById(buttonId);
-            if (!node) {
+
+            var buttonNode = document.getElementById(buttonId);
+            if (!buttonNode) {
                 return;
             }
 
             listener.handler = listener.disabledHandler;
             delete listener.disabledHandler;
-            node.classList.remove('disabled');
+            buttonNode.classList.remove('disabled');
             listener.disabled = false;
         }
 
@@ -227,7 +224,7 @@ define([
 
         function addDownloader(url) {
             var id = html.genId(),
-                content = iframe({id: id, src: url, style: {border: '1px red solid', width: '40px', height: '40px'}});
+                content = iframe({id: id, src: url, style: {display: 'none'}});
             places.appendContent('downloaders', content);
             // unfortunately, there is no way to monitor the progress of this download.
         }
@@ -240,10 +237,10 @@ define([
                 }
                 download.limit -= 1;
                 if (download.limit === 0) {
-                    download.message = 'Download starting; please run Transform again to obtain another download';
+                    download.message = 'Download starting; please Reset and run Transform again to download again';
                 }
             } else {
-                download.message = 'You may download this file again if you need to';
+                download.message = 'You may download this file again.';
             }
             // window.open(download.url, '_self');
             addDownloader(download.url);
@@ -309,99 +306,113 @@ define([
 
         function renderDownloads() {
             // removeListeners();
+            // ugly to handle it like this ...
+            var finished = true,
+                content;
             if (Object.keys(state.downloads).length === 0) {
-                return '';
-            }
-            var content = table({class: 'table table-bordered', style: {width: '100%'}}, [
-                tr([th({width: '10%'}, 'Format'),
-                    th({width: '10%'}, 'Started?'),
-                    th({width: '10%'}, 'Requested?'),
-                    th({width: '10%'}, 'Completed?'),
-                    th({width: '10%'}, 'Available?'),
-                    th({width: '10%'}, 'Elapsed'),
-                    th({width: '10%'}, 'Status'),
-                    th({width: '10%'}, 'Next'),
-                    th({width: '20%'}, 'Message')
-                ]),
-                Object.keys(state.downloads).map(function (key) {
-                    var download = state.downloads[key],
-                        formatName = state.downloadConfig[download.formatId].name;
+                content = span({style: {fontStyle: 'italic'}}, [
+                    'No transforms requested, please select one or more from the options above'
+                ]);
+            } else {
+                content = table({class: 'table table-bordered', style: {width: '100%'}}, [
+                    tr([th({width: '10%'}, 'Format'),
+                        th({width: '10%'}, 'Started?'),
+                        //th({width: '10%'}, 'Requested?'),
+                        th({width: '10%'}, 'Completed?'),
+                        //th({width: '10%'}, 'Available?'),
+                        th({width: '10%'}, 'Elapsed'),
+                        th({width: '10%'}, 'Status'),
+                        th({width: '10%'}, 'Next'),
+                        th({width: '40%'}, 'Message')
+                    ]),
+                    Object.keys(state.downloads).map(function (key) {
+                        var download = state.downloads[key],
+                            formatName = state.downloadConfig[download.formatId].name;
 
-                    return tr([
-                        td(formatName),
-                        td(download.started ? 'Y' : 'n'),
-                        td(download.requested ? 'Y' : 'n'),
-                        td(download.completed ? 'Y' : 'n'),
-                        td(download.available ? 'Y' : 'n'),
-                        td(renderElapsed(download.elapsed)),
-                        td(download.status || ''),
-                        td(renderNextButton(download)),
-                        td(download.message || '')]);
-                }).join('')
-            ]);
+                        if (!download.completed) {
+                            finished = false;
+                        }
+
+                        return tr([
+                            td(formatName),
+                            td(download.started ? 'Y' : 'n'),
+                            //td(download.requested ? 'Y' : 'n'),
+                            td(download.completed ? 'Y' : 'n'),
+                            //td(download.available ? 'Y' : 'n'),
+                            td(renderElapsed(download.elapsed)),
+                            td(download.status || ''),
+                            td(renderNextButton(download)),
+                            td(download.message || '')]);
+                    }).join('')
+                ]);
+            }
             places.setContent('downloads', content);
+            if (finished) {
+                disableButton('stop');
+                enableButton('reset');
+            }
         }
 
         function renderDownloadForm(downloadConfig) {
             var content = form([
-                    table([
-                        tr([
-                            td('Transform to: '),
-                            td(span({class: 'kb-btn-group', dataToggle: 'buttons'},
-                                downloadConfig.map(function (downloader, i) {
-                                    return label({class: 'kb-checkbox-control'}, [
-                                        input({type: 'checkbox', autocomplete: 'off', checked: false, value: String(i)}),
-                                        downloader.name
-                                    ]);
-                                }).join(' ')))
-                        ]),
-                        tr([
-                            td(),
-                            td([
-                                div({class: 'btn-toolbar', role: 'toolbar'}, [
-                                    div({class: 'btn-group', role: 'group'}, [
-                                        addButton({
-                                            name: 'transform',
-                                            type: 'primary',
-                                            handler: function () {
-                                                doStartTransform();
-                                                disableButton('transform');
-                                                enableButton('stop');
-                                            },
-                                            label: 'Transform',
-                                            width: '10em',
-                                            disabled: true
-                                        }),
-                                        addButton({
-                                            name: 'stop',
-                                            type: 'danger',
-                                            handler: function () {
-                                                doStopTransform();
-                                                disableButton('stop');
-                                                enableButton('reset');
-                                            },
-                                            label: 'Stop',
-                                            disabled: true,
-                                            width: '10em'
-                                        }),
-                                        addButton({
-                                            name: 'reset',
-                                            type: 'default',
-                                            handler: function () {
-                                                doReset();
-                                                disableButton('reset');
-                                                enableButton('transform');
-                                            },
-                                            label: 'Reset',
-                                            disabled: true,
-                                            width: '10em'
-                                        })
-                                    ])
+                table([
+                    tr([
+                        td('Transform to: '),
+                        td(span({class: 'kb-btn-group', dataToggle: 'buttons'},
+                            downloadConfig.map(function (downloader, i) {
+                                return label({class: 'kb-checkbox-control'}, [
+                                    input({type: 'checkbox', autocomplete: 'off', checked: false, value: String(i)}),
+                                    downloader.name
+                                ]);
+                            }).join(' ')))
+                    ]),
+                    tr([
+                        td(),
+                        td([
+                            div({class: 'btn-toolbar', role: 'toolbar'}, [
+                                div({class: 'btn-group', role: 'group'}, [
+                                    addButton({
+                                        name: 'transform',
+                                        type: 'primary',
+                                        handler: function () {
+                                            doStartTransform();
+                                            disableButton('transform');
+                                            enableButton('stop');
+                                        },
+                                        label: 'Transform',
+                                        width: '10em',
+                                        disabled: true
+                                    }),
+                                    addButton({
+                                        name: 'stop',
+                                        type: 'danger',
+                                        handler: function () {
+                                            doStopTransform();
+                                            disableButton('stop');
+                                            enableButton('reset');
+                                        },
+                                        label: 'Stop',
+                                        disabled: true,
+                                        width: '10em'
+                                    }),
+                                    addButton({
+                                        name: 'reset',
+                                        type: 'default',
+                                        handler: function () {
+                                            doReset();
+                                            disableButton('reset');
+                                            enableButton('transform');
+                                        },
+                                        label: 'Reset',
+                                        disabled: true,
+                                        width: '10em'
+                                    })
                                 ])
                             ])
                         ])
                     ])
-                ]),
+                ])
+            ]),
                 events = [{
                         type: 'change',
                         selector: 'input',
@@ -574,6 +585,7 @@ define([
                                 });
                         },
                         whenTimedOut: function (elapsed) {
+                            download.completed = true;
                             download.error = true;
                             download.status = 'timedout',
                                 download.message = 'Timed out after ' + elapsed / 1000 + ' seconds';
@@ -581,6 +593,7 @@ define([
                         },
                         whenError: function (err) {
                             console.error(err);
+                            download.completed = true;
                             download.status = 'error';
                             download.error = true;
                             var msg;
@@ -652,13 +665,23 @@ define([
                 }
             });
         }
-        
+
         function doStopTransform() {
             alert('Cannot do this yet');
         }
-        
+
         function doReset() {
-            alert('Not implemented yet');
+            Object.keys(state.downloads).forEach(function (id) {
+                var download = state.downloads[id];
+                download.started = false;
+                download.requested = false;
+                download.completed = false;
+                download.available = false;
+                download.status = 'reset';
+                download.elapsed = null;
+                download.message = '';
+            });
+            renderDownloads();
         }
 
         // API
@@ -669,6 +692,9 @@ define([
         function attach(node) {
             parent = node;
             container = node.appendChild(document.createElement('div'));
+            places = Places.make({
+                root: container
+            }),
             addEventManager(['click', 'load']);
         }
 
@@ -703,15 +729,14 @@ define([
 
         function start(params) {
             ingestParams(params);
-            container.innerHTML = layout;
+            container.innerHTML = renderLayout();
+            renderDownloads();
 
             // listen for events
             runtime.recv('downloadWidget', 'toggle', function () {
                 toggle();
             });
-        }
-
-        function run(params) {
+            
             // We can instantiate the widget as soon as we are started or run,
             // because the params passed to the page are good enough for
             // us to get started with.
@@ -785,7 +810,6 @@ define([
             init: init,
             attach: attach,
             start: start,
-            run: run,
             stop: stop,
             detach: detach,
             destroy: destroy
