@@ -185,8 +185,6 @@ define([
                         var obj = APIUtils.object_info_to_object(data[0]);
                         state.set('object', obj);
 
-                        runtime.send('ui', 'setTitle', 'Data View for ' + obj.name);
-
                         // create the data icon
                         state.set('dataicon', createDataIcon(data[0]));
                     })

@@ -85,30 +85,26 @@ define([
             }
 
             function renderPanel() {
-                var div = html.tag('div'),
-                    panel = div({class: 'kbase-view kbase-dataview-view container-fluid', 'data-kbase-view': 'dataview'}, [
-                        div({class: 'row'}, [
-                            div({class: 'col-sm-12'}, [
-                                div({id: widgetSet.addWidget('kb_dataview_download')})
-                            ]),
-                            div({class: 'col-sm-12'}, [
-                                div({id: widgetSet.addWidget('kb_dataview_copy')})
-                            ]),
-                            div({class: 'col-sm-12'}, [
-                                div({id: widgetSet.addWidget('kb_dataview_overview')}),
-                                renderBSCollapsiblePanel({
-                                    title: 'Data Provenance and Reference Network',
-                                    icon: 'sitemap',
-                                    content: div({id: widgetSet.addWidget('kb_dataview_provenance')})
-                                }),
-                                div({id: widgetSet.addWidget('kb_dataview_dataObjectVisualizer')})
-                            ])
+                var div = html.tag('div');
+                return div({class: 'kbase-view kbase-dataview-view container-fluid', 'data-kbase-view': 'dataview'}, [
+                    div({class: 'row'}, [
+                        div({class: 'col-sm-12'}, [
+                            div({id: widgetSet.addWidget('kb_dataview_download')})
+                        ]),
+                        div({class: 'col-sm-12'}, [
+                            div({id: widgetSet.addWidget('kb_dataview_copy')})
+                        ]),
+                        div({class: 'col-sm-12'}, [
+                            div({id: widgetSet.addWidget('kb_dataview_overview')}),
+                            renderBSCollapsiblePanel({
+                                title: 'Data Provenance and Reference Network',
+                                icon: 'sitemap',
+                                content: div({id: widgetSet.addWidget('kb_dataview_provenance')})
+                            }),
+                            div({id: widgetSet.addWidget('kb_dataview_dataObjectVisualizer')})
                         ])
-                    ]);
-                return({
-                    title: 'Dataview',
-                    content: panel
-                });
+                    ])
+                ]);
             }
 
             function init(config) {
@@ -120,19 +116,22 @@ define([
                 mount = node;
                 container = document.createElement('div');
                 mount.appendChild(container);
-                container.innerHTML = rendered.content;
+                container.innerHTML = rendered;
                 return widgetSet.attach(node);
             }
 
             function start(params) {
                 return getObjectInfo(params)
                     .then(function (objectInfo) {
-                        params.objectInfo = objectInfo;
-                        return widgetSet.start(params);
+                        runtime.send('ui', 'setTitle', 'Data View for ' + objectInfo.name);
+                        return objectInfo;
                     })
                     .then(function (objectInfo) {
-                        runtime.send('ui', 'setTitle', rendered.title);
-
+                        params.objectInfo = objectInfo;
+                        return widgetSet.start(params);
+                        return objectInfo;
+                    })
+                    .then(function (objectInfo) {
                         runtime.send('ui', 'addButton', {
                             name: 'downloadObject',
                             label: 'Download',
