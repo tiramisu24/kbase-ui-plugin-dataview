@@ -471,32 +471,27 @@ install:
                 - 
                     dataview
                 -
-                    type: param
                     name: workspaceId
                 -
-                    type: param
                     name: objectId
+                -
+                    name: objectVersion
+                    optional: true
             queryParams:
                 sub: {}
-                subid: {}            
+                subid: {}         
             widget: kb_dataview_panel
         -
-            path: ['dataview', {type: param, name: workspaceId}, {type: param, name: objectId}, {type: param, name: objectVersion}]
-            queryParams:
-                sub: {}
-                subid: {}            
-            widget: kb_dataview_panel
-        -
-            path: ['provenance', {type: param, name: workspaceId}, {type: param, name: objectId}]
-            queryParams:
-                sub: {}
-                subid: {}            
-            widget: kb_dataview_provenancePanel            
-        -
-            path: ['provenance', {type: param, name: workspaceId}, {type: param, name: objectId}, {type: param, name: objectVersion}]
-            queryParams:
-                sub: {}
-                subid: {}            
+            path: 
+                - 
+                    [objgraph, provenance]
+                - 
+                    name: workspaceId
+                -
+                    name: objectId
+                -
+                    name: objectVersion
+                    optional: true
             widget: kb_dataview_provenancePanel
     types:
         # COMMUNITIES
