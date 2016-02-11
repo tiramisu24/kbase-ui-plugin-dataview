@@ -103,7 +103,7 @@ define([
                     this.context.env = {
                         widgetTitle: this.widgetTitle,
                         widgetName: this.widgetName,
-                        docsite: this.runtime.getConfig('docsite'),
+                        docsite: this.runtime.getConfig('services.doc_site.url'),
                         browser: {
                             location: {
                                 scheme: window.location.protocol,
