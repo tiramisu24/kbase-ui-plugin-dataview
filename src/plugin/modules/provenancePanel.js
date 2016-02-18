@@ -57,11 +57,8 @@ define([
                         ignoreErrors: 1
                     })
                         .then(function (objectList) {
-                            if (objectList.length === 0) {
+                            if (objectList[0] === null) {
                                 throw new Error('Object not found: ' + objectRef);
-                            }
-                            if (objectList.length > 1) {
-                                throw new Error('Too many objects found: ' + objectRef + ', ' + objectList.length);
                             }
                             return apiUtils.object_info_to_object(objectList[0]);
                         });
