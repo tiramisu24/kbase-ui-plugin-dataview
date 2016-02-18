@@ -484,7 +484,7 @@ install:
         -
             path: 
                 - 
-                    [objgraph, provenance]
+                    [objgraphview, provenance]
                 - 
                     name: workspaceId
                 -
