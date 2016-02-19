@@ -64,7 +64,7 @@ define([
                         div({class: 'container-fluid'}, [
                             div({class: 'col-md-12'}, [
                                 p([
-                                    'This tool allows you to convert this data object to one or more output formats and download the resulting file.'
+                                    'This tool allows you to convert this data object to one or more output formats and download the resulting file(s).'
                                 ]),
                                 p({id: places.add('comment')})
                             ]),
@@ -237,7 +237,7 @@ define([
                 }
                 download.limit -= 1;
                 if (download.limit === 0) {
-                    download.message = 'Download starting; please Reset and run Transform again to download again';
+                    download.message = 'Download starting; if you need to download again, you will need to Reset and run Transform again';
                 }
             } else {
                 download.message = 'You may download this file again.';
@@ -361,8 +361,17 @@ define([
                         td(span({class: 'kb-btn-group', dataToggle: 'buttons'},
                             downloadConfig.map(function (downloader, i) {
                                 return label({class: 'kb-checkbox-control'}, [
-                                    input({type: 'checkbox', autocomplete: 'off', checked: false, value: String(i)}),
-                                    downloader.name
+                                    input({
+                                        type: 'checkbox', 
+                                        autocomplete: 'off', 
+                                        checked: false, 
+                                        value: String(i)
+                                    }),
+                                    span({
+                                        style: {
+                                            marginLeft: '4px'
+                                        }
+                                    }, downloader.name)
                                 ]);
                             }).join(' ')))
                     ]),
@@ -376,8 +385,6 @@ define([
                                         type: 'primary',
                                         handler: function () {
                                             doStartTransform();
-                                            disableButton('transform');
-                                            enableButton('stop');
                                         },
                                         label: 'Transform',
                                         width: '10em',
@@ -388,8 +395,6 @@ define([
                                         type: 'danger',
                                         handler: function () {
                                             doStopTransform();
-                                            disableButton('stop');
-                                            enableButton('reset');
                                         },
                                         label: 'Stop',
                                         disabled: true,
@@ -400,8 +405,6 @@ define([
                                         type: 'default',
                                         handler: function () {
                                             doReset();
-                                            disableButton('reset');
-                                            enableButton('transform');
                                         },
                                         label: 'Reset',
                                         disabled: true,
@@ -415,7 +418,7 @@ define([
             ]),
                 events = [{
                         type: 'change',
-                        selector: 'input',
+                        selector: 'input[type="checkbox"]',
                         handler: function (e) {
                             var value = e.target.value;
                             if (e.target.checked) {
@@ -655,6 +658,9 @@ define([
 
         function doStartTransform() {
             // gather the selected download types.
+            disableButton('transform');
+            enableButton('stop');
+
             Object.keys(state.downloads).forEach(function (id) {
                 var download = state.downloads[id],
                     downloadSpec = state.downloadConfig[download.formatId];
@@ -667,10 +673,16 @@ define([
         }
 
         function doStopTransform() {
-            alert('Cannot do this yet');
+            //disableButton('stop');
+            //enableButton('reset');
+
+            alert('Stopping a transform is not yet implemented');
         }
 
         function doReset() {
+            disableButton('reset');
+            enableButton('transform');
+
             Object.keys(state.downloads).forEach(function (id) {
                 var download = state.downloads[id];
                 download.started = false;
