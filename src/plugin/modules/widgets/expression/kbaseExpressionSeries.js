@@ -12,12 +12,12 @@
 define([
     'jquery',
     'bluebird',
-    'kb_common_html',
-    'kb_common_utils',
-    'kb_service_workspace',
-    'kb_service_workspaceClient',
-    'kb_widgetBases_kbWidget',
-    'kb_widget_kbTabs',
+    'kb/common/html',
+    'kb/common/utils',
+    'kb/service/client/workspace',
+    'kb/service/workspaceClient',
+    'kb/widget/legacy/widget',
+    'kb/widget/legacy/tabs',
     
     'datatables_bootstrap'
 ], function ($, Promise, html, Utils, Workspace, workspaceClient) {

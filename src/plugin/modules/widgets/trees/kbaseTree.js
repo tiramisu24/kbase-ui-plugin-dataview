@@ -13,11 +13,11 @@ define([
     'jquery',
     'bluebird',
     'uuid',
-    'kb_common_html',
-    'kb_service_workspace',
-    'kb_service_userAndJobState',
+    'kb/common/html',
+    'kb/service/client/workspace',
+    'kb/service/client/userAndJobState',
     'kb_dataview_easyTree',
-    'kb_widgetBases_kbAuthenticatedWidget'
+    'kb/widget/legacy/authenticatedWidget'
 ],
     function ($, Promise, uuid, html,Workspace, UserAndJobState, EasyTree) {
         'use strict';
@@ -150,6 +150,7 @@ define([
                                 objIdentityList.push({ref: tree.ws_refs[key]['g'][0]});
                             }
                         }
+                        
                         if (objIdentityList.length > 0) {
                             self.wsClient.get_object_info_new({objects: objIdentityList}, function (data) {
                                 var i;

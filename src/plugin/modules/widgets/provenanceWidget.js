@@ -4,9 +4,9 @@ define([
     'bluebird',
     'jquery',
     'd3',
-    'kb_common_html',
-    'kb_common_dom',
-    'kb_service_workspace',
+    'kb/common/html',
+    'kb/common/dom',
+    'kb/service/client/workspace',
     'd3_sankey'
 ],
     function (Promise, $, d3, html, dom, Workspace) {
@@ -336,13 +336,13 @@ define([
                             // Oh, no!
                             alert("Cannot expand this node.");
                         } else {
-                            if (d.info[1].indexOf(' ') >= 0) {
+                            //if (d.info[1].indexOf(' ') >= 0) {
+                            //    // TODO: Fix this
+                            //    window.location.href = "#provenance/" + encodeURI(d.info[7] + "/" + d.info[0]);
+                            //} else {
                                 // TODO: Fix this
-                                window.location.href = "#/objgraphview/" + encodeURI(d.info[7] + "/" + d.info[0]);
-                            } else {
-                                // TODO: Fix this
-                                window.location.href = "#/objgraphview/" + encodeURI(d.info[7] + "/" + d.info[1]);
-                            }
+                                runtime.navigate("provenance/" + encodeURI(d.info[6] + "/" + d.info[0] + '/' + d.info[4]));
+                            //}
                         }
                     })
                     .on('mouseover', nodeMouseover);
@@ -597,7 +597,15 @@ define([
                 $container.find('#loading-mssg').hide();
                 $container.append("<br><b>Error in building object graph!</b><br>");
                 $container.append("<i>Error was:</i></b> &nbsp ");
-                $container.append(err.error.message + "<br>");
+                var message;
+                if (err.message) {
+                    message = err.message;
+                } else if (err.error && err.error.message) {
+                    message = err.error.message;
+                } else {
+                    message = 'unknown error (check console)'
+                }
+                $container.append(message + "<br>");
                 console.error("Error in building object graph!");
                 console.error(err);
             }

@@ -12,14 +12,14 @@
 define([
     'jquery',
     'kb_dataview_googlepalette',
-    'kb_service_workspace',
-    'kb_common_html',
+    'kb/service/client/workspace',
+    'kb/common/html',
     'kb_dataview_communities_graph',
     'kb_dataview_communities_plot',
     
     // these don't need a parameter
-    'kb_widgetBases_kbAuthenticatedWidget',
-    'kb_widget_tabs',
+    'kb/widget/legacy/authenticatedWidget',
+    'kb/widget/legacy/kbaseTabs',
     'datatables_bootstrap'
 ], function ($, GooglePalette, Workspace, html, Graph, Plot) {
     'use strict';

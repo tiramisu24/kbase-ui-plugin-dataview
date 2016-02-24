@@ -31,13 +31,23 @@ source:
         # Common dataview components
             
         -
+            module: kb_dataview_widget_provenancePanel
+            file: provenancePanel
+        -
             module: kb_dataview_widget_panel
             file: panelWidget
-            # widget: kb_dataview_panel
         -
             module: kb_dataview_widget_provenance
             file: widgets/provenanceWidget
-            # widget: kb_dataview_provenance
+            
+        -
+            module: kb_dataview_downloadWidget
+            file: widgets/download/downloadWidget
+            css: true
+        -
+            module: kb_dataview_copyWidget
+            file: widgets/copy/copyWidget
+            css: true
         #-
         #    module: kb_widget_dataview_download
        #     file: widgets/kbaseDownloadPanel
@@ -149,7 +159,7 @@ source:
         
         -
             module: kb_dataview_file_pairedEndLibrary
-            file: assembly/kbaseFilePairedEndLibrary
+            file: widgets/assembly/kbaseFilePairedEndLibrary
             
         # KBASE GENOMES
         
@@ -221,6 +231,10 @@ source:
             module: kb_dataview_trees_tree
             file: widgets/trees/kbaseTree
             
+        # GENERIC
+        -
+            module: kb_dataview_genericObject
+            file: widgets/genericDataObject
         
     styles:
         - 
@@ -235,6 +249,10 @@ install:
             name: kb_dataview_panel
             type: factory
         -
+            module: kb_dataview_widget_provenancePanel
+            name: kb_dataview_provenancePanel
+            type: factory
+        -
             module: kb_dataview_widget_overview
             name: kb_dataview_overview
             type: factory
@@ -242,6 +260,16 @@ install:
             module: kb_dataview_widget_provenance
             name: kb_dataview_provenance
             type: factory
+        -
+            module: kb_dataview_downloadWidget
+            name: kb_dataview_download
+            type: factory
+        -
+            module: kb_dataview_copyWidget
+            name: kb_dataview_copy
+            type: factory
+            
+        # COMMUNITIES
         -
             module: kb_dataview_dataObjectVisualizer
             name: kb_dataview_dataObjectVisualizer
@@ -431,27 +459,40 @@ install:
             name: kb_dataview_trees_tree
             type: kbwidget
             
+        # GENERIC
+        -
+            module: kb_dataview_genericObject
+            name: kb_dataview_genericObject
+            type: factory
+            
     routes:
         -
             path: 
                 - 
                     dataview
                 -
-                    type: param
                     name: workspaceId
                 -
-                    type: param
                     name: objectId
+                -
+                    name: objectVersion
+                    optional: true
             queryParams:
                 sub: {}
-                subid: {}            
+                subid: {}         
             widget: kb_dataview_panel
         -
-            path: ['dataview', {type: param, name: workspaceId}, {type: param, name: objectId}, {type: param, name: objectVersion}]
-            queryParams:
-                sub: {}
-                subid: {}            
-            widget: kb_dataview_panel
+            path: 
+                - 
+                    [objgraphview, provenance]
+                - 
+                    name: workspaceId
+                -
+                    name: objectId
+                -
+                    name: objectVersion
+                    optional: true
+            widget: kb_dataview_provenancePanel
     types:
         # COMMUNITIES
         -
@@ -526,33 +567,34 @@ install:
                             
         # GENOMES
         
-        -
-            type:
-                module: KBaseGenomes
-                name: ContigSet
-                version: any
-            icon: 
-                type: fontAwesome
-                classes: ['fa-align-justify']
-            viewers:
-                -
-                    title: Data View
-                    widget: 
-                        name: kb_dataview_contigSet
-                        config:
-                            jqueryName: kbaseContigSetView
-                    panel: true
-                    options: 
-                        -
-                            from: workspaceId 
-                            to: ws_name
-                        -
-                            from: objectId
-                            to: ws_id
-                        -
-                            from: objectVersion
-                            to: ver 
-                            optional: true
+#        -
+#            type:
+#                module: KBaseGenomes
+#                name: ContigSet
+#                version: any
+#            icon: 
+#                type: fontAwesome
+#                classes: ['fa-align-justify']
+#            viewers:
+#                -
+#                    title: Data View
+#                    widget: 
+#                        name: kb_dataview_contigSet
+#                        config:
+#                            jqueryName: kbaseContigSetView
+#                    panel: true
+#                    options: 
+#                        -
+#                            from: workspaceId 
+#                            to: ws_name
+#                        -
+#                            from: objectId
+#                            to: ws_id
+#                        -
+#                            from: objectVersion
+#                            to: ver 
+#                            optional: true
+                            
         # TYPES DEFINED IN MODELING WIDGETS
         -
             type:
@@ -1056,31 +1098,31 @@ install:
 
         # TREES
         
-        -
-            type:
-                module: KBaseTrees
-                name: Tree
-                version: any
-            icon:   
-                type: kbase
-                classes: ['icon-tree', 'kb-data-icon-dnudge']
-            viewers:
-                -
-                    title: Data View
-                    widget:
-                        name: kb_dataview_trees_tree
-                        config:
-                            jqueryName: kbaseTree
-                    panel: true
-                    options: 
-                        -
-                            from: workspaceId 
-                            to: workspaceID
-                        -
-                            from: objectId 
-                            to: treeID
-                        -
-                            from: objectVersion 
-                            to: treeObjVer
+#        -
+#            type:
+#                module: KBaseTrees
+#                name: Tree
+#                version: any
+#            icon:   
+#                type: kbase
+#                classes: ['icon-tree', 'kb-data-icon-dnudge']
+#            viewers:
+#                -
+#                    title: Data View
+#                    widget:
+#                        name: kb_dataview_trees_tree
+#                        config:
+#                            jqueryName: kbaseTree
+#                    panel: true
+#                    options: 
+#                        -
+#                            from: workspaceId 
+#                            to: workspaceID
+#                        -
+#                            from: objectId 
+#                            to: treeID
+#                        -
+#                            from: objectVersion 
+#                            to: treeObjVer
                             
                             

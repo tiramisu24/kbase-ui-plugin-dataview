@@ -10,11 +10,11 @@
  */
 define([
     'jquery',
-    'kb_service_workspace',
-    'kb_common_html',
+    'kb/service/client/workspace',
+    'kb/common/html',
     // no parameters
     'datatables_bootstrap',
-    'kb_widgetBases_kbAuthenticatedWidget'
+    'kb/widget/legacy/authenticatedWidget'
 ],
     function ($, Workspace, html) {
         'use strict';
@@ -58,6 +58,8 @@ define([
                 }
                 this.$title.html('Error');
                 this.$body.html(message);
+                console.error('ERROR in kbaseCollectionView.js');
+                console.error(error);
             },
             render: function () {
                 var self = this;

@@ -7,10 +7,10 @@
  */
 define([
     'jquery',
-    'kb_common_html',
-    'kb_service_workspace',
+    'kb/common/html',
+    'kb/service/client/workspace',
     
-    'kb_widgetBases_kbWidget',
+    'kb/widget/legacy/widget',
     'kb_dataview_genomes_lineage'
 ], function ($, html, Workspace) {
     'use strict';

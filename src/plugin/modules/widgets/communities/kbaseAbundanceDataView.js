@@ -10,12 +10,12 @@
  */
 define([
     'jquery', 
-    'kb_service_workspace', 
-    'kb_common_html', 
+    'kb/service/client/workspace', 
+    'kb/common/html', 
     'kb_dataview_communities_graph', 
     
     'datatables_bootstrap',
-    'kb_widgetBases_kbAuthenticatedWidget', 
+    'kb/widget/legacy/authenticatedWidget', 
 ],
     function ($, Workspace, html, Graph) {
         'use strict';

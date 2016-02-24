@@ -7,8 +7,8 @@
  */
 define([
     'jquery',
-    'kb_service_fba',
-    'kb_service_workspace',
+    'kb/service/client/fba',
+    'kb/service/client/workspace',
     'kb_dataview_widget_modeling_objects'
 ], function ($, FBA, Workspace, KBObjects) {
     'use strict';

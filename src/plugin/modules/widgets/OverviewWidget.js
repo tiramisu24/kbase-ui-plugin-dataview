@@ -1,18 +1,13 @@
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
+/*global define*/
+/*jslint browser:true, white:true*/
 define([
     'promise',
-    'kb_service_utils',
-    'kb_common_utils',
-    'kb_common_html',
-    'kb_common_dom',
-    'kb_service_workspace',
-    'kb_common_state'
+    'kb/service/utils',
+    'kb/common/utils',
+    'kb/common/html',
+    'kb/common/dom',
+    'kb/service/client/workspace',
+    'kb/common/state'
 ],
     function (Promise, APIUtils, Utils, html, dom, Workspace, stateFactory) {
         'use strict';
@@ -156,7 +151,7 @@ define([
                         div = html.tag('div'),
                         span = html.tag('span'),
                         i = html.tag('i');
-                        
+
                     return div([
                         span({class: 'fa-stack fa-2x'}, [
                             i({class: 'fa fa-circle fa-stack-2x', style: {color: icon.color}}),
@@ -190,8 +185,6 @@ define([
                         var obj = APIUtils.object_info_to_object(data[0]);
                         state.set('object', obj);
 
-                        runtime.send('ui', 'setTitle', 'Data View for ' + obj.name);
-
                         // create the data icon
                         state.set('dataicon', createDataIcon(data[0]));
                     })
@@ -224,7 +217,7 @@ define([
                     })
                     .then(function () {
                         // Other narratives this user has.
-                        workspaceClient.list_workspace_info({
+                        return workspaceClient.list_workspace_info({
                             perm: 'w'
                         })
                             .then(function (data) {
@@ -288,19 +281,35 @@ define([
                 ]);
             }
             function renderTypeRow() {
-                return tr([
-                    th('Type'),
-                    td([
-                        (function () {
-                            if (state.get('sub.sub')) {
-                                return get('sub.sub') + ' in ';
-                            } else {
-                                return '';
-                            }
-                        }()),
-                        a({href: '#spec/type/' + state.get('object.type'), target: '_blank'}, state.get('object.typeName'))
+                return [
+                    tr([
+                        th('Module'),
+                        td([
+                            (function () {
+                                if (state.get('sub.sub')) {
+                                    return get('sub.sub') + ' in ';
+                                } else {
+                                    return '';
+                                }
+                            }()),
+                            state.get('object.typeModule')
+                        ])
+                    ]),
+                    tr([
+                        th('Type'),
+                        td([
+                            (function () {
+                                if (state.get('sub.sub')) {
+                                    return get('sub.sub') + ' in ';
+                                } else {
+                                    return '';
+                                }
+                            }()),
+                            a({href: '#spec/type/' + state.get('object.type'), target: '_blank'}, state.get('object.typeName'))
+                        ])
                     ])
-                ]);
+                ];
+
             }
             function renderNarrativeRow() {
                 if (state.get('workspace.metadata.narrative_nice_name')) {
@@ -506,7 +515,7 @@ define([
                     workspaceId = params.workspaceId;
                     objectId = params.objectId;
                     objectVersion = params.objectVersion;
-                    objectRef = APIUtils.makeWorkspaceObjectRef(workspaceId, objectId, objectVersion);
+                    objectRef = APIUtils.makeWorkspaceObjectRef(params.objectInfo.wsid, params.objectInfo.id, params.objectInfo.version);
                     if (!workspaceId) {
                         throw 'Workspace ID is required';
                     }
@@ -523,8 +532,7 @@ define([
                             }
                         })
                         .catch(function (err) {
-                            console.log('ERROR');
-                            console.log(err);
+                            console.error(err);
                             if (err.status && err.status === 500) {
                                 // User probably doesn't have access -- but in any case we can just tell them
                                 // that they don't have access.
@@ -595,137 +603,3 @@ define([
             }
         };
     });
-
-
-
-//                            Navbar.addDropdown({
-//                                place: 'end',
-//                                name: 'download',
-//                                style: 'default',
-//                                icon: 'download',
-//                                label: 'Download',
-//                                widget: 'kbaseDownloadPanel',
-//                                params: {'ws': this.getState('workspace.id'), 'obj': this.getState('object.id'), 'ver': this.getState('object.version')}
-//                            });
-//
-//                            Navbar
-//                                .addButton({
-//                                    name: 'copy',
-//                                    label: '+ New Narrative',
-//                                    style: 'primary',
-//                                    icon: 'plus-square',
-//                                    url: '/functional-site/#/narrativemanager/new?copydata=' + dataRef,
-//                                    external: true
-//                                })
-/*.addButton({
- name: 'download',
- label: 'Download',
- style: 'primary',
- icon: 'download',
- callback: function () {
- alert('download object');
- }.bind(this)
- })*/;
-
-
-
-//                            var narratives = this.getState('writableNarratives');
-//                            if (narratives) {
-//                                var items = [], i;
-//                                for (i = 0; i < narratives.length; i++) {
-//                                    var narrative = narratives[i];
-//                                    items.push({
-//                                        name: 'narrative_' + i,
-//                                        icon: 'file',
-//                                        label: narrative.metadata.narrative_nice_name,
-//                                        external: true,
-//                                        callback: (function (narrative) {
-//                                            var widget = this;
-//                                            return function (e) {
-//                                                e.preventDefault();
-//                                                widget.copyObjectToNarrative(narrative);
-//                                            };
-//                                        }.bind(this))(narrative)
-//                                    });
-//                                }
-//                                Navbar.addDropdown({
-//                                    place: 'end',
-//                                    name: 'options',
-//                                    style: 'default',
-//                                    icon: 'copy',
-//                                    label: 'Copy',
-//                                    items: items
-//                                });
-//                            }
-//                            break;
-//                        case 'notfound':
-//                            Navbar
-//                                .setTitle('<span style="color: red;">This Object was Not Found</span>')
-//                                .clearButtons();
-//                            this.places.content.html(this.renderTemplate('error'));
-//                            break;
-//                        case 'denied':
-//                            Navbar
-//                                .setTitle('<span style="color: red;">Access Denied to this Object</span>')
-//                                .clearButtons();
-//                            this.places.content.html(this.renderTemplate('error'));
-//                            break;
-//                        case 'error':
-//                            Navbar
-//                                .setTitle('<span style="color: red;">An Error has Occurred Accessing this Object</span>')
-//                                .clearButtons();
-//                            this.places.content.html(this.renderTemplate('error'));
-//                            break;
-//                        default:
-//                            Navbar
-//                                .setTitle('An Error has Occurred Accessing this Object')
-//                                .clearButtons();
-//                            state.set('error', {
-//                                type: 'internal',
-//                                code: 'invalidstatus',
-//                                shortMessage: 'The internal status "' + this.getState('status') + '" is not suppored'
-//                                    // originalMessage: err.message
-//                            });
-//                            this.places.content.html(this.renderTemplate('error'));
-//                            break;
-//                    }
-//
-//                }
-//            },
-
-/**
- copy the current ws object to the given narrative.
- TODO: omit the workspace for the current data object.
- */
-//            function copyObjectToNarrative(narrativeWs) {
-//                var from = this.getObjectRef();
-//                var to = narrativeWs.id + '';
-//                var name = this.getState('object.name');
-//
-//                Promise.resolve(this.workspaceClient.copy_object({
-//                    from: {ref: from},
-//                    to: {wsid: to, name: name}
-//                }))
-//                    .then(function (data) {
-//                        if (data) {
-//
-//                            var narrativeUrl = this.makeUrl('/narrative/' + APIUtils.makeWorkspaceObjectId(narrativeWs.id, narrativeWs.metadata.narrative));
-//                            this.alert.addSuccessMessage('Success', 'Successfully copied this data object to Narrative <i>' +
-//                                narrativeWs.metadata.narrative_nice_name + '</i>.  <a href="' + narrativeUrl + '" target="_blank">Open this Narrative</a>');
-//                        } else {
-//                            this.alert.addErrorMessage('Error', 'An unknown error occurred copying the data.');
-//                        }
-//                    }.bind(this))
-//                    .catch(function (err) {
-//                        if (err.error && err.error.message) {
-//                            var msg = err.error.message;
-//                        } else {
-//                            var msg = '';
-//                        }
-//                        this.alert.addErrorMessage('Error', 'Error copying the data object to the selected Narrative. ' + msg);
-//                        console.log('ERROR');
-//                        console.log(err);
-//                    }.bind(this))
-//                    .done();
-//
-//            }

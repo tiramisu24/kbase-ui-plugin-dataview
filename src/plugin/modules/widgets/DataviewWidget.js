@@ -2,13 +2,11 @@ define([
     'nunjucks',
     'jquery',
     'promise',
-    'kb_runtime',
-    'kb.utils',
-    'kb.alert',
-    'kb.html',
+    'kb/common/utils',
+    'kb/common/html',
     'kb_plugin_dataview'
 ],
-    function (nunjucks, $, Promise, R, Utils, Alert, html, Plugin) {
+    function (nunjucks, $, Promise, Utils, html, Plugin) {
         "use strict";
         var widget = Object.create({}, {
             // The init function interfaces this object with the caller, and sets up any 
@@ -105,7 +103,7 @@ define([
                     this.context.env = {
                         widgetTitle: this.widgetTitle,
                         widgetName: this.widgetName,
-                        docsite: this.runtime.getConfig('docsite'),
+                        docsite: this.runtime.getConfig('services.doc_site.url'),
                         browser: {
                             location: {
                                 scheme: window.location.protocol,
@@ -120,32 +118,6 @@ define([
                     this.context.state = this.state;
                     this.context.params = this.params;
 
-
-                    // Set up listeners for any kbase events we are interested in:
-                    // NB: following tradition, the auth listeners are namespaced for kbase; the events
-                    // are not actually emitted in the kbase namespace.
-                    /*
-                     this.subscriptions = [];
-                     this.subscriptions.push(Postal.channel('session').subscribe('login.success', function (data) {
-                     this.onLoggedIn(data.session);
-                     }.bind(this)));
-                     
-                     this.subscriptions.push(Postal.channel('session').subscribe('logout.success', function () {
-                     console.log('running logout.success postal event')
-                     if (this.onLoggedOut) {
-                     try {
-                     console.log('about to do onLoggedOut');
-                     this.onLoggedOut();
-                     console.log('about to do done...');
-                     } catch (ex) {
-                     console.error('Error in onLoggedOut');
-                     console.log(ex);
-                     }
-                     }
-                     }.bind(this)));
-                     */
-
-                    this.alert = Object.create(Alert).init();
 
                     // The status of the widget.
                     this.status = 'ready';
@@ -545,8 +517,6 @@ define([
                         alert: this.container.find('[data-placeholder="alert"]'),
                         content: this.container.find('[data-placeholder="content"]')
                     };
-                    // hook up the alert messages.
-                    this.alert.setContainer(this.places.alert);
                 }
             },
             // Render a waiting icon while.

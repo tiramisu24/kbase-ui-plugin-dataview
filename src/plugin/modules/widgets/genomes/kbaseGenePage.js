@@ -12,9 +12,9 @@
  */
 define([
     'jquery',
-    'kb_common_html',
-    'kb_service_workspace',
-    'kb_widgetBases_kbWidget',
+    'kb/common/html',
+    'kb/service/client/workspace',
+    'kb/widget/legacy/widget',
     'kb_dataview_genomes_geneInstanceInfo',
     'kb_dataview_genomes_geneBiochemistry',
     'kb_dataview_genomes_geneSequence'

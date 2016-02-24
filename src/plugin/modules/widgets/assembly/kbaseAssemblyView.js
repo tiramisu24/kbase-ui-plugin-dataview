@@ -12,9 +12,9 @@
  */
 define([
     'jquery',
-    'kb_common_html',
-    'kb_service_workspace',
-    'kb_widgetBases_kbAuthenticatedWidget'
+    'kb/common/html',
+    'kb/service/client/workspace',
+    'kb/widget/legacy/authenticatedWidget'
 ], function ($, html, Workspace) {
     'use strict';
     $.KBWidget({

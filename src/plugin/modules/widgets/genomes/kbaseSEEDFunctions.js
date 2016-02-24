@@ -16,10 +16,10 @@
 define([
     'jquery',
     'd3',
-    'kb_service_workspace',
+    'kb/service/client/workspace',
     'kb_plugin_dataview',
     
-    'kb_widgetBases_kbWidget',
+    'kb/widget/legacy/widget'
 ],
     function ($, d3, Workspace, Plugin) {
         'use strict';
@@ -111,7 +111,7 @@ define([
 
                 //d3.text("assets/data/subsys.txt", function(text) {
                 //d3.text("/static/subsys.txt", function(text) {
-                d3.text(Plugin.plugin.path + "/data/subsys.txt", function (text) {
+                d3.text(Plugin.plugin.fullPath + "/data/subsys.txt", function (text) {
                     var data = d3.tsv.parseRows(text),
                         totalGenesWithFunctionalRoles = 0,
                         i, j, geneCount, nodeHierarchy, parentHierarchy, node, gene;
@@ -308,8 +308,10 @@ define([
             click: function (d) {
 
                 // open window with gene landing page
-                if (d.children === undefined || (d._children === null && d.children === null)) {
-                    window.open("#genes/" + this.options.wsNameOrId + "/" + this.options.objNameOrId + "/" + d.name);
+                // if (d.children === undefined || (d._children === null && d.children === null)) {
+                // The size is set to an empty string for navigable leaves
+                if (d.size === '') {
+                    window.open("#dataview/" + this.options.wsNameOrId + "/" + this.options.objNameOrId + "?sub=Feature&subid=" + d.name);
                 }
 
                 // expand tree
@@ -325,7 +327,31 @@ define([
             },
             color: function (d) {
                 //return d._children ? "#3182bd" : d.children ? "#c6dbef" : "#fd8d3c";
-                return d._children ? "#c6dbef" : d.children ? "#3399ff" : "#ffffff";
+                /*
+                 * leaf color is set here.
+                 * A parent node collapsed and a non-feature leaf without
+                 */
+                
+                // terminal feature nodes are distinguished by having a string as 
+                // the size. A 0 size node has no children, and just retains
+                // the standard color.
+                // nodes with children become darker when expanded. Expansion is 
+                // detected by the presense of _children -- which is used to store
+                // the children when the parent is collapsed (and swapped to 
+                // .children when it is expanded.)
+                // The feature leaf nodes are always white.
+                if (typeof d.size === 'number') {
+                    if (d.size > 0) {
+                        if (d._children) {
+                            return '#c6dbef';
+                        } 
+                        return '#3399ff';
+                    }
+                    return '#c6dbef';
+                }
+                return '#ffffff';
+                
+                // return d._children ? "#c6dbef" : d.children ? "#3399ff" : "#ffffff";
             },
             collapse: function (d) {
                 var self = this;
@@ -358,7 +384,7 @@ define([
 
                 $.when(prom).fail($.proxy(function (error) {
                     //this.renderError(error); Need to define this function when I have time
-                    console.log(error);
+                    console.error(error);
                 }, this));
 
                 $.when(prom).done($.proxy(function (genome) {

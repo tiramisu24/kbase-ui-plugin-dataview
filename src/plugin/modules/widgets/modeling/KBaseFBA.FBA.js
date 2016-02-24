@@ -9,7 +9,7 @@ define([
     'jquery',
     'bluebird',
     'kb_dataview_widget_modeling_objects',
-    'kb_service_workspace'
+    'kb/service/client/workspace'
 ],
     function ($, Promise, KBObjects, Workspace) {
         'use strict';

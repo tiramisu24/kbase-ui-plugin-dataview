@@ -9,9 +9,9 @@ define([
     'jquery',
     'bluebird',
     'underscore',
-    'kb_service_workspace',
-    'kb_common_html',
-    'kb_service_utils'
+    'kb/service/client/workspace',
+    'kb/common/html',
+    'kb/service/utils'
 ],
     function ($, Promise, _, Workspace, html, APIUtils) {
         "use strict";
@@ -19,7 +19,6 @@ define([
         function factory(config) {
             var mount, container, $container, runtime = config.runtime,
                 theWidget, widgetContainer, panelInstalled;
-
 
             function findMapping(type, params) {
                 // var mapping = typeMap[objectType];
@@ -39,6 +38,16 @@ define([
                         //    console.error('Something was in sub, but no sub.sub or sub.subid found', params.sub);
                         //    return $('<div>');
                     }
+                } else {
+                    // Now we have a default mapping.
+                    mapping = {
+                        title: 'Generic Object View',
+                        widget: {
+                            name: 'kb_dataview_genericObject'
+                        },
+                        panel: true,
+                        options: []
+                    }
                 }
                 return mapping;
             }
@@ -57,36 +66,32 @@ define([
                 // params.objectVersion = params.ver;
 
                 // Get other params from the runtime.
-                return new Promise(function (resolve, reject) {
+                return Promise.try(function () {
                     var workspace = new Workspace(runtime.getConfig('services.workspace.url'), {
                         token: runtime.getService('session').getAuthToken()
                     }),
                         objectRefs = [{ref: makeObjectRef(params)}];
-                    Promise.resolve(workspace.get_object_info_new({
+                    return workspace.get_object_info_new({
                         objects: objectRefs,
                         ignoreErrors: 1,
                         includeMetadata: 1
-                    }))
+                    })
                         .then(function (data) {
                             if (data.length === 0) {
-                                reject('Object not found');
-                                return;
+                                throw new Error('Object not found');
                             }
                             if (data.length > 1) {
-                                reject('Too many (' + data.length + ') objects found.');
-                                return;
+                                throw new Error('Too many (' + data.length + ') objects found.');
                             }
                             if (data[0] === null) {
-                                reject('Null object returned');
-                                return;
+                                throw new Error('Null object returned');
                             }
 
                             var wsobject = APIUtils.object_info_to_object(data[0]);
                             var type = APIUtils.parseTypeId(wsobject.type),
                                 mapping = findMapping(type, params);
                             if (!mapping) {
-                                reject('Not Found', 'Sorry, cannot find widget for ' + type.module + '.' + type.name);
-                                return;
+                                throw new Error('Sorry, cannot find widget for ' + type.module + '.' + type.name);
                             }
                             // These params are from the found object.
                             var widgetParams = {
@@ -98,7 +103,7 @@ define([
                                 objectType: wsobject.type,
                                 type: wsobject.type
                             };
-                            
+
                             // handle sub
                             if (params.sub) {
                                 widgetParams[params.sub.toLowerCase() + 'ID'] = params.subid;
@@ -115,21 +120,14 @@ define([
                                 });
                             }
                             // Handle different types of widgets here.
-                            runtime.getService('widget').makeWidget(mapping.widget.name, mapping.widget.config)
+                            return runtime.getService('widget').makeWidget(mapping.widget.name, mapping.widget.config)
                                 .then(function (result) {
-                                    resolve({
+                                    return {
                                         widget: result,
                                         params: widgetParams,
                                         mapping: mapping
-                                    });
-                                })
-                                .catch(function (err) {
-                                    reject(err);
+                                    };
                                 });
-
-                        })
-                        .catch(function (err) {
-                            reject(err);
                         });
                 });
             }
@@ -212,51 +210,29 @@ define([
             }
             function run(params) {
                 return Promise.try(function () {
-                    return theWidget.run(params);
+                    if (theWidget && theWidget.run) {
+                        return theWidget.run(params);
+                    }
                 });
             }
             function stop() {
-                return new Promise(function (resolve, reject) {
+                return Promise.try(function () {
                     if (theWidget && theWidget.stop) {
-                        theWidget.stop()
-                            .then(function () {
-                                resolve();
-                            })
-                            .catch(function (err) {
-                                reject(err);
-                            });
-                    } else {
-                        resolve();
+                        return theWidget.stop();
                     }
                 });
             }
             function detach() {
-                return new Promise(function (resolve, reject) {
+               return Promise.try(function () {
                     if (theWidget && theWidget.detach) {
-                        theWidget.detach()
-                            .then(function () {
-                                resolve();
-                            })
-                            .catch(function (err) {
-                                reject(err);
-                            });
-                    } else {
-                        resolve();
+                        return theWidget.detach();
                     }
                 });
             }
             function destroy() {
-                return new Promise(function (resolve) {
-                    if (theWidget && theWidget.destroy) {
-                        theWidget.destroy()
-                            .then(function () {
-                                resolve();
-                            })
-                            .catch(function (err) {
-                                reject(err);
-                            });
-                    } else {
-                        resolve();
+                return Promise.try(function () {
+                    if (theWidget && theWidget.detach) {
+                        return theWidget.detach();
                     }
                 });
             }

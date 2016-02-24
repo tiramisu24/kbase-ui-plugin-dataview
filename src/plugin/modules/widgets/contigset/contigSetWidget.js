@@ -4,12 +4,11 @@ define([
     'bluebird',
     'jquery',
     'numeral',
-    'kb_common_html',
-    'kb_common_dom',
-    'kb_widgetBases_dataWidget',
-    'kb_service_workspace',
+    'kb/common/html',
+    'kb/widget/bases/dataWidget',
+    'kb/service/client/workspace',
     'datatables_bootstrap'
-], function (Promise, $, numeral, html, dom, DataWidget, Workspace) {
+], function (Promise, $, numeral, html, DataWidget, Workspace) {
     'use strict';
 
     function makeObjectRef(obj) {
@@ -31,29 +30,6 @@ define([
         return html.makeTableRotated(table);
     }
 
-//    function contigsTable(widget, contigSet) {
-//        var contigsData = contigSet.contigs.map(function (contig) {
-//            return {
-//                name: contig.id,
-//                length: contig.length
-//            }
-//        }),
-//            tableConfig = {
-//                sPaginationType: 'full_numbers',
-//                iDisplayLength: 10,
-//                aoColumns: [
-//                    {sTitle: 'Contig name', mData: 'name'},
-//                    {sTitle: 'Length', mData: 'length'}
-//                ],
-//                aaData: contigsData,
-//                oLanguage: {
-//                    sSearch: 'Search contig:',
-//                    sEmptyTable: 'No contigs found.'
-//                }
-//            };
-//
-//    }
-
     function contigsTable(widget, contigSet) {
         var contigsData = contigSet.contigs.map(function (contig) {
             return [
@@ -68,7 +44,7 @@ define([
         return html.makeTable(table);
     }
 
-    function widgetFactory(config) {
+    function factory(config) {
         return DataWidget.make({
             runtime: config.runtime,
             title: 'Contig Set Data View',
@@ -161,7 +137,7 @@ define([
 
     return {
         make: function (config) {
-            return widgetFactory(config);
+            return factory(config);
         }
     };
 });

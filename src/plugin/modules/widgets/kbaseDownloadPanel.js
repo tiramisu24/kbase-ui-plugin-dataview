@@ -13,13 +13,11 @@
 define([
     'jquery',
     'bluebird',
-    'kb.runtime',
-    'kb.html',
-    'kb.service.workspace',
-    'kb.utils',
-    'kb.jquery.widget',
+    'kb/common/html',
+    'kb/service/client/workspace',
+    'kb/widget/legacy/kbWidget'
 ],
-    function ($, Promise, R, html, WorkspaceService, Utils) {
+    function ($, Promise, html, WorkspaceService) {
         'use strict';
         $.KBWidget({
             name: "kbaseDownloadPanel",
@@ -130,25 +128,25 @@ define([
             },
             init: function (options) {
                 this._super(options);
-                this.wsUrl = R.getConfig('services.workspace.url');
-                this.transformURL = R.getConfig('services.transform.url');
-                this.ujsURL = R.getConfig('services.user_job_state.url');
-                this.shockURL = R.getConfig('services.shock.url');
-                this.exportURL = R.getConfig('services.data_import_export.url');
-                this.token = R.getAuthToken();
+                this.wsUrl = this.runtime.getConfig('services.workspace.url');
+                this.transformURL = this.runtime.getConfig('services.transform.url');
+                this.ujsURL = this.runtime.getConfig('services.user_job_state.url');
+                this.shockURL = this.runtimegetConfig('services.shock.url');
+                this.exportURL = this.runtime.getConfig('services.data_import_export.url');
+                this.token = this.runtime.service('session').getAuthToken();
                 this.type = null; //this.options.type;
                 this.wsId = this.options.params.ws;
                 this.objId = this.options.params.obj;
                 var self = this;
 
-                var Workspace = new WorkspaceService(this.wsUrl, {
+                var workspace = new WorkspaceService(this.wsUrl, {
                     token: this.token
                 });
-                Promise.resolve(Workspace.get_object_info_new({
+                workspace.get_object_info_new({
                     objects: [{
                             ref: this.wsId + '/' + this.objId
                         }]
-                }))
+                })
                     .then(function (objInfoList) {
                         self.objId = objInfoList[0][1];
                         self.type = objInfoList[0][2].split('-')[0];

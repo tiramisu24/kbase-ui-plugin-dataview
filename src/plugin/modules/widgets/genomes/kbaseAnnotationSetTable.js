@@ -10,10 +10,10 @@
  */
 define([
     'jquery',
-    'kb_common_html',
-    'kb_service_workspace',
+    'kb/common/html',
+    'kb/service/client/workspace',
     
-    'kb_widgetBases_kbAuthenticatedWidget',
+    'kb/widget/legacy/authenticatedWidget',
     'datatables_bootstrap'
 ],
     function ($, html, Workspace) {

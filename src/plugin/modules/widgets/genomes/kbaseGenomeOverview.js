@@ -14,11 +14,11 @@
  */
 define([
     'jquery',
-    'kb_common_html',
-    'kb_service_cdmi',
-    'kb_service_cdmiEntity',
-    'kb_service_workspace',
-    'kb_widgetBases_kbWidget'
+    'kb/common/html',
+    'kb/service/client/cdmi',
+    'kb/service/client/cdmiEntity',
+    'kb/service/client/workspace',
+    'kb/widget/legacy/widget'
 ], function ($, html, CDMI, CDMI_Entity, Workspace) {
     'use strict';
     $.KBWidget({

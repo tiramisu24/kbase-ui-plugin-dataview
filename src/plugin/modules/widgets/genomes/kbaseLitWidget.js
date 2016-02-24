@@ -9,9 +9,9 @@ define([
     'jquery', 
     'underscore', 
     'd3', 
-    'kb_common_html',
+    'kb/common/html',
     
-    'kb_widgetBases_kbWidget', 
+    'kb/widget/legacy/widget', 
     'datatables_bootstrap'
 ], function ($, _, d3, html) {
     'use strict';

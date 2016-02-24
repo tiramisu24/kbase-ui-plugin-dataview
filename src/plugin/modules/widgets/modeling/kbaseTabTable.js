@@ -8,11 +8,11 @@
 define([
     'jquery',
     'bluebird',
-    'kb_service_workspace',
-    'kb_service_fba',
+    'kb/service/client/workspace',
+    'kb/service/client/fba',
     'kb_dataview_widget_modeling_objects',
-    'kb_widget_kbTabs',
-    'kb_widgetBases_kbAuthenticatedWidget',
+    'kb/widget/legacy/tabs',
+    'kb/widget/legacy/authenticatedWidget',
     'kb_dataview_widget_modeling_biochem_media',
     'kb_dataview_widget_modeling_fba_fba',
     'kb_dataview_widget_modeling_fba_fbaModel',
@@ -20,7 +20,7 @@ define([
     //'kb_dataview_widget_modeling_phenotypeSet',
     //'kb_dataview_widget_modeling_phenotypeSimulationSet',
     //'kb_dataview_widget_modeling_genomeSet',
-    'kb_widget_helpers',
+    'kb/widget/legacy/helpers',
     'datatables_bootstrap'
 ],
     function ($, Promise, Workspace, FBA, KBObjects) {

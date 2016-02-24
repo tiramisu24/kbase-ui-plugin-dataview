@@ -46,11 +46,11 @@
 define([
     'jquery',
     'd3',
-    'kb_common_html',
-    'kb_service_cdmi',
+    'kb/common/html',
+    'kb/service/client/cdmi',
     'kb_plugin_dataview',
     
-    'kb_widgetBases_kbWidget',
+    'kb/widget/legacy/widget',
     'kb_dataview_genomes_contigBrowserButtons'
 ], function ($, d3, html, CDMI, Plugin) {
     'use strict';
@@ -200,7 +200,9 @@ define([
                     self.$featureInfoPanel.empty();
                     var $infoTable = $("<table>").addClass("table table-striped table-bordered");
                     if (d.id) {
-                        $infoTable.append(self.addInfoRow("Feature ID", '<a href="#/genes/' + self.options.workspaceID + '/' + self.options.genomeID + '/' + d.id + '" target="_blank">' + d.id + '</a>'));
+                        
+                        
+                        $infoTable.append(self.addInfoRow("Feature ID", '<a href="#dataview/' + self.options.workspaceID + '/' + self.options.genomeID + "?sub=Feature&subid=" +  d.id + '" target="_blank">' + d.id + '</a>'));
                     }
                     if (d.type) {
                         $infoTable.append(self.addInfoRow("Type", d.type));
@@ -984,11 +986,7 @@ define([
             }
 
             // read subsys.txt into seedOntology and seedTermsUniq objs
-            d3.text(Plugin.plugin.path + "/data/subsys.txt", function (text) {
-                console.log('IN'); 
-                console.log(Plugin.plugin.path);
-                console.log('GOT');
-                console.log(text);
+            d3.text(Plugin.plugin.fullPath + "/data/subsys.txt", function (text) {
                 var data = d3.tsv.parseRows(text);
 
                 var seedRole = "";

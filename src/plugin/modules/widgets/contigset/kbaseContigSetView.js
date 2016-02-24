@@ -13,11 +13,11 @@
 define([
     'jquery',
     'bluebird',
-    'kb_service_workspace',
-    'kb_common_html',
+    'kb/service/client/workspace',
+    'kb/common/html',
     
     'datatables_bootstrap',
-    'kb_widgetBases_kbAuthenticatedWidget',
+    'kb/widget/legacy/authenticatedWidget',
 ], function ($, Promise, Workspace, html) {
     'use strict';
     $.KBWidget({
