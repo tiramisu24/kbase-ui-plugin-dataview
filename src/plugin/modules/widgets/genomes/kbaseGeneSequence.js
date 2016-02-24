@@ -115,13 +115,13 @@ define([
                         var dnaDispStr = "";
                         var start_pos = 0;
                         var end_pos = 0;
-                        for (var i = 0; (i + 1) * seq_width - 1 < dnaSequenceStr.length; i++) {
+                        for (var i = 0; (i + 1) * seq_width < dnaSequenceStr.length; i++) {
                             start_pos = i * seq_width;
-                            end_pos = (i + 1) * seq_width - 1;
+                            end_pos = (i + 1) * seq_width;
                             dnaDispStr += dnaSequenceStr.substring(start_pos, end_pos) + '<br>';
                         }
                         start_pos += seq_width;
-                        end_pos = dnaSequenceStr.length - 1;
+                        end_pos = dnaSequenceStr.length;
                         if (start_pos < dnaSequenceStr.length) {
                             dnaDispStr += dnaSequenceStr.substring(start_pos, end_pos) + '<br>';
                         }
@@ -149,13 +149,13 @@ define([
                                     var dnaDispStr = "";
                                     var start_pos = 0;
                                     var end_pos = 0;
-                                    for (var i = 0; (i + 1) * seq_width - 1 < dnaSequenceStr.length; i++) {
+                                    for (var i = 0; (i + 1) * seq_width < dnaSequenceStr.length; i++) {
                                         start_pos = i * seq_width;
-                                        end_pos = (i + 1) * seq_width - 1;
+                                        end_pos = (i + 1) * seq_width;
                                         dnaDispStr += dnaSequenceStr.substring(start_pos, end_pos) + '<br>';
                                     }
                                     start_pos += seq_width;
-                                    end_pos = dnaSequenceStr.length - 1;
+                                    end_pos = dnaSequenceStr.length;
                                     if (start_pos < dnaSequenceStr.length) {
                                         dnaDispStr += dnaSequenceStr.substring(start_pos, end_pos) + '<br>';
                                     }
