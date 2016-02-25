@@ -39,9 +39,9 @@ define([
             init: function (options) {
                 this._super(options);
 
-                this.workspace = new Workspace(this.runtime.config('services.workspace.url', {
+                this.workspace = new Workspace(this.runtime.config('services.workspace.url'), {
                     token: this.runtime.service('session').getAuthToken()
-                }));
+                });
                 this.pref = this.genUUID();
                 this.geneIndex = {};
                 this.genomeNames = {};
