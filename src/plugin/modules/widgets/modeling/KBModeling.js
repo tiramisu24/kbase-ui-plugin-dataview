@@ -12,8 +12,7 @@
 define([
 ], function () {
     'use strict';
-    var kbObjects = function (config) {
-        this.runtime = config.runtime;
+    return function (config) {
+        // this.runtime = config.runtime;
     };
-    return kbObjects;
 });
