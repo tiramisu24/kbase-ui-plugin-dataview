@@ -6,25 +6,31 @@
  white: true
  */
 define([
-    'kb_widget_dataview_modeling_objects',
-    'kb.service.workspace',
-    'kb.runtime',
-    'bluebird'
+    'jquery',
+    'kb/service/client/workspace',
+    'kb_widget_dataview_modeling_modeling'
 ],
-    function (KBObjects, Workspace, R, Promise) {
+    function ($, Workspace, KBModeling) {
         'use strict';
         function KBasePhenotypes_PhenotypeSimulationSet(tabwidget) {
             var self = this;
             this.tabwidget = tabwidget;
+            this.runtime = tabwidget.runtime;
+
+            this.workspaceClient = new Workspace(this.runtime.config('services.workspace.url'), {
+                token: this.runtime.service('session').getAuthToken()
+            });
 
             this.setMetadata = function (data) {
                 this.workspace = data[7];
                 this.objName = data[1];
-                this.overview = {wsid: data[7] + "/" + data[1],
+                this.overview = {
+                    wsid: data[7] + "/" + data[1],
                     objecttype: data[2],
                     owner: data[5],
                     instance: data[4],
-                    moddate: data[3]};
+                    moddate: data[3]
+                };
                 // if there is user metadata, add it
                 if ('Name' in data[10]) {
                     this.usermeta = {
@@ -40,20 +46,19 @@ define([
 
             this.setData = function (indata) {
                 self.data = indata;
-                var workspace = new Workspace(R.getConfig('services.workspace.url'), {
-                    token: R.getAuthToken()
-                });
-                        console.log(indata);
-                return new Promise.resolve(workspace.get_objects([{ref: indata.phenotypeset_ref}]))
+                this.workspaceClient.get_objects([{ref: indata.phenotypeset_ref}])
                     .then(function (data) {
-                        var kbObjects = new KBObjects();
-                        self.phenoset = new kbObjects["KBasePhenotypes_PhenotypeSet"](self.tabwidget);
+                        var kbModeling = new KBModeling();
+                        self.phenoset = new kbModeling["KBasePhenotypes_PhenotypeSet"](self.tabwidget);
                         self.phenoset.setMetadata(data[0].info);
                         return self.phenoset.setData(data[0].data);
+                    }).then(function () {
+                    self.formatObject();
+                    return null;
+                })
+                    .catch(function (err) {
+                        console.error(err);
                     })
-                    .then(function () {
-                        self.formatObject();
-                    });
             };
 
             this.formatObject = function () {
@@ -129,6 +134,8 @@ define([
         }
 
 
+
+
 // make method of base class
-        KBObjects.prototype.KBasePhenotypes_PhenotypeSimulationSet = KBasePhenotypes_PhenotypeSimulationSet;
+        KBModeling.prototype.KBasePhenotypes_PhenotypeSimulationSet = KBasePhenotypes_PhenotypeSimulationSet;
     });

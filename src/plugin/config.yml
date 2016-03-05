@@ -73,8 +73,8 @@ source:
             module: kb_dataview_widget_modeling_tabTable
             file: widgets/modeling/kbaseTabTable            
         -
-            module: kb_dataview_widget_modeling_objects
-            file: widgets/modeling/KBObjects
+            module: kb_dataview_widget_modeling_modeling
+            file: widgets/modeling/KBModeling
         -
             module: kb_dataview_widget_modeling_biochem_media
             file: widgets/modeling/KBaseBiochem.Media

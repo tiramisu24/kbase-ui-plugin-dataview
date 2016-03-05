@@ -6,12 +6,13 @@
  white: true
  */
 define([
-    'kb_dataview_widget_modeling_objects'
-], function (KBObjects) {
+    'kb_dataview_widget_modeling_modeling'
+], function (KBModeling) {
     'use strict';
     function KBaseBiochem_Media(tabwidget) {
         var self = this;
         this.tabwidget = tabwidget;
+
         this.setMetadata = function (data) {
             this.overview = {
                 wsid: data[7] + "/" + data[1],
@@ -23,23 +24,27 @@ define([
                 source: data[10]["Source ID"],
                 minimal: data[10]["Is Minimal"],
                 defined: data[10]["Is Defined"],
-                numcompounds: data[10]["Number compounds"]};
+                numcompounds: data[10]["Number compounds"]
+            };
         };
+
         this.setData = function (data) {
             this.data = data;
             this.mediacompounds = this.data.mediacompounds;
             this.reagents = this.data.reagents;
             this.cpdhash = {};
             var cpdarray = [];
+
             for (var i = 0; i < this.mediacompounds.length; i++) {
                 var cpd = this.mediacompounds[i];
                 cpd.id = cpd.compound_ref.split("/").pop();
+
                 this.cpdhash[cpd.id] = cpd;
                 cpdarray.push(cpd.id);
             }
 
-            var p = this.tabwidget.getBiochemCompounds(cpdarray)
-                .done(function (cpds) {
+            return this.tabwidget.getBiochemCompounds(cpdarray)
+                .then(function (cpds) {
                     for (var i = 0; i < self.mediacompounds.length; i++) {
                         var cpd = self.mediacompounds[i];
                         cpd.name = cpds[i].name;
@@ -50,13 +55,11 @@ define([
                         cpd.abbrev = cpds[i].abbrev;
                     }
                 });
-
-            return p;
         };
+
         this.CompoundTab = function (info) {
             var cpd = this.cpdhash[info.id];
-            return [
-                {
+            return [{
                     "label": "Compound",
                     "data": cpd.id
                 }, {
@@ -80,9 +83,8 @@ define([
                 }, {
                     "label": "Concentration",
                     "data": cpd.concentration
-                }
-            ];
-        };
+                }];
+        }
 
         this.tabList = [{
                 "key": "overview",
@@ -112,7 +114,7 @@ define([
                         "key": "source"
                     }, {
                         "label": "Is minimal",
-                        "key": "minimal"
+                        "key": "minimal",
                     }, {
                         "label": "Is defined",
                         "key": "defined"
@@ -129,7 +131,7 @@ define([
                         "key": "id",
                         "type": "tabLink",
                         "linkformat": "dispID",
-                        "method": "CompoundTab"
+                        "method": "CompoundTab",
                     }, {
                         "label": "Name",
                         "key": "name"
@@ -139,29 +141,18 @@ define([
                     }, {
                         "label": "Charge",
                         "key": "charge"
-                    } /* {
-                     "label": "Compartment",
-                     "key": "compartment",
-                     "type": "tabLink",
-                     "method": "CompartmentTab"
-                     }*/]
-            }, {
-                "key": "reagents",
-                "name": "Reagents",
-                "type": "dataTable",
-                "columns": [{
-                        "label": "Reagent",
-                        "key": "id"
                     }, {
-                        "label": "Name",
-                        "key": "name"
+                        "label": "Min uptake<br>(mol/g CDW hr)",
+                        "key": "minFlux"
                     }, {
-                        "label": "Concentration",
-                        "key": "concentration"
+                        "label": "Max uptake<br>(mol/g CDW hr)",
+                        "key": "maxFlux"
                     }]
             }];
     }
 
+
+
 // make method of base class
-    KBObjects.prototype.KBaseBiochem_Media = KBaseBiochem_Media;
+    KBModeling.prototype.KBaseBiochem_Media = KBaseBiochem_Media;
 });

@@ -7,16 +7,21 @@
  */
 define([
     'jquery',
-    'bluebird',
-    'kb_dataview_widget_modeling_objects',
-    'kb/service/client/workspace'
+    'kb/service/client/workspace',
+    'kb_dataview_widget_modeling_modeling',
+    'plugins/dataview/modules/widgets/modeling/kbasePathways',
+    'kb_vis_pmiBarchart',
 ],
-    function ($, Promise, KBObjects, Workspace) {
+    function ($, Workspace, KBModeling) {
         'use strict';
         function KBaseFBA_FBA(modeltabs) {
             var self = this;
-            this.runtime = modeltabs.runtime;
             this.modeltabs = modeltabs;
+            this.runtime = modeltabs.runtime;
+
+            this.workspaceClient = new Workspace(this.runtime.config('services.workspace.url'), {
+                token: this.runtime.service('session').getAuthToken()
+            });
 
             this.tabList = [{
                     "key": "overview",
@@ -64,6 +69,9 @@ define([
                             "label": "Expression",
                             "key": "expression",
                             "type": "wstype"
+                        }, {
+                            "label": "Expression condition",
+                            "key": "expressioncolumn",
                         }, {
                             "label": "Single KO",
                             "key": "singleko"
@@ -130,9 +138,6 @@ define([
                             "method": "ReactionTab",
                             "width": "15%"
                         }, {
-                            "label": "Name",
-                            "key": "name"
-                        }, {
                             "label": "Flux",
                             "key": "flux",
                             "visible": 1
@@ -152,12 +157,12 @@ define([
                             "label": "Equation",
                             "key": "equation",
                             "type": "tabLink",
-                            "linkformat": "linkequation"
+                            "linkformat": "linkequation",
                         }, {
                             "label": "Genes",
                             "key": "genes",
                             "type": "tabLinkArray",
-                            "method": "GeneTab"
+                            "method": "GeneTab",
                         }]
                 }, {
                     "key": "compoundFluxes",
@@ -235,7 +240,7 @@ define([
                             "linkformat": "dispID"
                         }, {
                             "label": "Biomass flux",
-                            "key": "bioflux"
+                            "key": "bioflux",
                         }, {
                             "label": "Name",
                             "key": "name"
@@ -253,7 +258,19 @@ define([
                             "key": "maxprod",
                             "visible": 0
                         }]
-                }];
+                },
+                {
+                    "name": "Pathways",
+                    "widget": "kbasePathways",
+                    "getParams": function () {
+                        return {
+                            runtime: self.runtime,
+                            models: [self.model],
+                            fbas: [self.data]
+                        };
+                    }
+                }
+            ];
 
             this.setMetadata = function (indata) {
                 this.workspace = indata[7];
@@ -269,7 +286,6 @@ define([
                 };
 
                 this.usermeta = {};
-
                 // if there is user metadata, add it
                 if ('Model' in indata[10]) {
                     this.usermeta = {
@@ -285,13 +301,22 @@ define([
                         numconstraints: indata[10]["Number constraints"],
                         numaddnlcpds: indata[10]["Number additional compounds"]
                     };
-
+                    if ('ExpressionMatrix' in indata[10]) {
+                        this.usermeta["expression"] = indata[10]["ExpressionMatrix"];
+                    }
+                    if ('PromConstraint' in indata[10]) {
+                        this.usermeta["promconstraint"] = indata[10]["PromConstraint"];
+                    }
+                    if ('ExpressionMatrixColumn' in indata[10]) {
+                        this.usermeta["expressioncolumn"] = indata[10]["ExpressionMatrixColumn"];
+                    }
                     $.extend(this.overview, this.usermeta);
                 }
             };
 
             this.formatObject = function () {
                 this.usermeta.model = self.data.fbamodel_ref;
+
                 this.usermeta.media = self.data.media_ref;
                 this.usermeta.objective = self.data.objectiveValue;
                 this.usermeta.minfluxes = self.data.fluxMinimization;
@@ -407,9 +432,20 @@ define([
                         mdlgene.growthFraction = this.delhash[mdlgene.id].growthFraction;
                     }
                 }
+                var exp_state = 0;
+                var exp_value = 0;
                 for (var i = 0; i < this.modelreactions.length; i++) {
                     var mdlrxn = this.modelreactions[i];
                     if (this.rxnhash[mdlrxn.id]) {
+                        if ("exp_state" in this.rxnhash[mdlrxn.id]) {
+                            mdlrxn.exp_state = this.rxnhash[mdlrxn.id].exp_state;
+                        }
+                        if ("expression" in this.rxnhash[mdlrxn.id]) {
+                            mdlrxn.expression = this.rxnhash[mdlrxn.id].expression;
+                        }
+                        if ("scaled_exp" in this.rxnhash[mdlrxn.id]) {
+                            mdlrxn.scaled_exp = this.rxnhash[mdlrxn.id].scaled_exp;
+                        }
                         mdlrxn.upperFluxBound = this.rxnhash[mdlrxn.id].upperBound;
                         mdlrxn.lowerFluxBound = this.rxnhash[mdlrxn.id].lowerBound;
                         mdlrxn.fluxMin = this.rxnhash[mdlrxn.id].min;
@@ -423,6 +459,27 @@ define([
                         mdlrxn.customUpperBound = this.rxnboundhash[mdlrxn.id].upperBound;
                         mdlrxn.customLowerBound = this.rxnboundhash[mdlrxn.id].lowerBound;
                     }
+                    if ("exp_state" in mdlrxn) {
+                        exp_state = 1;
+                    }
+                    if ("expression" in mdlrxn) {
+                        exp_value = 1;
+                        mdlrxn.scaled_exp = Math.round(100 * mdlrxn.scaled_exp) / 100;
+                        mdlrxn.expression = Math.round(100 * mdlrxn.expression) / 100;
+                        mdlrxn.exp_value = mdlrxn.scaled_exp + "<br>(" + mdlrxn.expression + ")";
+                    }
+                }
+                if (exp_value === 1) {
+                    this.tabList[1].columns.splice(2, 0, {
+                        "label": "Scaled expression (unscaled value)",
+                        "key": "exp_value"
+                    });
+                }
+                if (exp_state === 1) {
+                    this.tabList[1].columns.splice(2, 0, {
+                        "label": "Expression state",
+                        "key": "exp_state"
+                    });
                 }
                 this.compoundFluxes = [];
                 this.cpdfluxhash = {};
@@ -489,18 +546,64 @@ define([
                 }
             };
 
-            this.setData = function (indata) {
+            this.setData = function (indata, tabs) { // this is a mess
                 self.data = indata;
-                var workspace = new Workspace(this.runtime.getConfig('services.workspace.url', {
-                    token: this.runtime.service('session').getAuthToken()
-                }));
-                return new Promise.resolve(workspace.get_objects([{ref: indata.fbamodel_ref}]))
+                return self.workspaceClient.get_objects([{ref: indata.fbamodel_ref}])
                     .then(function (data) {
-                        var kbObjects = new KBObjects({runtime: self.runtime});
-                        self.model = new kbObjects.KBaseFBA_FBAModel(self.modeltabs);
+                        self.model = data[0].data;
+
+                        //this is a godawful hack. When we setData, lookup the PlantModelTemplate, and if it's there, then add a barchart
+                        //otherwise, do nothing. Assume we'll attempt this if we've been given tabs.
+                        if (tabs !== undefined) {
+                            self.workspaceClient.get_objects([{ref: self.model.template_ref}])
+                                .then(function (data) {
+
+                                    var $usePlantModel = 0;
+
+                                    if (data[0].info[1] === 'PlantModelTemplate') {
+                                        $usePlantModel = 1;
+                                        //tabs.$elem.find('[data-id=Pathways]').hide();
+                                    }
+
+                                    var $barchartElem = $.jqElem('div');
+                                    $barchartElem.kbasePMIBarchart(
+                                        {
+                                            runtime: self.runtime,
+                                            fba_workspace: self.workspace,
+                                            fba_object: self.objName,
+                                            subsystem_annotation_object:
+                                                $usePlantModel
+                                                ? 'PlantSEED_Subsystems'
+                                                : 'default-kegg-subsystems',
+                                            subsystem_annotation_workspace:
+                                                $usePlantModel
+                                                ? 'PlantSEED'
+                                                : 'kbase',
+                                            selected_subsystems:
+                                                $usePlantModel
+                                                ? ["Central Carbon: Glycolysis_and_Gluconeogenesis_in_plants"]
+                                                : ["Carbohydrate metabolism: Glycolysis / Gluconeogenesis"]
+                                        }
+                                    );
+
+                                    tabs.addTab({
+                                        "name": "Bar charts",
+                                        'content': $barchartElem
+                                    });
+                                    return null;
+                                })
+                                .catch(function (err) {
+                                    console.log(err);
+                                });
+                        }
+
+                        var kbModeling = new KBModeling();  // this is a mess
+                        self.model = new kbModeling["KBaseFBA_FBAModel"](self.modeltabs);
+
                         self.model.setMetadata(data[0].info);
                         self.model.setData(data[0].data);
                         self.formatObject();
+                        return null;
                     });
             };
 
@@ -514,10 +617,9 @@ define([
                 }
                 var output = self.model.ReactionTab(info);
                 if (output && 'done' in output) {
-                    output.then(function (data) {
+                    return output.then(function (data) {
                         return self.ExtendReactionTab(info, data);
                     });
-                    return output;
                 }
                 return self.ExtendReactionTab(info, output);
             };
@@ -546,10 +648,9 @@ define([
             this.CompoundTab = function (info) {
                 var output = self.model.CompoundTab(info);
                 if (output && 'done' in output) {
-                    output.then(function (data) {
+                    return output.then(function (data) {
                         return self.ExtendCompoundTab(info, data);
                     });
-                    return output;
                 }
                 return self.ExtendCompoundTab(info, output);
             };
@@ -582,10 +683,9 @@ define([
             this.GeneTab = function (info) {
                 var output = self.model.GeneTab(info);
                 if (output && 'done' in output) {
-                    output.then(function (data) {
+                    return output.then(function (data) {
                         return self.ExtendGeneTab(info, data);
                     });
-                    return output;
                 }
                 return self.ExtendGeneTab(info, output);
             };
@@ -606,10 +706,9 @@ define([
             this.BiomassTab = function (info) {
                 var output = self.model.BiomassTab(info);
                 if (output && 'done' in output) {
-                    output.then(function (data) {
+                    return output.then(function (data) {
                         return self.ExtendBiomassTab(info, data);
                     });
-                    return output;
                 }
                 return self.ExtendBiomassTab(info, output);
             };
@@ -643,6 +742,7 @@ define([
             };
         }
 
+
 // make method of base class
-        KBObjects.prototype.KBaseFBA_FBA = KBaseFBA_FBA;
+        KBModeling.prototype.KBaseFBA_FBA = KBaseFBA_FBA;
     });

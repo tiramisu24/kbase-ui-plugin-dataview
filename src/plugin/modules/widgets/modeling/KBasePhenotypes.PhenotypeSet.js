@@ -7,11 +7,10 @@
  */
 define([
     'jquery',
-    'kb_dataview_widget_modeling_objects',
-    
+    'kb_dataview_widget_modeling_modeling',
     'kb_dataview_widget_modeling_tabTable'
 ],
-    function ($, KBObjects) {
+    function ($, KBModeling) {
         'use strict';
         function KBasePhenotypes_PhenotypeSet(modeltabs) {
             var self = this;
@@ -32,7 +31,7 @@ define([
                         source: data[10]["Source"] + "/" + data[10]["Source ID"],
                         numphenotypes: data[10]["Number phenotypes"],
                         type: data[10]["Type"]
-                    }
+                    };
 
                     $.extend(this.overview, this.usermeta);
                 }
@@ -44,14 +43,18 @@ define([
                 var cpd_refs_hash = {};
                 for (var i = 0; i < this.phenotypes.length; i++) {
                     var refs = this.phenotypes[i].additionalcompound_refs;
-                    refs.forEach(function (ref) {
-                        var split = ref.split('/'),
-                            id = split[split.length - 1];
-                        cpd_refs_hash[id] = 1;
-                    });
+                    for (var j = 0; j < refs.length; j++) {
+                        cpd_refs_hash[refs[j]] = 1;
+                    }
                 }
 
-                return this.modeltabs.getBiochemCompounds(Object.keys(cpd_refs_hash))
+                var cpd_refs = [];
+
+                for (var key in cpd_refs_hash) {
+                    cpd_refs.push(key);
+                }
+
+                var promise = this.modeltabs.getBiochemCompounds(cpd_refs)
                     .then(function (cpds) {
                         var addcpd_names_hash = {};
                         for (var j = 0; j < cpds.length; j++) {
@@ -65,7 +68,13 @@ define([
                             }
                             self.phenotypes[i].additionalcompound_names = names;
                         }
+                        return null;
+                    })
+                    .catch(function (err) {
+                        console.error(err);
                     });
+
+                return promise;
             };
 
             this.tabList = [{
@@ -125,6 +134,8 @@ define([
                 }];
         }
 
+
+
 // make method of base class
-        KBObjects.prototype.KBasePhenotypes_PhenotypeSet = KBasePhenotypes_PhenotypeSet;
+        KBModeling.prototype.KBasePhenotypes_PhenotypeSet = KBasePhenotypes_PhenotypeSet;
     });

@@ -7,9 +7,9 @@
  */
 define([
     'jquery',
-    'kb_dataview_widget_modeling_objects',
+    'kb_dataview_widget_modeling_modeling',
     'kb_dataview_widget_modeling_tabTable'
-], function ($, KBObjects) {
+], function ($, KBModeling) {
     'use strict';
     function KBaseSearch_GenomeSet(modeltabs) {
         var self = this;
@@ -18,8 +18,7 @@ define([
         this.setMetadata = function (data) {
             this.workspace = data[7];
             this.objName = data[1];
-            this.overview = {
-                wsid: data[7] + "/" + data[1],
+            this.overview = {wsid: data[7] + "/" + data[1],
                 objecttype: data[2],
                 owner: data[5],
                 instance: data[4],
@@ -85,6 +84,7 @@ define([
             }];
     }
 
+
 // make method of base class
-    KBObjects.prototype.KBaseSearch_GenomeSet = KBaseSearch_GenomeSet;
+    KBModeling.prototype.KBaseSearch_GenomeSet = KBaseSearch_GenomeSet;
 });

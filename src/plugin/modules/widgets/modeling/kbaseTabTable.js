@@ -8,9 +8,10 @@
 define([
     'jquery',
     'bluebird',
+    'kb/common/html',
     'kb/service/client/workspace',
     'kb/service/client/fba',
-    'kb_dataview_widget_modeling_objects',
+    'kb_dataview_widget_modeling_modeling',
     'kb/widget/legacy/tabs',
     'kb/widget/legacy/authenticatedWidget',
     'kb_dataview_widget_modeling_biochem_media',
@@ -23,7 +24,7 @@ define([
     'kb/widget/legacy/helpers',
     'datatables_bootstrap'
 ],
-    function ($, Promise, Workspace, FBA, KBObjects) {
+    function ($, Promise, html, Workspace, FBA, KBModeling) {
         'use strict';
         $.KBWidget({
             name: "kbaseTabTable",
@@ -44,7 +45,7 @@ define([
                 var tabs;
 
                 // base class for workspace object classes
-                var kbObjects = new KBObjects({
+                var kbModeling = new KBModeling({
                     runtime: this.runtime
                 });
 
@@ -53,7 +54,7 @@ define([
                 //
 
                 var className = type.split(/-/)[0].replace(/\./g, '_');
-                var ClassObject = kbObjects[className];
+                var ClassObject = kbModeling[className];
                 this.obj = new ClassObject(self);
 
                 //
@@ -83,14 +84,14 @@ define([
                 else if (!isNaN(input.ws) && !isNaN(input.obj))
                     var param = {ref: input.ws + '/' + input.obj};
 
-                this.workspace = new Workspace(this.runtime.getConfig('services.workspace.url'), {
+                this.workspaceClient = new Workspace(this.runtime.config('services.workspace.url'), {
                     token: this.runtime.service('session').getAuthToken()
                 });
-                this.fba = new FBA(this.runtime.getConfig('services.fba.url'), {
+                this.fbaClient = new FBA(this.runtime.config('services.fba.url'), {
                     token: this.runtime.service('session').getAuthToken()
                 });
 
-                this.workspace.get_object_info_new({objects: [param], includeMetadata: 1})
+                this.workspaceClient.get_object_info_new({objects: [param], includeMetadata: 1})
                     .then(function (res) {
                         self.obj.setMetadata(res[0]);
 
@@ -107,11 +108,11 @@ define([
                                 tabPane.append(table);
                             }
                         }
+                        return null;
                     })
                     .catch(function (err) {
                         console.log('ERROR getting object info (new)');
                         console.log(err);
-                        // tabPane.append('<b>Error</b><p>' + String(err) + '</p>');
                     });
 
                 //
@@ -123,18 +124,14 @@ define([
                     var param = {ref: input.ws + '/' + input.obj};
                 }
 
-                this.workspace.get_objects([param])
+                this.workspaceClient.get_objects([param])
                     .then(function (data) {
-                        var setMethod = self.obj.setData(data[0].data);
-
-                        // see if setData method returns promise or not
-                        if (setMethod && 'done' in setMethod) {
-                            setMethod.done(function () {
-                                buildContent();
+                        return Promise.try(function () {
+                            return self.obj.setData(data[0].data, tabs)
+                        })
+                            .then(function () {
+                                return buildContent();
                             });
-                        } else {
-                            buildContent();
-                        }
                     })
                     .catch(function (err) {
                         console.log('ERROR getting objects');
@@ -142,73 +139,88 @@ define([
                     });
 
                 var refLookup = {};
-                function preProcessDataTable(tabSpec) {
-                    // get refs
-                    var refs = [],
-                        cols = tabSpec.columns;
-                    cols.forEach(function (col) {
-                        if ((col.type === 'tabLink' || col.type === 'wstype') && col.linkformat === 'dispWSRef') {
-                            self.obj[tabSpec.key].forEach(function (item) {
-                                refs.push({ref: item[col.key]});
-                            });
-                        }
-                    });
-
-                    if (!refs.length) {
-                        return;
-                    }
-
-                    // get human readable info from workspaces
-                    return self.workspace.get_object_info_new({objects: refs})
-                        .then(function (data) {
-                            refs.forEach(function (ref, i) {
-                                // if (ref in referenceLookup) return
-                                refLookup[ref.ref] = {
-                                    name: data[i][1],
-                                    ws: data[i][7],
-                                    type: data[i][2].split('-')[0],
-                                    //link: data[i][2].split('-')[0]+'/'+data[i][7]+'/'+data[i][1]
-                                    link: data[i][7] + '/' + data[i][1]
-                                };
-                            });
+                function preProcessDataTable(tabSpec, tabPane) {
+                    return Promise.try(function () {
+                        // get refs
+                        var refs = [],
+                            cols = tabSpec.columns;
+                        cols.forEach(function (col) {
+                            if ((col.type === 'tabLink' || col.type === 'wstype') && col.linkformat === 'dispWSRef') {
+                                self.obj[tabSpec.key].forEach(function (item) {
+                                    if (refs.indexOf(item[col.key]) === -1) {
+                                        refs.push({ref: item[col.key]});
+                                    }
+                                });
+                            }
                         });
+
+                        if (!refs.length) {
+                            return null;
+                        }
+
+                        // get human readable info from workspaces
+                        return self.workspaceClient.get_object_info_new({objects: refs})
+                            .then(function (data) {
+                                refs.forEach(function (ref, i) {
+                                    // if (ref in referenceLookup) return
+                                    refLookup[ref.ref] = {
+                                        name: data[i][1],
+                                        ws: data[i][7],
+                                        type: data[i][2].split('-')[0],
+                                        //link: data[i][2].split('-')[0]+'/'+data[i][7]+'/'+data[i][1]
+                                        link: data[i][7] + '/' + data[i][1]
+                                    };
+                                });
+                                return null;
+                            });
+                    });
                 }
 
-                function buildContent() {
+                function buildContent(data) {
 
                     //5) Iterates over the entries in the spec and instantiate things
-                    for (var i = 0; i < tabList.length; i++) {
-                        var tabSpec = tabList[i];
-                        var tabPane = tabs.tabContent(tabSpec.name);
+                    return Promise.all(tabList.map(function (tabSpec) {
+                        Promise.try(function () {
+                            var tabPane = tabs.tabContent(tabSpec.name);
 
-                        // skip any vertical tables for now
-                        if (tabSpec.type === 'verticaltbl')
-                            continue;
+                            // skip any vertical tables for now
+                            if (tabSpec.type === 'verticaltbl') {
+                                return;
+                            }
 
-                        // if widget, invoke widget with arguments
-                        else if (tabSpec.widget) {
-                            var keys = tabSpec.keys.split(/\,\s+/g);
-                            var params = {};
-                            tabSpec.arguments.split(/\,\s+/g).forEach(function (arg, i) {
-                                params[arg] = self.obj[keys[i]];
-                            });
+                            // if widget, invoke widget with arguments
+                            if (tabSpec.widget) {
+                                try {
+                                    tabPane[tabSpec.widget](tabSpec.getParams());
+                                } catch (ex) {
+                                    createErrorMessage(tabPane, ex.message);
+                                } finally {
+                                    return;
+                                }
+                            }
 
-                            tabPane[tabSpec.widget](params);
-                            continue;
-                        }
+                            // preprocess data to get workspace info on any references in class
 
-                        // preprocess data to get workspace info on any references in class
-                        var prom = preProcessDataTable(tabSpec);
-                        if (prom) {
-                            prom.then(function () {
-                                createDataTable(tabSpec, tabPane);
-                            });
-                        } else {
-                            createDataTable(tabSpec, tabPane);
-                        }
+                            return preProcessDataTable(tabSpec, tabPane)
+                                .then(function () {
+                                    createDataTable(tabSpec, tabPane);
+                                    return null;
+                                })
+                                .catch(function (err) {
+                                    createErrorMessage(tabPane, err.message || err.error.message);
+                                    return null;
+                                });
+                        });
+                    }));
+                }
 
-
-                    }
+                function createErrorMessage(tabPane, message) {
+                    tabPane.empty();
+                    tabPane.append('<br>');
+                    tabPane.append(html.makePanel({
+                        title: 'Error',
+                        content: message
+                    }));
                 }
 
                 // creates a datatable on a tabPane
@@ -250,53 +262,60 @@ define([
                     return settings;
                 };
 
-
                 function newTabEvents(name) {
                     var ids = tabs.tabContent(name).find('.id-click');
 
                     ids.unbind('click');
                     ids.click(function () {
-                        var info = {id: $(this).data('id'),
+                        var info = {
+                            id: $(this).data('id'),
                             type: $(this).data('type'),
                             method: $(this).data('method'),
                             ref: $(this).data('ref'),
                             name: $(this).data('name'),
                             ws: $(this).data('ws'),
-                            action: $(this).data('action')};
-
-                        var content = $('<div>');
+                            action: $(this).data('action')
+                        },
+                        contentDiv = $('<div>'),
+                            methodResult;
 
                         if (info.method && info.method !== 'undefined') {
-                            var res = self.obj[info.method](info);
 
-                            if (res) {
-                                content = $('<div>').loading();
-                                Promise.resolve(res)
-                                    .then(function (rows) {
-                                        content.rmLoading();
-                                        var table = self.verticalTable({rows: rows});
-                                        content.append(table);
-                                    })
-                                    .catch(function (err) {
-                                        content.append('ERROR');
-                                    })
-                            } else if (res === undefined) {
-                                content.append('<br>No data found for ' + info.id);
+                            try {
+                                methodResult = self.obj[info.method](info);
+                                if (methodResult) {
+                                    contentDiv.loading();
+                                    Promise.resolve(methodResult)
+                                        .then(function (rows) {
+                                            contentDiv.rmLoading();
+                                            var table = self.verticalTable({rows: rows});
+                                            contentDiv.append(table);
+                                            return null;
+                                        })
+                                        .catch(function (err) {
+                                            console.error(err);
+                                            contentDiv.append('ERROR');
+                                            contentDiv.append(err.message);
+                                        });
+                                } else {
+                                    contentDiv.append('<br>No data found for ' + info.id);
+                                }
+                            } catch (ex) {
+                                console.error(ex);
+                                contentDiv.append('ERROR');
+                                contentDiv.append(ex.message);
                             }
 
-                            tabs.addTab({name: info.id, content: content, removable: true});
+                            tabs.addTab({name: info.id, content: contentDiv, removable: true});
                             tabs.showTab(info.id);
                             newTabEvents(info.id);
 
                         } else if (info.action === 'openWidget') {
-                            content.kbaseTabTable({ws: info.ws, type: info.type, obj: info.name});
-                            tabs.addTab({name: info.id, content: content, removable: true});
+                            contentDiv.kbaseTabTable({ws: info.ws, type: info.type, obj: info.name});
+                            tabs.addTab({name: info.id, content: contentDiv, removable: true});
                             tabs.showTab(info.id);
                             newTabEvents(info.id);
                         }
-
-
-
                     });
                 }
 
@@ -430,6 +449,11 @@ define([
                                         var ref = info.ref;
                                         table.find("[data-ref='" + ref + "']")
                                             .html('<a href="' + DATAVIEW_URL + info.url + '" target="_blank">' + name + '</a>');
+                                        return null;
+                                    })
+                                    .catch(function (err) {
+                                        console.error(err);
+                                        return null;
                                     });
 
                             } else {
@@ -446,21 +470,21 @@ define([
                 };
 
                 this.getBiochemReaction = function (id) {
-                    return new Promise.resolve(this.fba.get_reactions({reactions: [id]}))
+                    return this.fbaClient.get_reactions({reactions: [id]})
                         .then(function (data) {
                             return data[0];
                         });
                 };
 
                 this.getBiochemCompound = function (id) {
-                    return new Promise.resolve(this.fba.get_compounds({compounds: [id]}))
+                    return this.fbaClient.get_compounds({compounds: [id]})
                         .then(function (data) {
                             return data[0];
                         });
                 };
 
                 this.getBiochemCompounds = function (ids) {
-                    return new Promise.resolve(this.fba.get_compounds({compounds: ids}));
+                    return this.fbaClient.get_compounds({compounds: ids});
                 };
 
                 /* TODO: replace these remote calls with locally installed images. */
@@ -510,7 +534,7 @@ define([
                     }
 
                     var cpd_ids = cpds.left.concat(cpds.right);
-                    Promise.resolve(this.fba.get_compounds({compounds: cpd_ids}))
+                    this.fbaClient.get_compounds({compounds: cpd_ids})
                         .then(function (d) {
                             var map = {};
                             for (var i in d) {
@@ -520,6 +544,10 @@ define([
                             $('.cpd-id').each(function () {
                                 $(this).html(map[$(this).data('cpd')]);
                             });
+                            return null;
+                        })
+                        .catch(function (err) {
+                            console.error(err);
                         });
 
                     return panel;
@@ -535,10 +563,14 @@ define([
                 }
 
                 function getLink(ref) {
-                    return self.workspace.get_object_info_new({objects: [{ref: ref}]})
+                    return self.workspaceClient.get_object_info_new({objects: [{ref: ref}]})
                         .then(function (data) {
                             var a = data[0];
-                            return {url: a[7] + '/' + a[1], ref: a[6] + '/' + a[0] + '/' + a[4]};
+                            return {
+                                url: a[7] + '/' + a[1],
+                                ref: a[6] + '/' + a[0] + '/' + a[4]
+                            };
+                            return null;
                         });
                 }
 

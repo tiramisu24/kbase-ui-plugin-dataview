@@ -7,15 +7,24 @@
  */
 define([
     'jquery',
-    'kb/service/client/fba',
     'kb/service/client/workspace',
-    'kb_dataview_widget_modeling_objects'
-], function ($, FBA, Workspace, KBObjects) {
+    'kb/service/client/fba',
+    'kb_dataview_widget_modeling_modeling',
+    'plugins/dataview/modules/widgets/modeling/kbasePathways'
+], function ($, Workspace, FBA, KBModeling) {
     'use strict';
     function KBaseFBA_FBAModel(modeltabs) {
         var self = this;
         this.modeltabs = modeltabs;
         this.runtime = modeltabs.runtime;
+
+        this.workspaceClient = new Workspace(this.runtime.config('services.workspace.url'), {
+            token: this.runtime.service('session').getAuthToken()
+        });
+
+        this.fbaClient = new FBA(this.runtime.config('services.fba.url'), {
+            token: this.runtime.service('session').getAuthToken()
+        });
 
         this.setMetadata = function (data) {
             this.workspace = data[7];
@@ -136,6 +145,9 @@ define([
                         "key": "genes",
                         "type": "tabLinkArray",
                         "method": "GeneTab"
+                    }, {
+                        "label": "Gapfilling",
+                        "key": "gapfillingstring"
                     }]
             }, {
                 "key": "modelcompounds",
@@ -234,10 +246,7 @@ define([
                 "type": "dataTable",
                 "columns": [{
                         "label": "Gapfill",
-                        "key": "simpid",
-                        "linkformat": "dispID",
-                        "type": "tabLink",
-                        "method": "GapfillTab",
+                        "key": "simpid"
                     }, {
                         "label": "Integrated",
                         "key": "integrated"
@@ -248,17 +257,21 @@ define([
                         "type": "wstype",
                         "wstype": "KBaseFBA.Media"
                     }]
-            } /*{
-             "name": "Pathways",
-             "widget": "kbasePathways",
-             "keys": "workspace, objName",
-             "arguments": "model_ws, model_name"
-             }*/];
+            }, {
+                "name": "Pathways",
+                "widget": "kbasePathways",
+                "getParams": function () {
+                    return {
+                        runtime: self.runtime,
+                        models: [self.data]
+                    };
+                }
+            }];
 
 
         this.ReactionTab = function (info) {
-            var rxn = self.rxnhash[info.id],
-                output = [{
+            var rxn = self.rxnhash[info.id];
+            var output = [{
                     "label": "Reaction",
                     "data": rxn.dispid
                 }, {
@@ -288,14 +301,12 @@ define([
                 "label": "GPR",
                 "data": rxn.gpr
             });
+
             if (rxn.rxnkbid !== "rxn00000") {
-                var fba = new FBA(self.runtime.getConfig('services.fba.url'), {
-                    token: self.runtime.service('session').getAuthToken()
-                });
-                return fba.get_reactions({
+                return this.fbaClient.get_reactions({
                     reactions: [rxn.rxnkbid],
                     biochemistry: self.biochem,
-                    biochemistry_workspace: self.biochemws
+                    biochemistry_workspace: "kbase"
                 })
                     .then(function (data) {
                         if ("deltaG" in data[0]) {
@@ -325,6 +336,8 @@ define([
             }
             return output;
         };
+
+
 
         this.GeneTab = function (info) {
             // var gene = this.genehash[id];
@@ -361,19 +374,13 @@ define([
                     "data": cpd.charge
                 }, {
                     "label": "Compartment",
-                    "data": cpd.cmpkbid,
-                    "dispid": self.cmphash[cpd.cmpkbid].name + " " + self.cmphash[cpd.cmpkbid].compartmentIndex,
-                    "type": "tabLink",
-                    "function": "CompartmentTab"
+                    "data": self.cmphash[cpd.cmpkbid].name + " " + self.cmphash[cpd.cmpkbid].compartmentIndex
                 }];
             if (cpd.cpdkbid !== "cpd00000") {
-                var fba = new FBA(self.runtime.getConfig('services.fba.url'), {
-                    token: self.runtime.service('session').getAuthToken()
-                });
-                return fba.get_compounds({
+                return this.fbaClient.get_compounds({
                     compounds: [cpd.cpdkbid],
                     biochemistry: self.biochem,
-                    biochemistry_workspace: self.biochemws
+                    biochemistry_workspace: "kbase"
                 })
                     .then(function (data) {
                         if ("deltaG" in data[0]) {
@@ -394,6 +401,7 @@ define([
                             "label": "Aliases",
                             "data": finalaliases.join(", ")
                         });
+                        return output;
                         return output;
                     });
             }
@@ -457,114 +465,6 @@ define([
             return output;
         };
 
-        this.GapfillTab = function (info) {
-            var gfid = info.id;
-            var gf = self.gfhash[gfid];
-            var ref;
-            if ("gapfill_ref" in gf) {
-                ref = gf.gapfill_ref;
-            } else if ("fba_ref" in gf) {
-                ref = gf.fba_ref;
-            }
-            if ("output" in gf) {
-                return gf.output;
-            }
-            var workspace = new Workspace(this.runtime.getConfig('services.workspace.url'), {
-                token: this.runtime.service('session').getAuthToken()
-            });
-            return workspace.get_objects([{ref: ref}])
-                .then(function (data) {
-                    var solutions = data[0].data.gapfillingSolutions;
-                    return self.parse_gf_solutions(solutions);
-                })
-                .then(function (solutions) {
-                    if (gf.integrated === "1") {
-                        gf.integrated = "yes";
-                    } else if (gf.integrated === "0") {
-                        gf.integrated = "no";
-                    }
-                    gf.output = [{
-                            "label": "Gapfill ID",
-                            "data": gf.simpid
-                        }, {
-                            "label": "Media",
-                            "linkformat": "dispWSRef",
-                            "type": "wstype",
-                            "wstype": "KBaseFBA.Media",
-                            "data": gf.media_ref
-                        }, {
-                            "label": "Integrated",
-                            "data": gf.integrated
-                        }];
-                    if (gf.integrated === "yes") {
-                        gf.output.push({
-                            "label": "Integrated solution",
-                            "data": gf.integrated_solution
-                        });
-                    }
-                    var rxns = "";
-                    for (var i = 0; i < solutions.length; i++) {
-                        var solrxns = solutions[i].gapfillingSolutionReactions;
-                        for (var j = 0; j < solrxns.length; j++) {
-                            if (j > 0) {
-                                rxns += "<br>";
-                            }
-                            rxns += solrxns[j].id;
-                            if ("equation" in solrxns[j]) {
-                                rxns += ":" + solrxns[j].equation;
-                            }
-                        }
-                    }
-
-                    gf.output.push({
-                        "label": "Solution " + i,
-                        "data": rxns
-                    });
-                    return gf.output;
-                });
-        };
-
-        this.parse_gf_solutions = function (solutions) {
-            var rxnshash = {};
-            var biochemws = "kbase";
-            var biochem = "default";
-            for (var i = 0; i < solutions.length; i++) {
-                var solrxns = solutions[i].gapfillingSolutionReactions;
-                for (var j = 0; j < solrxns.length; j++) {
-                    var array = solrxns[j].reaction_ref.split("/");
-                    solrxns[j].id = array.pop();
-                    if (solrxns[j].id.match(/^rxn\d\d\d\d\d$/) && array[3] === "reactions") {
-                        biochemws = array[0];
-                        biochem = array[1];
-                        rxnshash[solrxns[j].id] = solrxns[j];
-                    }
-                }
-            }
-            var ids = new Array();
-            for (var key in rxnshash) {
-                ids.push(key);
-            }
-            if (ids.length > 0) {
-                var fba = new FBA(this.runtime.getConfig('services.fba.url'), {
-                    token: this.runtime.service('session').getAuthToken()
-                });
-                return fba.get_reactions({
-                    reactions: ids,
-                    biochemistry: biochem,
-                    biochemistry_workspace: biochemws
-                })
-                    .then(function (data) {
-                        for (var i = 0; i < data.length; i++) {
-                            if (data[i]) {
-                                rxnshash[data[i].id].equation = data[i].definition;
-                            }
-                        }
-                        return solutions;
-                    });
-            }
-            return solutions;
-        };
-
         this.setData = function (indata) {
             this.data = indata;
             this.modelreactions = this.data.modelreactions;
@@ -582,13 +482,22 @@ define([
             this.gfhash = {};
             this.biochemws = "kbase";
             this.biochem = "default";
+            var gfobjects = [];
             for (var i = 0; i < this.gapfillings.length; i++) {
                 this.gapfillings[i].simpid = "gf." + (i + 1);
+                if ('fba_ref' in this.gapfillings[i] && this.gapfillings[i].fba_ref.length > 0) {
+                    gfobjects.push({ref: this.gapfillings[i].fba_ref});
+                } else if ('gapfill_ref' in this.gapfillings[i] && this.gapfillings[i].gapfill_ref.length > 0) {
+                    gfobjects.push({ref: this.gapfillings[i].gapfill_ref});
+                }
                 this.gfhash[this.gapfillings[i].simpid] = this.gapfillings[i];
             }
             for (var i = 0; i < this.modelcompartments.length; i++) {
                 var cmp = this.modelcompartments[i];
                 cmp.cmpkbid = cmp.compartment_ref.split("/").pop();
+                if (cmp.cmpkbid === "d") {
+                    this.biochem = "plantdefault";
+                }
                 cmp.name = self.cmpnamehash[cmp.cmpkbid];
                 this.cmphash[cmp.id] = cmp;
             }
@@ -605,8 +514,6 @@ define([
                 this.cpdhash[cpd.id] = cpd;
                 if (cpd.cpdkbid !== "cpd00000") {
                     var array = cpd.compound_ref.split("/");
-                    this.biochemws = array[0];
-                    this.biochem = array[1];
                     this.cpdhash[cpd.cpdkbid + "_" + cpd.cmpkbid] = cpd;
                     if (idarray[0] !== cpd.cpdkbid) {
                         cpd.dispid += "<br>(" + cpd.cpdkbid + ")";
@@ -657,13 +564,14 @@ define([
                 var idarray = rxn.id.split('_');
                 rxn.dispid = idarray[0] + "[" + idarray[1] + "]";
                 rxn.rxnkbid = rxn.reaction_ref.split("/").pop();
+                rxn.rxnkbid = rxn.rxnkbid.replace(/_[a-zA-z]/, '');
                 rxn.cmpkbid = rxn.modelcompartment_ref.split("/").pop();
                 rxn.name = rxn.name.replace(/_[a-zA-z]\d+$/, '');
                 rxn.gpr = "";
                 if (rxn.name === "CustomReaction") {
                     rxn.name = rxn.dispid;
                 }
-                this.rxnhash[rxn.id] = rxn;
+                self.rxnhash[rxn.id] = rxn;
                 if (rxn.rxnkbid !== "rxn00000") {
                     this.rxnhash[rxn.rxnkbid + "_" + rxn.cmpkbid] = rxn;
                     if (rxn.rxnkbid !== idarray[0]) {
@@ -733,6 +641,16 @@ define([
                     rxn.gpr += ")";
                 }
 
+                rxn.gapfilling = [];
+                for (var gf in rxn.gapfill_data) {
+                    if (rxn.gapfill_data[gf][0][0] === '<') {
+                        rxn.gapfilling.push(gf + ": reverse");
+                    } else {
+                        rxn.gapfilling.push(gf + ": forward");
+                    }
+                }
+                rxn.gapfillingstring = rxn.gapfilling.join('<br>');
+
                 rxn.dispfeatures = "";
                 rxn.genes = [];
                 for (var gene in rxn.ftrhash) {
@@ -743,20 +661,51 @@ define([
                         genes.push(item.id);
                     });
 
-                    if (genes.indexOf(gene) === -1) {
+                    if (genes.indexOf(gene) === -1)
                         this.modelgenes.push({id: gene, reactions: [{id: rxn.id, dispid: rxn.dispid}]});
-                    } else {
+                    else
                         this.modelgenes[genes.indexOf(gene)].reactions.push({id: rxn.id, dispid: rxn.dispid});
-                    }
                 }
 
                 rxn.equation = reactants + " " + sign + " " + products;
             }
-
+            if (gfobjects.length > 0) {
+                this.workspaceClient.get_objects(gfobjects)
+                    .then(function (data) {
+                        for (var i = 0; i < data.length; i++) {
+                            var solrxns = data[i].data.gapfillingSolutions[0].gapfillingSolutionReactions;
+                            for (var j = 0; j < solrxns.length; j++) {
+                                var array = solrxns[j].reaction_ref.split("/");
+                                var id = array.pop();
+                                var rxnobj;
+                                if (id in self.rxnhash) {
+                                    rxnobj = self.rxnhash[id];
+                                } else {
+                                    var cmparray = solrxns[j].compartment_ref.split("/");
+                                    var cmp = cmparray.pop();
+                                    id = id + "_" + cmp + solrxns[j].compartmentIndex;
+                                    rxnobj = self.rxnhash[id];
+                                }
+                                if (typeof rxnobj !== "undefined") {
+                                    if (solrxns[j].direction === '<') {
+                                        rxnobj.gapfilling.push('gf.' + (i + 1) + ": reverse");
+                                    } else {
+                                        rxnobj.gapfilling.push('gf.' + (i + 1) + ": forward");
+                                    }
+                                    rxnobj.gapfillingstring = rxnobj.gapfilling.join('<br>');
+                                }
+                            }
+                        }
+                    })
+                    .catch(function (err) {
+                        console.error(err);
+                    });
+            }
         };
-
     }
 
+
+
 // make method of base class
-    KBObjects.prototype.KBaseFBA_FBAModel = KBaseFBA_FBAModel;
+    KBModeling.prototype.KBaseFBA_FBAModel = KBaseFBA_FBAModel;
 });

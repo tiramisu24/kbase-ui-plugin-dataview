@@ -6,8 +6,8 @@
  white: true
  */
 define([
-    'kb_dataview_widget_modeling_objects'
-], function (KBObjects) {
+    'kb_dataview_widget_modeling_modeling'
+], function (KBModeling) {
     'use strict';
     function KBaseFBA_FBAModelSet(modeltabs) {
         var self = this;
@@ -28,11 +28,10 @@ define([
         this.setData = function (indata) {
             this.data = indata;
             this.models = [];
-            var obj;
-            for (obj in indata.elements) {
+            for (var obj in indata.elements) {
                 this.models.push({"ref": indata.elements[obj]["ref"]});
             }
-        };
+        }
 
         this.tabList = [{
                 "key": "overview",
@@ -69,6 +68,8 @@ define([
             }];
     }
 
+
+
 // make method of base class
-    KBObjects.prototype.KBaseFBA_FBAModelSet = KBaseFBA_FBAModelSet;
+    KBModeling.prototype.KBaseFBA_FBAModelSet = KBaseFBA_FBAModelSet;
 });
