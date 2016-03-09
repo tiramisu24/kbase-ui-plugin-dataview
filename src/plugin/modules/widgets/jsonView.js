@@ -20,7 +20,7 @@ define([
                 p = t('p'), pre = t('pre'), code = t('code'), div = t('div');
             if (jsString.length > 10000) {
                 comment = p(['Object is too large to display fully (', numeral(jsString.length).format('0.0b'), ') truncated at 10K']);
-                jsString = jsString.substr(0, 1000000);
+                jsString = jsString.substr(0, 10000);
             }
             return div([
                 comment,
