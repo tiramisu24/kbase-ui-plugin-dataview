@@ -6,13 +6,11 @@
  white: true
  */
 define([
-    'bluebird',
     'kb/common/html',
     'kb/widget/widgetSet',
-    'kb/service/utils',
-    'kb/service/client/workspace'
+    './utils'
 ],
-    function (Promise, html, WidgetSet, apiUtils, Workspace) {
+    function (html, WidgetSet, utils) {
         'use strict';
 
         function renderBSCollapsiblePanel(config) {
@@ -47,42 +45,7 @@ define([
                 widgetSet = WidgetSet.make({runtime: runtime}),
                 rendered;
 
-            function getObjectInfo(params) {
-                return Promise.try(function () {
-                    var workspaceId = params.workspaceId,
-                        objectId = params.objectId,
-                        objectVersion = params.objectVersion;
-
-                    if (workspaceId === undefined) {
-                        throw new Error('Workspace id or name is required');
-                    }
-                    if (objectId === undefined) {
-                        throw new Error('Object id or name is required');
-                    }
-
-                    var objectRef = apiUtils.makeWorkspaceObjectRef(workspaceId, objectId, objectVersion),
-                        workspaceClient = new Workspace(runtime.getConfig('services.workspace.url'), {
-                            token: runtime.service('session').getAuthToken()
-                        });
-
-                    return workspaceClient.get_object_info_new({
-                        objects: [{ref: objectRef}],
-                        ignoreErrors: 1
-                    })
-                        .then(function (objectList) {
-                            if (objectList.length === 0) {
-                                throw new Error('Object not found: ' + objectRef);
-                            }
-                            if (objectList.length > 1) {
-                                throw new Error('Too many objects found: ' + objectRef + ', ' + objectList.length);
-                            }
-                            if (objectList[0] === null) {
-                                throw new Error('Object not found with reference ' + objectRef);
-                            }
-                            return apiUtils.object_info_to_object(objectList[0]);
-                        });
-                });
-            }
+            
 
             function renderPanel() {
                 var div = html.tag('div');
@@ -121,7 +84,7 @@ define([
             }
 
             function start(params) {
-                return getObjectInfo(params)
+                return utils.getObjectInfo(runtime, params)
                     .then(function (objectInfo) {
                         runtime.send('ui', 'setTitle', 'Data View for ' + objectInfo.name);
                         return objectInfo;
