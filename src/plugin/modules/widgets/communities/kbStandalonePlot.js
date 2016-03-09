@@ -220,7 +220,6 @@ define([
 
                 // disable caching these, the user can do that themselves.
                 // window.rendererGraph.push(instance);
-console.log(Uuid);
                 instance.settings.id = new Uuid(4).format();
 
                 return instance;
