@@ -11,7 +11,6 @@
  */
 define([
     'jquery',
-    'bluebird',
     'uuid',
     'kb/common/html',
     'kb/service/client/workspace',
@@ -19,7 +18,7 @@ define([
     'kb_dataview_easyTree',
     'kb/widget/legacy/authenticatedWidget'
 ],
-    function ($, Promise, uuid, html,Workspace, UserAndJobState, EasyTree) {
+    function ($, Uuid, html, Workspace, UserAndJobState, EasyTree) {
         'use strict';
         $.KBWidget({
             name: 'kbaseTree',
@@ -39,7 +38,7 @@ define([
             timer: null,
             init: function (options) {
                 this._super(options);
-                this.pref = uuid.v4();
+                this.pref = new Uuid(4).format();
 
                 if (!this.options.treeID) {
                     this.renderError("No tree to render!");

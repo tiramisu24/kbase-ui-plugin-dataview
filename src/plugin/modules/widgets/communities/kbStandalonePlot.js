@@ -102,7 +102,7 @@ define([
     'jquery',
     'uuid',
     'kb_dataview_communities_jquerySvg'], // 'jquery-svg-graph', 'jquery-svg-plot'],
-    function ($, uuid) {
+    function ($, Uuid) {
         'use strict';
         var plot = {
             about: {
@@ -220,8 +220,8 @@ define([
 
                 // disable caching these, the user can do that themselves.
                 // window.rendererGraph.push(instance);
-
-                instance.settings.id = uuid.v4();
+console.log(Uuid);
+                instance.settings.id = new Uuid(4).format();
 
                 return instance;
             },
