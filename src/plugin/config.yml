@@ -28,6 +28,17 @@ source:
             module: kb_dataview_easyTree
             file: lib/easyTree
             
+        # JsonView
+        -
+            module: kb_dataview_jsonViewPanel
+            file: jsonViewPanel
+        -
+            module: kb_dataview_widget_jsonView
+            file: widgets/jsonView
+        -
+            module: kb_dataview_widget_jsonViewOverview
+            file: widgets/jsonViewOverview
+            
         # Common dataview components
             
         -
@@ -269,6 +280,20 @@ install:
             name: kb_dataview_copy
             type: factory
             
+        # JSON VIEW
+        -
+            module: kb_dataview_jsonViewPanel
+            name: kb_dataview_jsonViewPanel
+            type: factory
+        -
+            module: kb_dataview_widget_jsonView
+            name: kb_dataview_jsonView
+            type: factory
+        -
+            module: kb_dataview_widget_jsonViewOverview
+            name: kb_dataview_jsonViewOverview
+            type: factory
+            
         # COMMUNITIES
         -
             module: kb_dataview_dataObjectVisualizer
@@ -493,6 +518,18 @@ install:
                     name: objectVersion
                     optional: true
             widget: kb_dataview_provenancePanel
+        -
+            path:
+                -
+                    jsonview
+                -
+                    name: workspaceId
+                -
+                    name: objectId
+                -
+                    name: objectVersion
+                    optional: true
+            widget: kb_dataview_jsonViewPanel 
     types:
         # COMMUNITIES
         -
