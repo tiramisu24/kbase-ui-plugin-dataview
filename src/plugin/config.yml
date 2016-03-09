@@ -59,13 +59,6 @@ source:
             module: kb_dataview_copyWidget
             file: widgets/copy/copyWidget
             css: true
-        #-
-        #    module: kb_widget_dataview_download
-       #     file: widgets/kbaseDownloadPanel
-        #    widget: kb_dataview_download
-        #-
-        #    module: kb_widget_dataview_base
-        #    file: widgets/DataviewWidget
         -
             module: kb_dataview_widget_overview
             file: widgets/OverviewWidget

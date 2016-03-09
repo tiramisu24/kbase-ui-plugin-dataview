@@ -111,8 +111,8 @@ define([
                         return null;
                     })
                     .catch(function (err) {
-                        console.log('ERROR getting object info (new)');
-                        console.log(err);
+                        console.error('ERROR getting object info (new)');
+                        console.error(err);
                     });
 
                 //
@@ -134,8 +134,8 @@ define([
                             });
                     })
                     .catch(function (err) {
-                        console.log('ERROR getting objects');
-                        console.log(err);
+                        console.error('ERROR getting objects');
+                        console.error(err);
                     });
 
                 var refLookup = {};

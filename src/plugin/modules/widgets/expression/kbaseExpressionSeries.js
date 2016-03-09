@@ -125,8 +125,7 @@ define([
                 })
                 .catch(function (e) {
                     // container.rmLoading();
-                    console.log('ERROR');
-                    console.log(e);
+                    console.error(e);
                     container.append('<div class="alert alert-danger">' +
                         e.error.message + '</div>');
                 });

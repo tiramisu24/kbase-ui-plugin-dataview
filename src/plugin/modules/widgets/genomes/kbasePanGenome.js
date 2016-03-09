@@ -287,12 +287,9 @@ define([
 
                     // work in progress
                     function getOrthologInfo(id) {
-                        //console.log(data)
                         for (var i in data.orthologs) {
                             if (data.orthologs[i].id === id) {
-                                //console.log('match');
                                 var ort_list = data.orthologs[i];
-                                //console.log(ort_list);
                                 return ort_list;
                             }
                         }
@@ -322,8 +319,8 @@ define([
                         callback();
                     })
                     .catch(function (err) {
-                        console.log('ERROR cacheGeneFunctions');
-                        console.log(err);
+                        console.error('ERROR cacheGeneFunctions');
+                        console.error(err);
                         this.$elem.empty();
                         this.$elem.append('<div class="alert alert-danger">' +
                             err.error.message + '</div>');
@@ -359,7 +356,7 @@ define([
                         self.buildOrthoTableLoaded(orth_id, genes, tab);
                     })
                     .catch(function (e) {
-                        console.log("Error caching genes: " + e.error.message);
+                        console.error("Error caching genes: " + e.error.message);
                     });
                 return tab;
             },

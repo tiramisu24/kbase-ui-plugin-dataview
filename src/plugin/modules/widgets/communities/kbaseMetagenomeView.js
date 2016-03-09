@@ -273,13 +273,11 @@ define([
                         var pwidth = 750;
                         var pheight = 300;
                         var ymax = Math.max.apply(Math, y_all);
-                        ymax = ymax + (0.25 * ymax)
+                        ymax = ymax + (0.25 * ymax);
                         var pot = ymax.toString().indexOf('.') || ymax.toString.length;
                         pot = Math.pow(10, pot - 1);
                         ymax = Math.floor((ymax + pot) / pot) * pot;
                                                 
-                        console.log('series');
-                        console.log(xy);
 
                         var plotKmer = Plot.create({
                             target: document.getElementById(pref + 'kmer'),

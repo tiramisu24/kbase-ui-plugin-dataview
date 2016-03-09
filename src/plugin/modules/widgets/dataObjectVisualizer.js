@@ -134,8 +134,7 @@ define([
 
             function showError(err) {
                 var content;
-                console.log('ERROR');
-                console.log(err);
+                console.error(err);
                 if (typeof err === 'string') {
                     content = err;
                 } else if (err.message) {

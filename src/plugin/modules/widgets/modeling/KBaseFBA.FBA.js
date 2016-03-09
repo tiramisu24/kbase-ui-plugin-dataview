@@ -593,7 +593,7 @@ define([
                                     return null;
                                 })
                                 .catch(function (err) {
-                                    console.log(err);
+                                    console.error(err);
                                 });
                         }
 

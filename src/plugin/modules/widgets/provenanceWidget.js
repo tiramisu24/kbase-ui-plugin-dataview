@@ -204,8 +204,8 @@ define([
                             text += "error in fetching provenance";
                             text += '</table>';
                             text += "</td></tr></table>";
-                            console.log('Error fetching provenance');
-                            console.log(err);
+                            console.error('Error fetching provenance');
+                            console.error(err);
                             $container.find('#objdetailsdiv').html(text);
                         });
                 }
@@ -677,7 +677,6 @@ define([
                         var uniqueRefs = {};
                         var uniqueRefObjectIdentities = [];
                         var links = [];
-                        //console.log(objdata);
                         for (var i = 0; i < objdata.length; i++) {
                             // extract the references contained within the object
                             for (var r = 0; r < objdata[i]['refs'].length; r++) {
@@ -772,8 +771,6 @@ define([
                         }
                     })
                     .catch(function (err) {
-                        console.log('OK: error');
-                        console.log(err);
                         // we couldn't get info for some reason, could be if objects are deleted or not visible
                         var uniqueRefs = tempRefData['uniqueRefs'];
                         for (var ref in uniqueRefs) {

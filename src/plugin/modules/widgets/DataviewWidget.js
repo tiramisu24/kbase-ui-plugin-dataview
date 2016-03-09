@@ -189,8 +189,7 @@ define([
                             return this.refresh()
                         }.bind(this))
                         .catch(function (err) {
-                            console.log('ERROR');
-                            console.log(err);
+                            console.error(err);
                             this.setError(err);
                         }.bind(this));
                 }
@@ -213,13 +212,6 @@ define([
             stop: {
                 value: function () {
                     this.status = 'stopped';
-                    /*
-                     this.subscriptions.forEach(function(subscription) {
-                     subscription.unsubscribe();
-                     });
-                     this.subscriptions = [];
-                     console.log('usubscribed!');
-                     */
                 }
             },
             destroy: {
@@ -635,17 +627,17 @@ define([
             },
             logDeprecation: {
                 value: function (source, message) {
-                    console.log('DEPRECATION: [' + source + '] ' + message);
+                    console.warn('DEPRECATION: [' + source + '] ' + message);
                 }
             },
             logWarning: {
                 value: function (source, message) {
-                    console.log('WARNING: [' + source + '] ' + message);
+                    console.warn('WARNING: [' + source + '] ' + message);
                 }
             },
             logError: {
                 value: function (source, message) {
-                    console.log('ERROR: [' + source + '] ' + message);
+                    console.error('ERROR: [' + source + '] ' + message);
                 }
             },
             createListMaps: {

@@ -194,7 +194,6 @@ define([
                     function (error) {
                         console.error("Error loading genome subdata");
                         console.error(error);
-                        console.log(self.runtime.service('session').getAuthToken());
                         panel1.empty();
                         self.showError(panel1, error);
                         cell2.empty();

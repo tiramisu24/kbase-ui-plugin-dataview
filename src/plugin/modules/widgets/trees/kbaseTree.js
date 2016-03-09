@@ -158,8 +158,8 @@ define([
                                     refToInfoMap[objIdentityList[i].ref] = objInfo;
                                 }
                             }, function (err) {
-                                console.log("Error getting genomes info:");
-                                console.log(err);
+                                console.error("Error getting genomes info:");
+                                console.error(err);
                             });
                         }
                         new EasyTree(self.canvasId, tree.tree, tree.default_node_labels, function (node) {

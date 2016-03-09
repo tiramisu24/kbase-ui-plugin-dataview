@@ -38,8 +38,6 @@ define([
                 this.pref = this.genUUID();
                 this.ws = options.ws;
                 this.id = options.id;
-                console.log('A: here');
-                console.log(options);
                 this.render();
                 return this;
             },

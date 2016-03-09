@@ -199,7 +199,6 @@ define([
             
             var listener = getListener([]);
             if (listener) {
-                console.log(listener);
                 listener.listeners.forEach(function (listener) {
                     listener.onChange(state, newValue);
                 });

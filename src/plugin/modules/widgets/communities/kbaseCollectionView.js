@@ -82,8 +82,7 @@ define([
                         var collectionObject = data[0].data,
                             idList = collectionObject.members.map(function (member) {
                                 if (member.URL.match(/^http/)) {
-                                    console.log('ERROR');
-                                    console.log(member);
+                                    console.error(member);
                                     throw new Error('Invalid Collection Object');
                                 }
                                 return {ref: member.URL};
