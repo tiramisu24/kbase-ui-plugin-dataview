@@ -33,6 +33,7 @@ define([
 
         function init(config) {
             layout = renderLayout();
+            runtime.send('ui', 'setTitle', 'JSON View');
             return widgetSet.init(config);
         }
 
