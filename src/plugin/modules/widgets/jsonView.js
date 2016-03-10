@@ -2,40 +2,94 @@
 /*jslint white:true,browser:true*/
 define([
     'kb/common/html',
+    'kb/common/domEvent',
     'highlight',
     'numeral'
-], function (html, highlight, numeral) {
+], function (html, domEvent, highlight, numeral) {
     'use strict';
 
     function factory(config) {
         var runtime = config.runtime, container,
+            theObject, showLargeObject = false,
+            events = domEvent.make(),
             t = html.tag,
-            div = t('div');
+            div = t('div'), button = t('button'),
+            p = t('p'), pre = t('pre'), code = t('code'), div = t('div');
 
-        // from http://stackoverflow.com/questions/1248302/javascript-object-size
+        function toggleLargeObject() {
+            if (showLargeObject) {
+                showLargeObject = false;
+            } else {
+                showLargeObject = true;
+            }
+            render();            
+        }
+        
+        function renderOverview(data) {
+            var jsString = JSON.stringify(data, true, 4), comment, formatOutput = true;
+            return pre(code(highlight.highlight('json', jsString).value));
+        }
+        
+        function renderProvenance(data) {
+            var jsString = JSON.stringify(data, true, 4), comment, formatOutput = true;
+            return pre(code(highlight.highlight('json', jsString).value));
+        }
+        
+        function renderObject(data) {
+            var jsString = JSON.stringify(data, true, 4), comment, formatOutput = true;
 
-
-        function renderJson(object) {
-            var jsString = JSON.stringify(object, true, 4), comment, t = html.tag,
-                p = t('p'), pre = t('pre'), code = t('code'), div = t('div');
             if (jsString.length > 10000) {
-                comment = p(['Object is too large to display fully (', numeral(jsString.length).format('0.0b'), ') truncated at 10K']);
-                jsString = jsString.substr(0, 10000);
+                if (showLargeObject) {
+                     comment = div([
+                        p(['Object is very large (', numeral(jsString.length).format('0.0b'), '), but being displayed anyway.']),
+                        p(['If the browser is misbehaving, refresh it or ',
+                            button({
+                                class: 'btn btn-default',
+                                id: events.addEvent('click', toggleLargeObject)
+                            }, 'Redisplay with the Object Truncated'),
+                            '.'])
+                    ]);
+                    formatOutput = false;
+                } else {
+                    comment = div([
+                        p(['Object is too large to display fully (', numeral(jsString.length).format('0.0b'), ') truncated at 10K.']),
+                        p(['You may live dangerously and ',
+                            button({
+                                class: 'btn btn-default',
+                                id: events.addEvent('click', toggleLargeObject)
+                            }, 'Display the Entire Object Without Syntax Highlighting'),
+                            '.'])
+                    ]);
+                    jsString = jsString.substr(0, 10000);
+                }
             }
             return div([
-                comment,
-                pre(code(highlight.highlight('json', jsString).value))
+                comment,                 
+                pre(code( formatOutput ? highlight.highlight('json', jsString).value : jsString))
             ]);
         }
 
-        function renderOverview(data) {
-            return renderJson(data);
-        }
-        function renderProvenance(data) {
-            return renderJson(data);
-        }
-        function renderObject(data) {
-            return renderJson(data);
+        function render() {
+            events.detachEvents();
+            container.innerHTML = div({class: 'container-fluid'}, [
+                div({class: 'row'}, [
+                    div({class: 'col-md-12'}, [
+                        html.makePanel({
+                            title: 'info',
+                            content: renderOverview(theObject.info)
+                        }),
+                        html.makePanel({
+                            title: 'provenance',
+                            content: renderProvenance(theObject.provenance)
+                        }),
+                        html.makePanel({
+                            title: 'data',
+                            content: renderObject(theObject.data)
+                        })
+                    ])
+                ])
+            ]);
+            events.attachEvents();
         }
 
         function attach(node) {
@@ -45,34 +99,21 @@ define([
                     div({class: 'col-md-12'}, div({class: 'well'}, html.loading('Loading object...')))
                 ])
             ]);
-
+            
         }
         function start(params) {
+            theObject = params.object;
+            render();
+        }
 
-
-            container.innerHTML = div({class: 'container-fluid'}, [
-                div({class: 'row'}, [
-                    div({class: 'col-md-12'}, [
-                        html.makePanel({
-                            title: 'Overview',
-                            content: renderOverview(params.object.info)
-                        }),
-                        html.makePanel({
-                            title: 'Provenance',
-                            content: renderProvenance(params.object.provenance)
-                        }),
-                        html.makePanel({
-                            title: 'Object',
-                            content: renderObject(params.object.data)
-                        })
-                    ])
-                ])
-            ]);
+        function detach() {
+            events.detachEvents();
         }
 
         return {
             attach: attach,
-            start: start
+            start: start,
+            detach: detach
         };
     }
     return {
