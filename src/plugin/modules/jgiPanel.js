@@ -2,9 +2,8 @@
 /*jslint white:true,browser:true*/
 define([
     'kb/common/html',
-    'kb/widget/widgetSet',
-    'plugins/dataview/modules/utils'
-], function (html, WidgetSet, utils) {
+    'kb/widget/widgetSet'
+], function (html, WidgetSet) {
     'use strict';
 
     function factory(config) {
@@ -29,7 +28,6 @@ define([
                 ])
             ]);
         }
-
 
         function init(config) {
             layout = renderLayout();
