@@ -547,7 +547,10 @@ install:
                 - import
                 - name: workspaceId
                 - name: objectId
+                - name: objectVersion
+                  optional: true
             widget: kb_dataview_jgiPanel
+            
                 
                     
     types:
