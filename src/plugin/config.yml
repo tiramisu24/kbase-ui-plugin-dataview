@@ -550,6 +550,7 @@ install:
                 - name: objectVersion
                   optional: true
             widget: kb_dataview_jgiPanel
+            authorization: true
             
                 
                     
