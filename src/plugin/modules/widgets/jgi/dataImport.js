@@ -356,96 +356,100 @@ define([
 
             var copyToNarrative = narrativesDropdown(data.narrativeWorkspaces);
 
-            return div({class: 'container-fluid'}, [
+            return div({class: 'container-fluid', dataWidget: 'jgi-import-tool'}, [
                 div({class: 'row'}, [
                     div({class: 'col-md-6'}, [
-                        sectionHeader('Copy Object to New Narrative'),
-                        p('Use this tool to copy the JGI import object into a new Narrative, which will be created on the fly. Inserts and configures the indicated app or method with the data object set as an input parameter.'),
-                        table({class: 'table table-bordered'}, [
-                            tr([
-                                th({style: {verticalAlign: 'middle'}}, ['Insert ' + (data.typeInfo.app ? 'App' : 'Method')]),
-                                td(a({href: makePath(['narrativestore', data.typeInfo.type, data.typeInfo.id])}, data.typeInfo.name))
-                            ]),
-                            tr([
-                                th('Object name'),
-                                td(input({
-                                    type: 'text',
-//                                    id: events.addEvents([
-//                                        {
-//                                            type: 'change',
-//                                            handler: handleNewNarrativeNameChanged
-//                                        },
-//                                        {
-//                                            type: 'keyup',
-//                                            handler: handleNewNarrativeNameKeyUp
-//                                        }
-//                                    ]),
-                                    value: model.state.newNarrativeObjectName || data.objectInfo.name,
-                                    readonly: true,
-                                    style: {width: '100%'}
-                                }))
-                            ]),
-                            tr([
-                                th(),
-                                td(a({
-                                    class: 'btn btn-primary', href: '#',
-                                    style: {margin: '5px'},
-                                    id: events.addEvent('click', handleCopyToAndOpenNewNarrative)
-                                }, 'Copy to New Narrative'))
+                        div({dataElement: 'copy-to-new-narrative'}, [
+                            sectionHeader('Copy Object to New Narrative'),
+                            p('Use this tool to copy the JGI import object into a new Narrative, which will be created on the fly. Inserts and configures the indicated app or method with the data object set as an input parameter.'),
+                            table({class: 'table table-bordered'}, [
+                                tr([
+                                    th({style: {verticalAlign: 'middle'}}, ['Insert ' + (data.typeInfo.app ? 'App' : 'Method')]),
+                                    td(a({href: makePath(['narrativestore', data.typeInfo.type, data.typeInfo.id])}, data.typeInfo.name))
+                                ]),
+                                tr([
+                                    th('Object name'),
+                                    td(input({
+                                        type: 'text',
+    //                                    id: events.addEvents([
+    //                                        {
+    //                                            type: 'change',
+    //                                            handler: handleNewNarrativeNameChanged
+    //                                        },
+    //                                        {
+    //                                            type: 'keyup',
+    //                                            handler: handleNewNarrativeNameKeyUp
+    //                                        }
+    //                                    ]),
+                                        value: model.state.newNarrativeObjectName || data.objectInfo.name,
+                                        readonly: true,
+                                        style: {width: '100%'}
+                                    }))
+                                ]),
+                                tr([
+                                    th(),
+                                    td(a({
+                                        class: 'btn btn-primary', href: '#',
+                                        style: {margin: '5px'},
+                                        id: events.addEvent('click', handleCopyToAndOpenNewNarrative)
+                                    }, 'Copy to New Narrative'))
+                                ])
                             ])
                         ]),
-                        sectionHeader('Copy Object to Existing Narrative'),
-                        p('Use this tool to copy the JGI import object into any Narrative to which you have write access.'),
-                        table({class: 'table table-bordered'}, [
-                            tr([
-                                th({style: {verticalAlign: 'middle'}}, 'Narratives (writable)'), 
-                                td([
-                                    copyToNarrative,
-                                    (function () {
-                                        if (model.state.selectedNarrative) {
-                                            var narrative = model.data.narrativeWorkspacesMap[model.state.selectedNarrative];
-                                            return [
-                                                '<br>',
-                                                button({
-                                                    class: 'btn btn-default',
-                                                    id: events.addEvent('click', handleOpenNarrative)
-                                                }, 'Open Narrative <i>' + narrative.metadata.narrative_nice_name + '</i>')
-                                            ];                                      
-                                        }
-                                    }())
+                        div({dataElemenet: 'copy-to-existing-narrative'}, [
+                            sectionHeader('Copy Object to Existing Narrative'),
+                            p('Use this tool to copy the JGI import object into any Narrative to which you have write access.'),
+                            table({class: 'table table-bordered'}, [
+                                tr([
+                                    th({style: {verticalAlign: 'middle'}}, 'Narratives (writable)'), 
+                                    td([
+                                        copyToNarrative,
+                                        (function () {
+                                            if (model.state.selectedNarrative) {
+                                                var narrative = model.data.narrativeWorkspacesMap[model.state.selectedNarrative];
+                                                return [
+                                                    '<br>',
+                                                    button({
+                                                        class: 'btn btn-default',
+                                                        id: events.addEvent('click', handleOpenNarrative)
+                                                    }, 'Open Narrative <i>' + narrative.metadata.narrative_nice_name + '</i>')
+                                                ];                                      
+                                            }
+                                        }())
+                                    ])
+                                ]),
+                                tr([
+                                    th('Object name'),
+                                    td(input({
+                                        type: 'text',
+                                        readonly: true,
+    //                                    id: events.addEvents([
+    //                                        {
+    //                                            type: 'change',
+    //                                            handler: handleCopyToNarrativeNameChanged
+    //                                        },
+    //                                        {
+    //                                            type: 'keyup',
+    //                                            handler: handleCopyToNarrativeNameKeyUp
+    //                                        }
+    //                                    ]),
+                                        value: model.state.copyToNarrativeObjectName || data.objectInfo.name,
+                                        style: {width: '100%'}
+                                    }))
+                                ]),
+                                tr([
+                                    th(),
+                                    td(a({
+                                        class: 'btn btn-primary', href: '#',
+                                        style: {margin: '5px'},
+                                        disabled: (model.state.selectedNarrative ? false : true),
+                                        id: events.addEvent('click', handleCopyToNarrative)
+                                    }, 'Copy to Narrative'))
                                 ])
-                            ]),
-                            tr([
-                                th('Object name'),
-                                td(input({
-                                    type: 'text',
-                                    readonly: true,
-//                                    id: events.addEvents([
-//                                        {
-//                                            type: 'change',
-//                                            handler: handleCopyToNarrativeNameChanged
-//                                        },
-//                                        {
-//                                            type: 'keyup',
-//                                            handler: handleCopyToNarrativeNameKeyUp
-//                                        }
-//                                    ]),
-                                    value: model.state.copyToNarrativeObjectName || data.objectInfo.name,
-                                    style: {width: '100%'}
-                                }))
-                            ]),
-                            tr([
-                                th(),
-                                td(a({
-                                    class: 'btn btn-primary', href: '#',
-                                    style: {margin: '5px'},
-                                    disabled: (model.state.selectedNarrative ? false : true),
-                                    id: events.addEvent('click', handleCopyToNarrative)
-                                }, 'Copy to Narrative'))
                             ])
                         ])
                     ]),
-                    div({class: 'col-md-6'}, [
+                    div({class: 'col-md-6', dataElement: 'object-summary'}, [
                         sectionHeader('Object Summary'),
                         p('This is the original object imported from JGI source'),
                         basicInfoTable,
@@ -519,7 +523,7 @@ define([
                     var narrativeMap = {};
                     narrativeWorkspaces.forEach(function (narrative) {
                         narrativeMap[narrative.id] = narrative;
-                    })
+                    });
 
                     var typeName = objectInfo.type.split('-')[0];
                     var typeInfo = types[typeName] || types.none;
