@@ -246,22 +246,23 @@ define([
                 var div = html.tag('div');
                 return html.makePanel({
                     title: 'Data Overview',
-                    content: div([
+                    content: div({dataWidget: 'dataview-overview'},[
                         div({dataPlaceholder: 'alert'}),
                         div({dataPlaceholder: 'content'})
                     ])
                 });
             }
-            var div = html.tag('div'),
-                h3 = html.tag('h3'),
-                h4 = html.tag('h4'),
-                span = html.tag('span'),
-                p = html.tag('p'),
-                a = html.tag('a'),
-                table = html.tag('table'),
-                tr = html.tag('tr'),
-                th = html.tag('th'),
-                td = html.tag('td');
+            var t = html.tag,
+                div = t('div'),
+                h3 = t('h3'),
+                h4 = t('h4'),
+                span = t('span'),
+                p = t('p'),
+                a = t('a'),
+                table = t('table'),
+                tr = t('tr'),
+                th = t('th'),
+                td = t('td');
             function renderTitleRow() {
                 return tr({style: {verticalAlign: 'baseline'}}, [
                     th(state.get('dataicon')),
@@ -284,7 +285,7 @@ define([
                 return [
                     tr([
                         th('Module'),
-                        td([
+                        td({dataElement: 'module'},[
                             (function () {
                                 if (state.get('sub.sub')) {
                                     return get('sub.sub') + ' in ';
@@ -297,7 +298,7 @@ define([
                     ]),
                     tr([
                         th('Type'),
-                        td([
+                        td({dataElement: 'module'}, [
                             (function () {
                                 if (state.get('sub.sub')) {
                                     return get('sub.sub') + ' in ';
@@ -315,7 +316,7 @@ define([
                 if (state.get('workspace.metadata.narrative_nice_name')) {
                     return tr([
                         th('In Narrative'),
-                        td(a({href: '/narrative/ws.' + state.get('workspace.id') + '.' + state.get('object.id'),
+                        td({dataElement: 'narrative'}, a({href: '/narrative/ws.' + state.get('workspace.id') + '.' + state.get('object.id'),
                             target: '_blank'}, state.get('workspace.metadata.narrative_nice_name')))
                     ]);
                 }
@@ -335,14 +336,14 @@ define([
                 }
                 return tr([
                     th('Permalink'),
-                    td(a({href: permalink}, permalink))
+                    td({dataElement: 'permalink'}, a({href: permalink}, permalink))
                 ]);
             }
             function renderVersionRow() {
                 var version = state.get('object.version') || 'Latest';
                 return tr([
                     th('Version'),
-                    td(version)
+                    td({dataElement: 'version'}, version)
                 ]);
             }
             function panel(content) {
@@ -477,7 +478,7 @@ define([
                             renderNarrativeRow(),
                             tr([
                                 th('Last Updated'),
-                                td([
+                                td({dataElement: 'last-updated'}, [
                                     dateFormat(state.get('object.save_date')), ' by ', a({href: ['#people', state.get('object.saved_by')].join('/')}, state.get('object.saved_by'))
                                 ])
                             ]),
