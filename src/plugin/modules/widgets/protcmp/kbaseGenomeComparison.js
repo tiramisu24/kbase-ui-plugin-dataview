@@ -62,7 +62,7 @@ define([
             render: function () {
                 var self = this;
 
-                self.tooltip = d3.select("body").append("div").classed("kbcb-tooltip", true);
+                self.tooltip = d3.select("body").append("div").classed("genome-comparison-tooltip", true);
 
                 var container = this.$elem;
                 container.empty();

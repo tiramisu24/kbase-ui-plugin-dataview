@@ -1071,3 +1071,12 @@ button.kb-method-run:hover {
   font-size: 24pt;
 }
 
+.genome-comparison-tooltip {
+	position: absolute;
+	z-index: 9999999;
+	visibility: hidden;
+	opacity: 0.8;
+	background-color: #222;
+	color: #fff;
+	padding: 0.5em;
+}
