@@ -46,7 +46,6 @@ define([
                         name: 'Copied From'
                     }
                 },
-            tempRefData = null,
                 monthLookup = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
                 graph = {
                     nodes: [],
@@ -72,6 +71,39 @@ define([
                     div({id: 'objgraphview', style: {overflow: 'auto', height: '450px', resize: 'vertical'}}),
                     div({id: 'nodeColorKey'})
                 ]);
+            }
+            
+             /* Construct an ObjectIdentity that can be used to query the WS*/
+            function getObjectIdentity(wsNameOrId, objNameOrId, objVer) {
+                if (objVer) {
+                    return {ref: wsNameOrId + "/" + objNameOrId + "/" + objVer};
+                }
+                return {ref: wsNameOrId + "/" + objNameOrId};
+            }
+            // edited from: http://stackoverflow.com/questions/3177836/how-to-format-time-since-xxx-e-g-4-minutes-ago-similar-to-stack-exchange-site
+            function getTimeStampStr(objInfoTimeStamp) {
+                if (!objInfoTimeStamp) {
+                    return '';
+                }
+                var date = new Date(objInfoTimeStamp);
+                var seconds = Math.floor((new Date() - date) / 1000);
+
+                // f-ing safari, need to add extra ':' delimiter to parse the timestamp
+                if (isNaN(seconds)) {
+                    var tokens = objInfoTimeStamp.split('+');  // this is just the date without the GMT offset
+                    var newTimestamp = tokens[0] + '+' + tokens[0].substr(0, 2) + ":" + tokens[1].substr(2, 2);
+                    date = new Date(newTimestamp);
+                    seconds = Math.floor((new Date() - date) / 1000);
+                    if (isNaN(seconds)) {
+                        // just in case that didn't work either, then parse without the timezone offset, but
+                        // then just show the day and forget the fancy stuff...
+                        date = new Date(tokens[0]);
+                        return monthLookup[date.getMonth()] + " " + date.getDate() + ", " + date.getFullYear();
+                    }
+                }
+
+                // keep it simple, just give a date
+                return monthLookup[date.getMonth()] + " " + date.getDate() + ", " + date.getFullYear();
             }
 
             //should be a struct with fields of type name, values are type info.  type info has 'info', 'refs'
@@ -157,7 +189,7 @@ define([
                                 text += metadata + "</div></td></tr>";
                             }
                             text += "</div></td></tr></table></td><td>";
-                            text += '<h4>Provenance</h4><table cellpadding="2" cellspacing="0" class="table table-bordered table-striped">'
+                            text += '<h4>Provenance</h4><table cellpadding="2" cellspacing="0" class="table table-bordered table-striped">';
 
                             if (objdata.length > 0) {
                                 if (objdata[0].copied) {
@@ -603,7 +635,7 @@ define([
                 } else if (err.error && err.error.message) {
                     message = err.error.message;
                 } else {
-                    message = 'unknown error (check console)'
+                    message = 'unknown error (check console)';
                 }
                 $container.append(message + "<br>");
                 console.error("Error in building object graph!");
@@ -656,11 +688,11 @@ define([
                                 objRefToNodeIdx[objId] = nodeId;
 
                                 // add the link now too
-                                if (objRefToNodeIdx[objIdentities[i]['ref']] != null) {  // only add the link if it is visible
-                                    graph['links'].push({
-                                        source: objRefToNodeIdx[objIdentities[i]['ref']],
+                                if (objRefToNodeIdx[objIdentities[i].ref] !== null) {  // only add the link if it is visible
+                                    graph.links.push({
+                                        source: objRefToNodeIdx[objIdentities[i].ref],
                                         target: nodeId,
-                                        value: 1,
+                                        value: 1
                                     });
                                 }
                             }
@@ -672,7 +704,7 @@ define([
             }
 
             function getObjectProvenance(objIdentities) {
-                workspace.get_object_provenance(objIdentities)
+                return workspace.get_object_provenance(objIdentities)
                     .then(function (objdata) {
                         var uniqueRefs = {};
                         var uniqueRefObjectIdentities = [];
@@ -700,7 +732,6 @@ define([
                             }
                             // copied from
                             if (objdata[i].hasOwnProperty('copied')) {
-
                                 var copyShort = objdata[i].copied.split('/')[0] + '/' + objdata[i].copied.split('/')[1];
                                 var thisShort = objIdentities[i]['ref'].split('/')[0] + '/' + objIdentities[i]['ref'].split('/')[1];
                                 if (copyShort !== thisShort) { // only add if it wasn't copied from an older version
@@ -713,18 +744,17 @@ define([
                             }
 
                         }
-                        tempRefData = {
+                        return {
                             uniqueRefs: uniqueRefs,
                             uniqueRefObjectIdentities: uniqueRefObjectIdentities,
                             links: links
                         };
-
                     });
             }
 
-            function getObjectInfo(tempRefData) {
+            function getObjectInfo(refData) {
                 return workspace.get_object_info_new({
-                    objects: tempRefData['uniqueRefObjectIdentities'],
+                    objects: refData['uniqueRefObjectIdentities'],
                     includeMetadata: 1,
                     ignoreErrors: 1
                 })
@@ -737,7 +767,7 @@ define([
 
                         }
                         // add the nodes
-                        var uniqueRefs = tempRefData['uniqueRefs'];
+                        var uniqueRefs = refData['uniqueRefs'];
                         for (var ref in uniqueRefs) {
                             var refInfo = objInfoStash[ref];
                             if (refInfo) {
@@ -759,7 +789,7 @@ define([
                             }
                         }
                         // add the link info
-                        var links = tempRefData['links'];
+                        var links = refData['links'];
                         for (var i = 0; i < links.length; i++) {
                             if (objRefToNodeIdx[links[i]['source']] !== null && objRefToNodeIdx[links[i]['target']] !== null) {
                                 graph['links'].push({
@@ -772,7 +802,7 @@ define([
                     })
                     .catch(function (err) {
                         // we couldn't get info for some reason, could be if objects are deleted or not visible
-                        var uniqueRefs = tempRefData['uniqueRefs'];
+                        var uniqueRefs = refData['uniqueRefs'];
                         for (var ref in uniqueRefs) {
                             var nodeId = graph['nodes'].length;
                             var refTokens = ref.split("/");
@@ -788,7 +818,7 @@ define([
                             objRefToNodeIdx[ref] = nodeId;
                         }
                         // add the link info
-                        var links = tempRefData['links'];
+                        var links = refData['links'];
                         for (var i = 0; i < links.length; i++) {
                             graph['links'].push({
                                 source: objRefToNodeIdx[links[i]['source']],
@@ -818,10 +848,10 @@ define([
                             getObjectProvenance(objIdentities)
                         ]);
                     })
-                    .spread(function (ignore, tempRefData) {
-                        if (tempRefData && 'uniqueRefObjectIdentities' in tempRefData) {
-                            if (tempRefData.uniqueRefObjectIdentities.length > 0) {
-                                return getObjectInfo(tempRefData)
+                    .spread(function (ignore, refData) {
+                        if (refData && 'uniqueRefObjectIdentities' in refData) {
+                            if (refData.uniqueRefObjectIdentities.length > 0) {
+                                return getObjectInfo(refData);
                             }
                         }
                     })
@@ -862,39 +892,7 @@ define([
             function getData() {
                 return {title: "Data Object Reference Network", workspace: workspaceId, id: "This view shows the data reference connections to object " + objectId};
             }
-            /* Construct an ObjectIdentity that can be used to query the WS*/
-            function getObjectIdentity(wsNameOrId, objNameOrId, objVer) {
-                if (objVer) {
-                    return {ref: wsNameOrId + "/" + objNameOrId + "/" + objVer};
-                }
-                return {ref: wsNameOrId + "/" + objNameOrId};
-            }
-            // edited from: http://stackoverflow.com/questions/3177836/how-to-format-time-since-xxx-e-g-4-minutes-ago-similar-to-stack-exchange-site
-            function getTimeStampStr(objInfoTimeStamp) {
-                if (!objInfoTimeStamp) {
-                    return '';
-                }
-                var date = new Date(objInfoTimeStamp);
-                var seconds = Math.floor((new Date() - date) / 1000);
-
-                // f-ing safari, need to add extra ':' delimiter to parse the timestamp
-                if (isNaN(seconds)) {
-                    var tokens = objInfoTimeStamp.split('+');  // this is just the date without the GMT offset
-                    var newTimestamp = tokens[0] + '+' + tokens[0].substr(0, 2) + ":" + tokens[1].substr(2, 2);
-                    date = new Date(newTimestamp);
-                    seconds = Math.floor((new Date() - date) / 1000);
-                    if (isNaN(seconds)) {
-                        // just in case that didn't work either, then parse without the timezone offset, but
-                        // then just show the day and forget the fancy stuff...
-                        date = new Date(tokens[0]);
-                        return monthLookup[date.getMonth()] + " " + date.getDate() + ", " + date.getFullYear();
-                    }
-                }
-
-                // keep it simple, just give a date
-                return monthLookup[date.getMonth()] + " " + date.getDate() + ", " + date.getFullYear();
-            }
-
+           
             // Widget API
             function attach(node) {
                 mount = node;
@@ -915,7 +913,6 @@ define([
             function detach() {
                 mount.removeChild(container);
             }
-
 
             return {
                 attach: attach,
