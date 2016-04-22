@@ -62,7 +62,7 @@ define([
                             }
                             return apiUtils.object_info_to_object(objectList[0]);
                         });
-                })
+                });
             }
 
             function renderPanel() {
