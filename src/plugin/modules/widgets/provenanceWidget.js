@@ -80,6 +80,12 @@ define([
                 }
                 return {ref: wsNameOrId + "/" + objNameOrId};
             }
+            function getObjectRefShort(objectInfo) {
+                return [objectInfo[6], objectInfo[0]].join('/');
+            }
+            function getObjectRef(objectInfo) {
+                return [objectInfo[6], objectInfo[0], objectInfo[4]].join('/');
+            }
             // edited from: http://stackoverflow.com/questions/3177836/how-to-format-time-since-xxx-e-g-4-minutes-ago-similar-to-stack-exchange-site
             function getTimeStampStr(objInfoTimeStamp) {
                 if (!objInfoTimeStamp) {
@@ -261,7 +267,7 @@ define([
                         isFake: true
                     });
                     objRefToNodeIdx["-1"] = 1;
-                    graph.links.push({target: 0, source: 1, value: 1});
+                    graph.links.push(makeLink(0, 1, 1));
                 }
 
                 if (height < 450) {
@@ -516,8 +522,7 @@ define([
                  * string description - a free text description of the data.
                  */
                 var rethtml = '';
-                for (var i = 0; i < extData.length; i++) {
-                    var edu = extData[i];
+                extData.forEach(function (edu) {
                     if ('resource_name' in edu) {
                         rethtml += '<b>Resource Name</b><br/>';
                         if ('resource_url' in edu) {
@@ -554,7 +559,7 @@ define([
                         rethtml += "<b>Description</b><br/>";
                         rethtml += edu["description"] + "<br/>";
                     }
-                }
+                });
                 return rethtml;
             }
             // removes any keys named 'auth'
@@ -592,35 +597,33 @@ define([
                     latestObjId = "";
 
                 // These are global.
-
                 objRefToNodeIdx = {};
-
                 graph = {
                     nodes: [],
                     links: []
                 };
 
-                for (var i = 0; i < data.length; i++) {
+                data.forEach(function (objectInfo) {
                     //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
-                    var t = data[i][2].split("-")[0],
-                        objId = data[i][6] + "/" + data[i][0] + "/" + data[i][4],
-                        nodeId = graph['nodes'].length;
+                    var t = objectInfo[2].split("-")[0],
+                        objId = objectInfo[6] + "/" + objectInfo[0] + "/" + objectInfo[4],
+                        nodeId = graph.nodes.length;
                     graph.nodes.push({
                         node: nodeId,
-                        name: getNodeLabel(data[i]),
-                        info: data[i],
+                        name: getNodeLabel(objectInfo),
+                        info: objectInfo,
                         nodeType: "core",
                         objId: objId
                     });
-                    if (data[i][4] > latestVersion) {
-                        latestVersion = data[i][4];
+                    if (objectInfo[4] > latestVersion) {
+                        latestVersion = objectInfo[4];
                         latestObjId = objId;
                     }
                     objRefToNodeIdx[objId] = nodeId;
                     objIdentities.push({ref: objId});
-                }
+                });
                 if (latestObjId.length > 0) {
-                    graph.nodes[objRefToNodeIdx[latestObjId]]['nodeType'] = 'selected';
+                    graph.nodes[objRefToNodeIdx[latestObjId].nodeType] = 'selected';
                 }
                 return objIdentities;
             }
@@ -689,67 +692,79 @@ define([
 
                                 // add the link now too
                                 if (objRefToNodeIdx[objIdentities[i].ref] !== null) {  // only add the link if it is visible
-                                    graph.links.push({
-                                        source: objRefToNodeIdx[objIdentities[i].ref],
-                                        target: nodeId,
-                                        value: 1
-                                    });
+                                    graph.links.push(makeLink(objRefToNodeIdx[objIdentities[i].ref], nodeId, 1));
                                 }
                             }
                         }
                     });
-                //.catch(function (err) {
-                //    showError(err);
-                //});
+            }
+            
+            function makeLink(source, target, value) {
+                return {
+                    source: source,
+                    target: target,
+                    value: value
+                };
             }
 
             function getObjectProvenance(objIdentities) {
                 return workspace.get_object_provenance(objIdentities)
                     .then(function (objdata) {
-                        var uniqueRefs = {};
-                        var uniqueRefObjectIdentities = [];
-                        var links = [];
-                        for (var i = 0; i < objdata.length; i++) {
+                        var uniqueRefs = {},
+                            uniqueRefObjectIdentities = [],
+                            links = [];                            
+                            
+                        objdata.forEach(function (objectProvenance) {
+                            var objRef = getObjectRef(objectProvenance.info);
+                            
                             // extract the references contained within the object
-                            for (var r = 0; r < objdata[i]['refs'].length; r++) {
-                                if (!(objdata[i]['refs'][r] in uniqueRefs)) {
-                                    uniqueRefs[objdata[i]['refs'][r]] = 'included';
-                                    uniqueRefObjectIdentities.push({ref: objdata[i]['refs'][r]});
+                            objectProvenance.refs.forEach(function (ref) {
+                                if (!(ref in uniqueRefs)) {
+                                    uniqueRefs[ref] = 'included';
+                                    uniqueRefObjectIdentities.push({ref: ref});
                                 }
-                                links.push({source: objdata[i]['refs'][r], target: objIdentities[i]['ref'], value: 1});
-                            }
-                            // extract the references from the provenance
-                            for (var p = 0; p < objdata[i]['provenance'].length; p++) {
-                                if (objdata[i]['provenance'][p].hasOwnProperty('resolved_ws_objects')) {
-                                    for (var pRef = 0; pRef < objdata[i]['provenance'][p].resolved_ws_objects.length; pRef++) {
-                                        if (!(objdata[i]['provenance'][p].resolved_ws_objects[pRef] in uniqueRefs)) {
-                                            uniqueRefs[objdata[i]['provenance'][p].resolved_ws_objects[pRef]] = 'included'; // TODO switch to prov??
-                                            uniqueRefObjectIdentities.push({ref: objdata[i]['provenance'][p].resolved_ws_objects[pRef]});
+                                links.push(makeLink(ref, objRef, 1));
+                            });
+                            
+                            // extract the references from the provenance                            
+                            objectProvenance.provenance.forEach(function (provenance) {
+                                if (provenance.resolved_ws_objects) {
+                                    provenance.resolved_ws_objects.forEach(function (resolvedObjectRef) {
+                                         if (!(resolvedObjectRef in uniqueRefs)) {
+                                            uniqueRefs[resolvedObjectRef] = 'included'; // TODO switch to prov??
+                                            uniqueRefObjectIdentities.push({ref: resolvedObjectRef});
                                         }
-                                        links.push({source: objdata[i]['provenance'][p].resolved_ws_objects[pRef], target: objIdentities[i]['ref'], value: 1});
-                                    }
+                                        links.push(makeLink(resolvedObjectRef, objRef, 1));
+                                    });
                                 }
-                            }
-                            // copied from
-                            if (objdata[i].hasOwnProperty('copied')) {
-                                var copyShort = objdata[i].copied.split('/')[0] + '/' + objdata[i].copied.split('/')[1];
-                                var thisShort = objIdentities[i]['ref'].split('/')[0] + '/' + objIdentities[i]['ref'].split('/')[1];
-                                if (copyShort !== thisShort) { // only add if it wasn't copied from an older version
-                                    if (!(objdata[i].copied in uniqueRefs)) {
-                                        uniqueRefs[objdata[i].copied] = 'copied'; // TODO switch to prov??
-                                        uniqueRefObjectIdentities.push({ref: objdata[i].copied});
-                                    }
-                                    links.push({source: objdata[i].copied, target: objIdentities[i]['ref'], value: 1});
-                                }
-                            }
+                            });
 
-                        }
+                            // copied from
+                            if (objectProvenance.copied) {
+                                var copyShort = objectProvenance.copied.split('/')[0] + '/' + objectProvenance.copied.split('/')[1];
+                                var thisShort = getObjectRefShort(objectProvenance.info);
+                                if (copyShort !== thisShort) { // only add if it wasn't copied from an older version
+                                    if (!(objectProvenance.copied in uniqueRefs)) {
+                                        uniqueRefs[objectProvenance.copied] = 'copied'; // TODO switch to prov??
+                                        uniqueRefObjectIdentities.push({ref: objectProvenance.copied});
+                                    }
+                                    links.push(makeLink(objectProvenance.copied, objRef, 1));
+                                }
+                            }
+                        });
                         return {
                             uniqueRefs: uniqueRefs,
                             uniqueRefObjectIdentities: uniqueRefObjectIdentities,
                             links: links
                         };
                     });
+            }
+            
+            function isUndefNull(obj) {
+                if (obj === null || obj === undefined) {
+                    return true;
+                }
+                return false;
             }
 
             function getObjectInfo(refData) {
@@ -764,18 +779,17 @@ define([
                             if (objInfoList[i]) {
                                 objInfoStash[objInfoList[i][6] + "/" + objInfoList[i][0] + "/" + objInfoList[i][4]] = objInfoList[i];
                             }
-
                         }
                         // add the nodes
-                        var uniqueRefs = refData['uniqueRefs'];
+                        var uniqueRefs = refData.uniqueRefs;
                         for (var ref in uniqueRefs) {
                             var refInfo = objInfoStash[ref];
                             if (refInfo) {
                                 //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
                                 var t = refInfo[2].split("-")[0];
                                 var objId = refInfo[6] + "/" + refInfo[0] + "/" + refInfo[4];
-                                var nodeId = graph['nodes'].length;
-                                graph['nodes'].push({
+                                var nodeId = graph.nodes.length;
+                                graph.nodes.push({
                                     node: nodeId,
                                     name: getNodeLabel(refInfo),
                                     info: refInfo,
@@ -786,19 +800,18 @@ define([
                             } else {
                                 // there is a reference, but we no longer have access; could do something better
                                 // here, but instead we just skip
+                                // At least warn... there be bugs if this happens...
+                                console.warn('In provenance widget reference '  + ref + ' is not accessible');
                             }
                         }
                         // add the link info
-                        var links = refData['links'];
-                        for (var i = 0; i < links.length; i++) {
-                            if (objRefToNodeIdx[links[i]['source']] !== null && objRefToNodeIdx[links[i]['target']] !== null) {
-                                graph['links'].push({
-                                    source: objRefToNodeIdx[links[i]['source']],
-                                    target: objRefToNodeIdx[links[i]['target']],
-                                    value: links[i]['value']
-                                });
+                        refData.links.forEach(function (link) {
+                            if ( isUndefNull(objRefToNodeIdx[link.source]) || isUndefNull(objRefToNodeIdx[link.target]) ) {
+                                console.warn('skipping link', link);                                
+                            } else {
+                                graph.links.push(makeLink(objRefToNodeIdx[link.source], objRefToNodeIdx[link.target], link.value));
                             }
-                        }
+                        });
                     })
                     .catch(function (err) {
                         // we couldn't get info for some reason, could be if objects are deleted or not visible
@@ -820,11 +833,7 @@ define([
                         // add the link info
                         var links = refData['links'];
                         for (var i = 0; i < links.length; i++) {
-                            graph['links'].push({
-                                source: objRefToNodeIdx[links[i]['source']],
-                                target: objRefToNodeIdx[links[i]['target']],
-                                value: links[i]['value']
-                            });
+                            graph['links'].push(makeLink(objRefToNodeIdx[links[i]['source']], objRefToNodeIdx[links[i]['target']],links[i]['value']));
                         }
                     });
             }
@@ -881,11 +890,7 @@ define([
                     expectedNextId = node.info[6] + "/" + node.info[0] + "/" + expectedNextVersion;
                     if (objRefToNodeIdx[expectedNextId]) {
                         // add the link now too
-                        graph.links.push({
-                            source: objRefToNodeIdx[node.objId],
-                            target: objRefToNodeIdx[expectedNextId],
-                            value: 1
-                        });
+                        graph.links.push(makeLink(objRefToNodeIdx[node.objId], objRefToNodeIdx[expectedNextId], 1)); 
                     }
                 });
             }
