@@ -39,7 +39,7 @@ define([
             this.$messagePane = $("<div/>").hide();
             this.$elem.append(this.$messagePane);
 
-            this.render(); // this is moved inside central store and 
+            this.render(); // this is moved inside central store and
             if (this.options.workspaceID === null) {
                 this.renderCentralStore();
             } else {
@@ -191,18 +191,26 @@ define([
 
             var gcContent = "Unknown";
             var dnaLength = "Unknown";
-            if (genome.dna_size && genome.dna_size !== 0) {
-                dnaLength = genome.dna_size;
-                if (genome.gc_content) {
-                    gcContent = Number(genome.gc_content);
-                    if (isInt(gcContent)) {
-                        if (dnaLength)
-                            gcContent = (gcContent / dnaLength * 100).toFixed(2) + " %";
-                    } else
-                        gcContent = Number(gcContent * 100).toFixed(2) + " %";
+
+            /** Changes - wjriehl 22apr2016 */
+            /* Assume two cases for GC content.
+             * 1. GC > 1 --> it's a raw percentage, so just render
+             * 2. GC < 1 --> it's a decimal and should be x100
+             * 3. (maybe?) GC > 100 --> it's an actual count of GCs and should be divided by dna length
+             */
+
+            if (genome.gc_content) {
+                gcContent = Number(genome.gc_content);
+                if (gcContent < 1.0)
+                    gcContent = (gcContent * 100).toFixed(2) + " %";
+                else if (gcContent > 100) {
+                    if (genome.dna_size && genome.dna_size !== 0) {
+                        gcContent = gcContent + Number(genome.dna_size) + " %";
+                    }
                 }
-            } else if (Number(genome.gc_content) < 1.0) {
-                gcContent = Number(genome.gc_content * 100).toFixed(2) + " %";
+                else {
+                    gcContent = gcContent.toFixed(2) + " %";
+                }
             }
 
             var nFeatures = 0;
