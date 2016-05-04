@@ -173,7 +173,7 @@ define([
                                     widgetParentId = html.genId(),
                                     div = html.tag('div');
                                 temp.innerHTML = html.makePanel({
-                                    title: 'Data View',
+                                    title: result.mapping.title || 'Data View',
                                     content: div({id: widgetParentId})
                                 });
                                 // These are global.
