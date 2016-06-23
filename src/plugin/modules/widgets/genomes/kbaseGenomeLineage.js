@@ -154,7 +154,7 @@ define([
                     if (splittax.length >= 2) {
                         needGuess = false;
                     }
-                    finaltax += "<pre>";
+                    finaltax += '<pre style="white-space: pre-wrap">';
                     var a, b, pad, searchtax, str;
                     for (a = 0; a < splittax.length; a += 1) {
                         pad = "";
