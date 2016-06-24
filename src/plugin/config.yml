@@ -605,7 +605,8 @@ install:
             viewers:
                 -
                     name: Data View
-                    panel: true
+                    panel: true                    
+                    default: true
                     widget: 
                         name: kb_dataview_abundanceDataHeatmap
                         config:
@@ -644,6 +645,7 @@ install:
 #                        config:
 #                            jqueryName: kbaseContigSetView
 #                    panel: true
+#                    default: true
 #                    options: 
 #                        -
 #                            from: workspaceId 
@@ -673,6 +675,7 @@ install:
                         config:
                             jqueryName: kbaseTabTable
                     panel: true
+                    default: true
                     options: 
                         -
                             from: workspaceName 
@@ -699,6 +702,7 @@ install:
                         config:
                             jqueryName: AbundanceDataView
                     panel: true
+                    default: true
                     options: 
                         -
                             from: workspaceId
@@ -723,6 +727,7 @@ install:
                         config:
                                 jqueryName: MetagenomeView
                     panel: true
+                    default: true
                     options:
                         -
                             from: workspaceId
@@ -743,6 +748,7 @@ install:
                         config:
                             jqueryName: AbundanceDataView
                     panel: true
+                    default: true
                     options: 
                         -
                             from: workspaceId
@@ -767,6 +773,7 @@ install:
                         config:
                             jqueryName: GenomeComparisonWidget
                     panel: true
+                    default: true
                     options:
                         -
                             from: workspaceId
@@ -791,6 +798,7 @@ install:
                         config:
                             jqueryName: kbaseAssemblyInput
                     panel: true
+                    default: true
                     options:
                         -
                             from: workspaceId
@@ -815,6 +823,7 @@ install:
                         config: 
                             jqueryName: kbaseAssemblyView
                     panel: true
+                    default: true
                     options:
                         -
                             from: workspaceId
@@ -838,6 +847,7 @@ install:
                         config:
                             jqueryName: kbasePairedEndLibrary
                     panel: true
+                    default: true
                     options:
                         -
                             from: workspaceId
@@ -862,6 +872,7 @@ install:
                         config:
                             jqueryName: kbaseReferenceAssembly
                     panel: true
+                    default: true
                     options:
                         -
                             from: workspaceId
@@ -891,6 +902,7 @@ install:
                         config:
                             jqueryName: kbaseTabTable
                     panel: true
+                    default: true
                     options: 
                         -
                             from: workspaceName 
@@ -919,6 +931,7 @@ install:
                         config:
                             jqueryName: kbaseExpressionSeries
                     panel: true
+                    default: true
                     options: 
                         -
                             from: workspaceName 
@@ -943,6 +956,7 @@ install:
                         config:
                             jqueryName: kbaseTabTable
                     panel: true
+                    default: true
                     options: 
                         -
                             from: workspaceName 
@@ -969,6 +983,7 @@ install:
                         config:
                             jqueryName: kbaseTabTable
                     panel: true
+                    default: true
                     options: 
                         -
                             from: workspaceName 
@@ -992,6 +1007,7 @@ install:
                         config:
                                 jqueryName: kbaseTabTable
                     panel: true
+                    default: true
                     options: 
                         -
                             from: workspaceName 
@@ -1020,6 +1036,7 @@ install:
                         config:
                             jqueryName: kbaseTabTable
                     panel: true
+                    default: true
                     options: 
                         -
                             from: workspaceName 
@@ -1045,6 +1062,7 @@ install:
                         config:
                             jqueryName:  kbaseFilePairedEndLibrary
                     panel: true
+                    default: true
                     options: 
                         -
                             from: workspaceId
@@ -1084,6 +1102,7 @@ install:
                         config:
                             jqueryName: KBaseGenomePage
                     panel: false
+                    default: true
                     # Options object to build. Maps
                     options: 
                         -
@@ -1100,6 +1119,7 @@ install:
                                 config:
                                     jqueryName: KBaseGenePage
                             panel: false
+                            default: true
                             options: 
                                 -
                                     from: objectId 
@@ -1126,6 +1146,7 @@ install:
                         config:
                             jqueryName: kbasePanGenome
                     panel: true
+                    default: true
                     options: 
                         -
                             from: workspaceName 
@@ -1149,6 +1170,7 @@ install:
                         config:
                             jqueryName: AnnotationSetTable
                     panel: true
+                    default: true
                     options: 
                         -
                             from: workspaceId 
