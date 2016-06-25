@@ -22,7 +22,7 @@ define([
 
             function findMapping(type, params) {
                 // var mapping = typeMap[objectType];
-                var mapping = runtime.getService('type').getViewer({type: type});
+                var mapping = runtime.getService('type').getViewer({type: type, id: params.viewer});
                 if (mapping) {
                     if (params.sub && params.subid) {
                         if (mapping.sub) {
