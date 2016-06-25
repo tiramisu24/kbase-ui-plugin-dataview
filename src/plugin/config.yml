@@ -515,7 +515,8 @@ install:
                     optional: true
             queryParams:
                 sub: {}
-                subid: {}         
+                subid: {}
+                viewer: {}
             widget: kb_dataview_panel
         -
             path: 
