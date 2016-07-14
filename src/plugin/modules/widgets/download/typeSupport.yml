@@ -14,6 +14,19 @@ types:
             external_type: Genbank.Genome
             transform_options: {}
             
+    KBaseGenomeAnnotations.Assembly:
+        -
+            name: FASTA
+            external_type: FASTA.DNA.Assembly
+            transform_options:
+            output_file_name: "?.fasta"
+            
+    KBaseGenomeAnnotations.GenomeAnnotation:
+        -
+            name: GENBANK
+            external_type: Genbank.Genome
+            transform_options: {}
+            
     KBaseAssembly.SingleEndLibrary: 
          -
             name: FASTA/FASTQ
