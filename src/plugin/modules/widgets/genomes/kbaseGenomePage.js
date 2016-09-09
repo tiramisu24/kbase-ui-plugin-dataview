@@ -16,13 +16,15 @@ define([
     'jquery',
     'kb/common/html',
     'kb/service/client/workspace',
+    'kb_sdk_clients/GenomeAnnotationAPI/dev/GenomeAnnotationAPIClient',
+    'kb_sdk_clients/AssemblyAPI/dev/AssemblyAPIClient',
     'kb/widget/legacy/widget',
     'kb_dataview_genomes_wideOverview',
     'kb_dataview_genomes_literature',
     'kb_dataview_genomes_wideTaxonomy',
-    'kb_dataview_genomes_wideAssemblyAnnotation'
+    'kb_dataview_genomes_wideAssemblyAnnotation',
 ],
-    function ($, html, Workspace) {
+    function ($, html, Workspace, GenomeAnnotationAPI, AssemblyAPI) {
         'use strict';
         $.KBWidget({
             name: "KBaseGenomePage",
@@ -45,10 +47,18 @@ define([
                 var self = this;
                 var scope = {ws: this.options.workspaceID, id: this.options.genomeID, ver: this.options.ver};
 
-                var workspace = new Workspace(this.runtime.getConfig('services.workspace.url'), {
-                    token: this.runtime.service('session').getAuthToken()
+                var ga_api = new GenomeAnnotationAPI({
+                    url: this.runtime.getConfig('services.service_wizard.url'),
+                    auth: {'token': this.runtime.service('session').getAuthToken()},
+                    version: 'release'
                 });
-
+                
+                var asm_api = new AssemblyAPI({
+                    url: this.runtime.getConfig('services.service_wizard.url'),
+                    auth: {'token': this.runtime.service('session').getAuthToken()},
+                    version: 'release'
+                });
+                
                 var cell1 = $('<div panel panel-default">');
                 self.$elem.append(cell1);
                 var panel1 = self.makePleaseWaitPanel();
@@ -77,9 +87,9 @@ define([
                 var objId = scope.ws + "/" + scope.id;
                 if (self.options.ver)
                     objId += "/" + self.options.ver;
-                var includedNoFeat = ["/complete", "/contig_ids", "/contig_lengths", "contigset_ref", "/dna_size",
-                    "/domain", "/gc_content", "/genetic_code", "/id", "/md5", "num_contigs",
-                    "/scientific_name", "/source", "/source_id", "/tax_id", "/taxonomy"];
+                var genome_fields = ["complete", "contig_ids", "contig_lengths", "contigset_ref", "dna_size",
+                    "domain", "gc_content", "genetic_code", "id", "md5", "num_contigs",
+                    "scientific_name", "source", "source_id", "tax_id", "taxonomy"];
 
                 var ready = function (genomeInfo) {
                     panel1.empty();
@@ -130,14 +140,20 @@ define([
                         genomeInfo && genomeInfo.data['domain'] === 'Plant') {
                         cell5.empty();
                     } else {
-                        var includedWithFeat = includedNoFeat.concat(
-                            ["/features/[*]/aliases", "/features/[*]/annotations",
-                                "/features/[*]/function", "/features/[*]/id", "/features/[*]/location",
-                                "/features/[*]/protein_translation_length", "/features/[*]/type"]);
+                        var feature_fields = ["aliases",
+                                              "annotations",
+                                              "function",
+                                              "id",
+                                              "location",
+                                              "protein_translation_length",
+                                              "type"];
 
-                        workspace.get_object_subset([{ref: objId, included: includedWithFeat}], function (data) {
-                            var genomeInfo = data[0];
-                            var ready = function () {
+                        ga_api.get_genome_v1({"genomes": [{"ref": objId}],
+                                              "included_fields": genome_fields,
+                                              "included_feature_fields": feature_fields}).then(function (data) {
+                            var genomeInfo = data.genomes[0];
+                            var gnm = genomeInfo.data;
+                            if (gnm.contig_ids && gnm.contig_lengths && gnm.contig_ids.length === gnm.contig_lengths.length) {
                                 panel5.empty();
                                 try {
                                     panel5.KBaseGenomeWideAssemAnnot({
@@ -151,56 +167,43 @@ define([
                                     console.error(e);
                                     self.showError(panel5, e.message);
                                 }
-                            };
-                            var gnm = genomeInfo.data;
-                            if (gnm.contig_ids && gnm.contig_lengths && gnm.contig_ids.length === gnm.contig_lengths.length) {
-                                ready();
-                            } else {
-                                var contigSetRef = gnm.contigset_ref;
-                                workspace.get_object_subset([{ref: contigSetRef, included: ['contigs/[*]/id', 'contigs/[*]/length']}], function (data2) {
-                                    var ctg = data2[0].data;
-                                    gnm.contig_ids = [];
-                                    gnm.contig_lengths = [];
-                                    for (var pos in ctg.contigs) {
-                                        var contigId = ctg.contigs[pos].id;
-                                        gnm.contig_ids.push(contigId);
-                                        var contigLen = ctg.contigs[pos].length;
-                                        gnm.contig_lengths.push(contigLen);
-                                    }
-                                    ready();
-                                },
-                                    function (error) {
-                                        console.error("Error loading contigset subdata");
-                                        console.error(error);
-                                        panel5.empty();
-                                        self.showError(panel5, error);
-                                    });
+                            } else {                                
+                                var assembly_error = function (error) {
+                                    console.error("Error loading contigset subdata");
+                                    console.error(error);
+                                    panel5.empty();
+                                    self.showError(panel5, error);
+                                };
+                                
+                                asm_api.get_contig_ids(gnm.contigset_ref).then(function (contig_ids) {
+                                   gnm.contig_ids = contig_ids;
+                                   return contig_ids;
+                                }).catch(assembly_error(error));
+                                asm_api.get_contig_lengths(gnm.contigset_ref).then(function (contig_lengths) {
+                                    gnm.contig_lengths = contig_lengths;
+                                    return contig_lengths;
+                                }).catch(assembly_error(error));
                             }
-                        },
-                            function (error) {
-                                console.error("Error loading genome subdata");
-                                console.error(error);
-                                panel5.empty();
-                                self.showError(panel5, error);
-                            });
+
+                            return null;
+                        });
                     }
                 };
-
-                workspace.get_object_subset([{ref: objId, included: includedNoFeat}],
-                    function (data) {
-                        var genomeInfo = data[0];
-                        ready(genomeInfo);
-                    },
-                    function (error) {
-                        console.error("Error loading genome subdata");
-                        console.error(error);
-                        panel1.empty();
-                        self.showError(panel1, error);
-                        cell2.empty();
-                        cell3.empty();
-                        cell4.empty();
-                        cell5.empty();
-                    });
+                
+                ga_api.get_genome_v1({"genomes": [{"ref": objId}],
+                                      "included_fields": genome_fields}).then(function (data) {
+                    ready(data.genomes[0]);
+                    return null;
+                }).catch(function (error) {
+                    console.error("Error loading genome subdata");
+                    console.error(error);
+                    panel1.empty();
+                    self.showError(panel1, error);
+                    cell2.empty();
+                    cell3.empty();
+                    cell4.empty();
+                    cell5.empty();
+                });
             },
             makePleaseWaitPanel: function () {
                 return $('<div>').html(html.loading('loading...'));
