@@ -1182,31 +1182,32 @@ install:
 
         # TREES
         
-#        -
-#            type:
-#                module: KBaseTrees
-#                name: Tree
-#                version: any
-#            icon:   
-#                type: kbase
-#                classes: ['icon-tree', 'kb-data-icon-dnudge']
-#            viewers:
-#                -
-#                    title: Data View
-#                    widget:
-#                        name: kb_dataview_trees_tree
-#                        config:
-#                            jqueryName: kbaseTree
-#                    panel: true
-#                    options: 
-#                        -
-#                            from: workspaceId 
-#                            to: workspaceID
-#                        -
-#                            from: objectId 
-#                            to: treeID
-#                        -
-#                            from: objectVersion 
-#                            to: treeObjVer
+        -
+            type:
+                module: KBaseTrees
+                name: Tree
+                version: any
+            icon:   
+                type: kbase
+                classes: ['icon-tree', 'kb-data-icon-dnudge']
+            viewers:
+                -
+                    title: Data View
+                    default: true
+                    widget:
+                        name: kb_dataview_trees_tree
+                        config:
+                            jqueryName: kbaseTree
+                    panel: true
+                    options: 
+                        -
+                            from: workspaceId 
+                            to: workspaceID
+                        -
+                            from: objectId 
+                            to: treeID
+                        -
+                            from: objectVersion 
+                            to: treeObjVer
                             
                             
