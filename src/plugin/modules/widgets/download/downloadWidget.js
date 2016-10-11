@@ -519,7 +519,7 @@ define([
                     workspace_name: state.params.objectInfo.ws,
                     object_name: state.params.objectInfo.name,
                     optional_arguments: {
-                        transform: downloadSpec.transform_options
+                        transform: downloadSpec.transform_options || {}
                     }
                 },
             nameSuffix = '.' + downloadSpec.name.replace(/[^a-zA-Z0-9|\.\-_]/g, '_'),
