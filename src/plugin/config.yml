@@ -39,13 +39,6 @@ source:
             module: kb_dataview_widget_jsonViewOverview
             file: widgets/jsonViewOverview
             
-        # JGI
-        -
-            module: kb_dataview_jgiPanel
-            file: jgiPanel
-        -
-            module: kb_dataview_jgi_dataImport
-            file: widgets/jgi/dataImport
             
         # Common dataview components
             
@@ -295,15 +288,6 @@ install:
             name: kb_dataview_jsonViewOverview
             type: factory
         
-        # JGI 
-        -
-            module: kb_dataview_jgiPanel
-            name: kb_dataview_jgiPanel
-            type: factory
-        -
-            module: kb_dataview_jgi_dataImport
-            name: kb_dataview_jgiDataImport
-            type: factory
             
         # COMMUNITIES
         -
@@ -542,16 +526,6 @@ install:
                     name: objectVersion
                     optional: true
             widget: kb_dataview_jsonViewPanel 
-        -
-            path:
-                - jgi
-                - import
-                - name: workspaceId
-                - name: objectId
-                - name: objectVersion
-                  optional: true
-            widget: kb_dataview_jgiPanel
-            authorization: true
             
                 
                     
