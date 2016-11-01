@@ -37,27 +37,237 @@ define([
             },
             init: function (options) {
                 this._super(options);
-                if (this.options.workspaceID === 'CDS') {
-                    this.options.workspaceID = 'KBasePublicGenomesV4';
-                }
+                
                 this.render();
                 return this;
+            },
+            fetchGenome: function() {
+                var scope = {
+                    ws: this.options.workspaceID,
+                    id: this.options.genomeID,
+                    ver: this.options.ver
+                },
+                objId = scope.ws + "/" + scope.id,
+                ga_api = new GenomeAnnotationAPI({
+                    url: this.runtime.getConfig('services.service_wizard.url'),
+                    auth: {'token': this.runtime.service('session').getAuthToken()},
+                    version: 'release'
+                }),
+                asm_api = new AssemblyAPI({
+                    url: this.runtime.getConfig('services.service_wizard.url'),
+                    auth: {'token': this.runtime.service('session').getAuthToken()},
+                    version: 'release'
+                });
+
+                if (this.options.ver) {
+                    objId += "/" + this.options.ver;
+                }
+                
+                ga_api.get_genome_v1({"genomes": [{"ref": objId}],
+                                      "included_fields": genome_fields}).then(function (data) {
+                    var assembly_ref = null,
+                        gnm = data.genomes[0].data,
+                        metadata = data.genomes[0].info[10];
+
+                    console.log(gnm, metadata);
+                    
+                    if (gnm.hasOwnProperty('contigset_ref')) {
+                        assembly_ref = gnm.contigset_ref;
+                    }
+                    else if (gnm.hasOwnProperty('assembly_ref')) {
+                        assembly_ref = gnm.assembly_ref;
+                    }
+
+                    if (gnm.domain === 'Eukaryota' || gnm.domain === 'Plant') {
+                        var assembly_error = function (error) {
+                            console.error("Error loading contigset subdata");
+                            console.error(error);
+                            console.log(gnm);
+                        };
+
+                        if (metadata && metadata["GC content"] && metadata["Size"] && metadata["Number contigs"]) {
+                            Object.defineProperties(gnm, {
+                                "dna_size": {
+                                    __proto__: null,
+                                    value: metadata["Size"],
+                                    writable: false,
+                                    enumerable: true
+                                },
+                                "gc_content": {
+                                    __proto__: null,
+                                    value: metadata["GC content"],
+                                    writable: false,
+                                    enumerable: true
+                                },
+                                "num_contigs": {
+                                    __proto__: null,
+                                    value: metadata["Number contigs"],
+                                    writable: false,
+                                    enumerable: true
+                                }
+                            });
+                            ready(data.genomes[0]);
+                        }
+                        else {
+                            asm_api.get_stats(assembly_ref).then(function (stats) {
+                                Object.defineProperties(gnm, {
+                                    "dna_size": {
+                                        __proto__: null,
+                                        value: stats.dna_size,
+                                        writable: false,
+                                        enumerable: true
+                                    },
+                                    "gc_content": {
+                                        __proto__: null,
+                                        value: stats.gc_content,
+                                        writable: false,
+                                        enumerable: true
+                                    },
+                                    "num_contigs": {
+                                        __proto__: null,
+                                        value: stats.num_contigs,
+                                        writable: false,
+                                        enumerable: true
+                                    }
+                                });
+                                
+                                ready(data.genomes[0]);
+                                return null;
+                            }).catch(function (error) {
+                                assembly_error(error);
+                            });
+                        }
+                        return null;
+                    }
+                    else {
+                        ga_api.get_genome_v1({"genomes": [{"ref": objId}],
+                                              "included_fields": genome_fields,
+                                              "included_feature_fields": feature_fields}).then(function (data) {
+                            gnm = data.genomes[0];
+                            metadata = data.genomes[0].info[10];
+                            var assembly_error = function (error) {
+                                console.error("Error loading contigset subdata");
+                                console.error(error);
+                                console.log(gnm);
+                            };
+
+                            console.log(gnm, metadata);
+                            if (metadata && metadata["GC content"] && metadata["Size"] && metadata["Number contigs"]) {
+                                Object.defineProperties(gnm, {
+                                    "dna_size": {
+                                        __proto__: null,
+                                        value: metadata["Size"],
+                                        writable: false,
+                                        enumerable: true
+                                    },
+                                    "gc_content": {
+                                        __proto__: null,
+                                        value: metadata["GC content"],
+                                        writable: false,
+                                        enumerable: true
+                                    },
+                                    "num_contigs": {
+                                        __proto__: null,
+                                        value: metadata["Number contigs"],
+                                        writable: false,
+                                        enumerable: true
+                                    }
+                                });
+                                ready(data.genomes[0]);
+                            }
+                            else if (!gnm.data.hasOwnProperty("dna_size")) {
+                                asm_api.get_stats(assembly_ref).then(function (stats) {
+                                    Object.defineProperties(gnm.data, {
+                                        "dna_size": {
+                                            __proto__: null,
+                                            value: stats.dna_size,
+                                            writable: false,
+                                            enumerable: true
+                                        },
+                                        "gc_content": {
+                                            __proto__: null,
+                                            value: stats.gc_content,
+                                            writable: false,
+                                            enumerable: true
+                                        },
+                                        "num_contigs": {
+                                            __proto__: null,
+                                            value: stats.num_contigs,
+                                            writable: false,
+                                            enumerable: true
+                                        }
+                                    });
+                                
+                                    ready(data.genomes[0]);
+                                    return null;
+                                }).catch(function (error) {
+                                    assembly_error(error);
+                                });
+                            }
+                            else {
+                                ready(data.genomes[0]);
+                            }
+                            
+                            return null;
+                        }).catch(function (error) {
+                           console.error(error); 
+                        });                        
+                    }
+                    
+                    return null;
+                }).catch(function (error) {
+                    console.error("Error loading genome subdata");
+                    console.error(error);
+                    panel1.empty();
+                    self.showError(panel1, error);
+                    cell2.empty();
+                    cell3.empty();
+                    cell4.empty();
+                    cell5.empty();
+                });                
+            },
+            fetchAssembly: function(genomeInfo, callback) {
+                var assembly_ref = null,
+                    gnm = genomeInfo.data;
+
+                if (gnm.hasOwnProperty('contigset_ref')) {
+                    assembly_ref = gnm.contigset_ref;
+                }
+                else if (gnm.hasOwnProperty('assembly_ref')) {
+                    assembly_ref = gnm.assembly_ref;
+                }
+               
+                asm_api.get_contig_ids(assembly_ref).then(function (contig_ids) {
+                    Object.defineProperties(gnm, {
+                        "contig_ids": {
+                            __proto__: null,
+                            value: contig_ids,
+                            writable: false,
+                            enumerable: true
+                        }
+                    });
+                    return asm_api.get_contig_lengths(assembly_ref, contig_ids).then(function (contig_lengths) {
+                        Object.defineProperties(gnm, {
+                            "contig_lengths": {
+                                __proto__: null,
+                                value: contig_lengths,
+                                writable: false,
+                                enumerable: true
+                            }
+                        });
+                        
+                        callback(genomeInfo);
+                        return null;
+                    }).catch(function (error) {
+                        panelError(panel5, error);
+                    });
+                }).catch(function (error) {
+                    panelError(panel5, error);
+                });  
             },
             render: function () {
                 var self = this;
                 var scope = {ws: this.options.workspaceID, id: this.options.genomeID, ver: this.options.ver};
-
-                var ga_api = new GenomeAnnotationAPI({
-                    url: this.runtime.getConfig('services.service_wizard.url'),
-                    auth: {'token': this.runtime.service('session').getAuthToken()},
-                    version: 'release'
-                });
-                
-                var asm_api = new AssemblyAPI({
-                    url: this.runtime.getConfig('services.service_wizard.url'),
-                    auth: {'token': this.runtime.service('session').getAuthToken()},
-                    version: 'release'
-                });
                 
                 var cell1 = $('<div panel panel-default">');
                 self.$elem.append(cell1);
@@ -85,13 +295,16 @@ define([
                 self.makeDecoration(cell5, 'Assembly and Annotation', panel5);
 
                 var objId = scope.ws + "/" + scope.id;
-                if (self.options.ver)
+                if (self.options.ver) {
                     objId += "/" + self.options.ver;
-                var genome_fields = ["complete", "contig_ids", "contig_lengths", "contigset_ref", "dna_size",
-                    "domain", "gc_content", "genetic_code", "id", "md5", "num_contigs",
-                    "scientific_name", "source", "source_id", "tax_id", "taxonomy"];
+                }
 
                 var ready = function (genomeInfo) {
+                    var panelError = function (p, e) {
+                        console.error(e);
+                        self.showError(p, e.message);
+                    };
+                    
                     panel1.empty();
                     try {
                         panel1.KBaseGenomeWideOverview({
@@ -100,14 +313,15 @@ define([
                             genomeInfo: genomeInfo,
                             runtime: self.runtime
                         });
-                    } catch (e) {
-                        console.error(e);
-                        self.showError(panel1, e.message);
+                    }
+                    catch (e) {
+                        panelError(panel1, e);
                     }
 
                     var searchTerm = "";
-                    if (genomeInfo && genomeInfo.data['scientific_name'])
+                    if (genomeInfo && genomeInfo.data['scientific_name']) {
                         searchTerm = genomeInfo.data['scientific_name'];
+                    }
                     panel2.empty();
                     try {
                         panel2.KBaseLitWidget({
@@ -115,9 +329,9 @@ define([
                             genomeInfo: genomeInfo,
                             runtime: self.runtime
                         });
-                    } catch (e) {
-                        console.error(e);
-                        self.showError(panel2, e.message);
+                    }
+                    catch (e) {
+                        panelError(panel2, e);
                     }
 
                     //panel3.empty();
@@ -132,28 +346,17 @@ define([
                             genomeInfo: genomeInfo,
                             runtime: self.runtime
                         });
-                    } catch (e) {
-                        console.error(e);
-                        self.showError(panel4, e.message);
                     }
+                    catch (e) {
+                        panelError(panel4, e);
+                    }
+
                     if (genomeInfo && genomeInfo.data['domain'] === 'Eukaryota' ||
                         genomeInfo && genomeInfo.data['domain'] === 'Plant') {
                         cell5.empty();
                     } else {
-                        var feature_fields = ["aliases",
-                                              "annotations",
-                                              "function",
-                                              "id",
-                                              "location",
-                                              "protein_translation_length",
-                                              "type"];
-
-                        ga_api.get_genome_v1({"genomes": [{"ref": objId}],
-                                              "included_fields": genome_fields,
-                                              "included_feature_fields": feature_fields}).then(function (data) {
-                            var genomeInfo = data.genomes[0];
-                            var gnm = genomeInfo.data;
-                            if (gnm.contig_ids && gnm.contig_lengths && gnm.contig_ids.length === gnm.contig_lengths.length) {
+                        var gnm = genomeInfo.data,
+                            assembly_callback = function () {
                                 panel5.empty();
                                 try {
                                     panel5.KBaseGenomeWideAssemAnnot({
@@ -164,46 +367,17 @@ define([
                                         runtime: self.runtime
                                     });
                                 } catch (e) {
-                                    console.error(e);
-                                    self.showError(panel5, e.message);
-                                }
-                            } else {                                
-                                var assembly_error = function (error) {
-                                    console.error("Error loading contigset subdata");
-                                    console.error(error);
-                                    panel5.empty();
-                                    self.showError(panel5, error);
-                                };
-                                
-                                asm_api.get_contig_ids(gnm.contigset_ref).then(function (contig_ids) {
-                                   gnm.contig_ids = contig_ids;
-                                   return contig_ids;
-                                }).catch(assembly_error(error));
-                                asm_api.get_contig_lengths(gnm.contigset_ref).then(function (contig_lengths) {
-                                    gnm.contig_lengths = contig_lengths;
-                                    return contig_lengths;
-                                }).catch(assembly_error(error));
-                            }
+                                    panelError(panel5, e);
+                                }                                
+                            };
 
-                            return null;
-                        });
+                        if (gnm.contig_ids && gnm.contig_lengths && gnm.contig_ids.length === gnm.contig_lengths.length) {
+                            assembly_callback(genomeInfo);
+                        } else {
+                            this.fetchAssembly(gnm, assembly_callback);                                
+                        }
                     }
                 };
-                
-                ga_api.get_genome_v1({"genomes": [{"ref": objId}],
-                                      "included_fields": genome_fields}).then(function (data) {
-                    ready(data.genomes[0]);
-                    return null;
-                }).catch(function (error) {
-                    console.error("Error loading genome subdata");
-                    console.error(error);
-                    panel1.empty();
-                    self.showError(panel1, error);
-                    cell2.empty();
-                    cell3.empty();
-                    cell4.empty();
-                    cell5.empty();
-                });
             },
             makePleaseWaitPanel: function () {
                 return $('<div>').html(html.loading('loading...'));

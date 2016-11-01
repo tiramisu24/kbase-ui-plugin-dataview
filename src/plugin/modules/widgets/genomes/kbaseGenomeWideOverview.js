@@ -33,7 +33,7 @@ define([
             this.render();
             return this;
         },
-        render: function () {
+        render: function (genomeData) {
             var self = this;
             var row = $('<div class="row">');
             self.$elem.append(row);
@@ -42,6 +42,10 @@ define([
             var wikidescription = $('<div class="col-md-8">');
             row.append(wikidescription);
 
+            if (genomeData) {
+                self.options.genomeInfo.data = genomeData;
+            }
+            
             overview.KBaseGenomeOverview({
                 genomeID: self.options.genomeID,
                 workspaceID: self.options.workspaceID,
