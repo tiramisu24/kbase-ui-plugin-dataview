@@ -199,10 +199,14 @@ define([
              * 3. (maybe?) GC > 100 --> it's an actual count of GCs and should be divided by dna length
              */
 
+            if (genome.dna_size && genome.dna_size !== 0) {
+                dnaLength = Number(genome.dna_size);
+            }
             if (genome.gc_content) {
                 gcContent = Number(genome.gc_content);
-                if (gcContent < 1.0)
+                if (gcContent < 1.0) {
                     gcContent = (gcContent * 100).toFixed(2) + " %";
+                }
                 else if (gcContent > 100) {
                     if (genome.dna_size && genome.dna_size !== 0) {
                         gcContent = gcContent + Number(genome.dna_size) + " %";
