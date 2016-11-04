@@ -103,7 +103,6 @@ define([
             */
         },
         showData: function (genome, metadata) {
-            console.log(metadata);
             var self = this,
                 gcContent = "Unknown",
                 dnaLength = "Unknown",
