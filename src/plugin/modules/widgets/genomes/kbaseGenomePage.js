@@ -69,23 +69,24 @@ define([
                         'contig_id',
                         'location',
                         'function'
-                    ],
-                    ga_api = new GenomeAnnotationAPI({
-                        url: this.runtime.getConfig('services.service_wizard.url'),
-                        auth: {'token': this.runtime.service('session').getAuthToken()},
-                        version: 'release'
-                    }),
-                    asm_api = new AssemblyAPI({
-                        url: this.runtime.getConfig('services.service_wizard.url'),
-                        auth: {'token': this.runtime.service('session').getAuthToken()},
-                        version: 'release'
-                    });
+                    ];
+
+                this.ga_api = new GenomeAnnotationAPI({
+                    url: this.runtime.getConfig('services.service_wizard.url'),
+                    auth: {'token': this.runtime.service('session').getAuthToken()},
+                    version: 'release'
+                });
+                this.asm_api = new AssemblyAPI({
+                    url: this.runtime.getConfig('services.service_wizard.url'),
+                    auth: {'token': this.runtime.service('session').getAuthToken()},
+                    version: 'release'
+                });
 
                 if (this.options.ver) {
                     objId += "/" + this.options.ver;
                 }
 
-                ga_api.get_genome_v1({"genomes": [{"ref": objId}],
+                self.ga_api.get_genome_v1({"genomes": [{"ref": objId}],
                                       "included_fields": genome_fields}).then(function (data) {
                     var assembly_ref = null,
                         gnm = data.genomes[0].data,
@@ -128,7 +129,7 @@ define([
                         // no assembly reference found, error
                         assembly_error(gnm, "No assembly reference present!");
                     }
-
+                    
                     if (gnm.domain === 'Eukaryota' || gnm.domain === 'Plant') {
                         if (metadata && metadata["GC content"] && metadata["Size"] && metadata["Number contigs"]) {
                             add_stats(gnm,
@@ -138,7 +139,7 @@ define([
                             self.render(data.genomes[0]);
                         }
                         else {
-                            asm_api.get_stats(assembly_ref).then(function (stats) {
+                            self.asm_api.get_stats(assembly_ref).then(function (stats) {
                                 add_stats(gnm,
                                           stats.dna_size,
                                           stats.gc_content,
@@ -153,10 +154,10 @@ define([
                     }
                     else {
                         genome_fields.push('features');
-                        ga_api.get_genome_v1({"genomes": [{"ref": objId}],
+                        self.ga_api.get_genome_v1({"genomes": [{"ref": objId}],
                                               "included_fields": genome_fields,
                                               "included_feature_fields": feature_fields}).then(function (data) {
-                            gnm = data.genomes[0];
+                            gnm = data.genomes[0].data;
                             metadata = data.genomes[0].info[10];
 
                             if (metadata && metadata["GC content"] && metadata["Size"] && metadata["Number contigs"]) {
@@ -166,8 +167,8 @@ define([
                                           metadata["Number contigs"]);
                                 self.render(data.genomes[0]);
                             }
-                            else if (!gnm.data.hasOwnProperty("dna_size")) {
-                                asm_api.get_stats(assembly_ref).then(function (stats) {
+                            else if (!gnm.hasOwnProperty("dna_size")) {
+                                self.asm_api.get_stats(assembly_ref).then(function (stats) {
                                     add_stats(gnm,
                                               stats.dna_size,
                                               stats.gc_content,
@@ -210,7 +211,7 @@ define([
                     assembly_ref = gnm.assembly_ref;
                 }
 
-                asm_api.get_contig_ids(assembly_ref).then(function (contig_ids) {
+                self.asm_api.get_contig_ids(assembly_ref).then(function (contig_ids) {
                     Object.defineProperties(gnm, {
                         "contig_ids": {
                             __proto__: null,
@@ -219,7 +220,7 @@ define([
                             enumerable: true
                         }
                     });
-                    return asm_api.get_contig_lengths(assembly_ref, contig_ids).then(function (contig_lengths) {
+                    return self.asm_api.get_contig_lengths(assembly_ref, contig_ids).then(function (contig_lengths) {
                         Object.defineProperties(gnm, {
                             "contig_lengths": {
                                 __proto__: null,
@@ -352,7 +353,7 @@ define([
                 }
                 else {
                     var gnm = genomeInfo.data,
-                        assembly_callback = function () {
+                        assembly_callback = function (genomeInfo) {
                             self.view.panels[3].inner_div.empty();
                             try {
                                 self.view.panels[3].inner_div.KBaseGenomeWideAssemAnnot({
@@ -371,7 +372,7 @@ define([
                         assembly_callback(genomeInfo);
                     }
                     else {
-                        this.fetchAssembly(gnm, assembly_callback);
+                        self.fetchAssembly(genomeInfo, assembly_callback);
                     }
                 }
             },
