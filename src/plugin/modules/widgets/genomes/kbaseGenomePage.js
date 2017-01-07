@@ -14,8 +14,8 @@
  */
 define([
     'jquery',
-    'kb/common/html',
-    'kb/service/client/workspace',
+    'kb_common/html',
+    'kb_service/client/workspace',
     'kb_sdk_clients/GenomeAnnotationAPI/dev/GenomeAnnotationAPIClient',
     'kb_sdk_clients/AssemblyAPI/dev/AssemblyAPIClient',
     'kb/widget/legacy/widget',

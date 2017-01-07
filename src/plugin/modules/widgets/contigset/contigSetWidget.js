@@ -4,9 +4,9 @@ define([
     'bluebird',
     'jquery',
     'numeral',
-    'kb/common/html',
+    'kb_common/html',
     'kb/widget/bases/dataWidget',
-    'kb/service/client/workspace',
+    'kb_service/client/workspace',
     'datatables_bootstrap'
 ], function (Promise, $, numeral, html, DataWidget, Workspace) {
     'use strict';

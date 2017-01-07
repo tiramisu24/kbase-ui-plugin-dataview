@@ -3,11 +3,11 @@
 define([
     'promise',
     'kb/service/utils',
-    'kb/common/utils',
-    'kb/common/html',
-    'kb/common/dom',
-    'kb/service/client/workspace',
-    'kb/common/state'
+    'kb_common/utils',
+    'kb_common/html',
+    'kb_common/dom',
+    'kb_service/client/workspace',
+    'kb_common/state'
 ],
     function (Promise, APIUtils, Utils, html, dom, Workspace, stateFactory) {
         'use strict';

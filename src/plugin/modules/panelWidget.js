@@ -6,7 +6,7 @@
  white: true
  */
 define([
-    'kb/common/html',
+    'kb_common/html',
     'kb/widget/widgetSet',
     'plugins/dataview/modules/utils'
 ],
@@ -93,37 +93,39 @@ define([
                         params.objectInfo = objectInfo;
                         return widgetSet.start(params);
                         return objectInfo;
-                    })
-                    .then(function (objectInfo) {
-                        runtime.send('ui', 'addButton', {
-                            name: 'downloadObject',
-                            label: 'Download',
-                            style: 'default',
-                            icon: 'download',
-                            toggle: true,
-                            params: {
-                                ref: objectInfo.ref
-                            },
-                            callback: function () {
-                                runtime.send('downloadWidget', 'toggle');
-                            }
-                        });
+                    }); 
 
-                        runtime.send('ui', 'addButton', {
-                            name: 'copyObject',
-                            label: 'Copy',
-                            style: 'default',
-                            icon: 'copy',
-                            toggle: true,
-                            params: {
-                                ref: objectInfo.ref
-                            },
-                            callback: function () {
-                                runtime.send('copyWidget', 'toggle');
-                            }
-                        });
+                    // Disable buttons for the time being.
+                    // Will re-enable when we have time to deal with it.
+                    // .then(function (objectInfo) {
+                    //     runtime.send('ui', 'addButton', {
+                    //         name: 'downloadObject',
+                    //         label: 'Download',
+                    //         style: 'default',
+                    //         icon: 'download',
+                    //         toggle: true,
+                    //         params: {
+                    //             ref: objectInfo.ref
+                    //         },
+                    //         callback: function () {
+                    //             runtime.send('downloadWidget', 'toggle');
+                    //         }
+                    //     });
 
-                    });
+                    //     runtime.send('ui', 'addButton', {
+                    //         name: 'copyObject',
+                    //         label: 'Copy',
+                    //         style: 'default',
+                    //         icon: 'copy',
+                    //         toggle: true,
+                    //         params: {
+                    //             ref: objectInfo.ref
+                    //         },
+                    //         callback: function () {
+                    //             runtime.send('copyWidget', 'toggle');
+                    //         }
+                    //     });
+                    // });
             }
 
             function run(params) {

@@ -12,10 +12,10 @@
 define([
     'jquery',
     'bluebird',
-    'kb/common/html',
-    'kb/common/utils',
-    'kb/service/client/workspace',
-    'kb/service/workspaceClient',
+    'kb_common/html',
+    'kb_common/utils',
+    'kb_service/client/workspace',
+    'kb_service/workspaceClient',
     'kb/widget/legacy/widget',
     'kb/widget/legacy/tabs',
     

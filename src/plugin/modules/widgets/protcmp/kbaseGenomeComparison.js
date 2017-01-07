@@ -12,13 +12,12 @@
  */
 define([
     'jquery', 
-    'kb/common/html',
-    'kb/service/client/workspace', 
+    'kb_common/html',
+    'kb_service/client/workspace', 
     'd3', 
     'kb/widget/legacy/authenticatedWidget'
-],
-    function ($, html, Workspace, d3) {
-        'use strict';
+], function ($, html, Workspace, d3) {
+        'use strict'; 
         $.KBWidget({
             name: "GenomeComparisonWidget",
             parent: "kbaseAuthenticatedWidget",

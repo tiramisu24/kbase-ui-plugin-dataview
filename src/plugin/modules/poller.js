@@ -2,20 +2,20 @@
 /*jslint white:true,browser:true*/
 define([
     'bluebird'
-], function(Promise) {
+], function (Promise) {
     'use strict';
-    
+
     function factory(config) {
-        var tasks = {}, 
+        var tasks = {},
             currentTimer,
             interval = config.interval || 5000,
             lastId = 0;
-        
+
         function nextId() {
             lastId += 1;
             return lastId;
         }
-        
+
         function addTask(task) {
             var id = String(nextId());
             tasks[id] = {
@@ -26,11 +26,29 @@ define([
             };
             ensureRunning();
         }
-        
+
         function removeTask(id) {
             delete tasks[id];
         }
-        
+
+        function cancelTask(id) {
+            var task = tasks[id];
+            if (task.task.onCancel) {
+                try {
+                    task.task.onCancel();
+                } catch (ex) {
+                    // NB need a way to signal this error.
+                    console.error('ERROR cancelling task', ex);
+                }
+            }
+        }
+
+        function cancelAllTasks() {
+            Object.keys(tasks).forEach(function (id) {
+                cancelTask(id);
+            });
+        }
+
         function ensureRunning() {
             if (currentTimer) {
                 return;
@@ -45,8 +63,8 @@ define([
                     });
             }, interval);
         }
-        
-        function processTasks() {            
+
+        function processTasks() {
             return runTasks(tasks)
                 .then(function (newTasks) {
                     tasks = newTasks;
@@ -54,19 +72,19 @@ define([
                         return false;
                     }
                     return true;
-                });            
+                });
         }
-        
+
         function runTasks() {
             var ids = Object.keys(tasks);
             return Promise.all(ids.map(function (id) {
-                var task = tasks[id],
-                    now = (new Date()).getTime(),
-                    elapsed = now - task.started;
-                return Promise.try(function () {
-                    return Promise.all([task, Promise.resolve(task.task.isCompleted(elapsed)).reflect()]);
-                });
-            }))
+                    var task = tasks[id],
+                        now = (new Date()).getTime(),
+                        elapsed = now - task.started;
+                    return Promise.try(function () {
+                        return Promise.all([task, Promise.resolve(task.task.isCompleted(elapsed)).reflect()]);
+                    });
+                }))
                 .then(function (results) {
                     return Promise.all(results.map(function (result) {
                         var task = result[0],
@@ -81,16 +99,16 @@ define([
                                 task.status = 'completed';
                                 return Promise.all([task, Promise.resolve(task.task.whenCompleted()).reflect()]);
                             }
-                                
+
                             if (elapsed > task.timeout) {
                                 task.status = 'timedout';
                                 return Promise.all([task, Promise.resolve(task.task.whenTimedOut(elapsed))]);
                             }
-                            
+
                             task.status = 'notready';
                             return Promise.all([task, false]);
                             // otherwise just wait...
-                        } 
+                        }
                         task.status = 'error';
                         return Promise.all([task, Promise.resolve(task.task.whenError(isCompleted.reason())).reflect()]);
                     }));
@@ -107,7 +125,7 @@ define([
                         if (task.status === 'timedout') {
                             return false;
                         }
-                        return true;                          
+                        return true;
                     });
                     tasks = newTasks.map(function (task) {
                         return task[0];
@@ -119,16 +137,17 @@ define([
                     console.error(err);
                 });
         }
-        
+
         return {
             addTask: addTask,
-            removeTask: removeTask
+            removeTask: removeTask,
+            cancelAllTasks: cancelAllTasks
         };
     }
-    
+
     return {
         make: function (config) {
             return factory(config);
         }
-    };    
+    };
 });

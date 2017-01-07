@@ -2,8 +2,8 @@ define([
     'nunjucks',
     'jquery',
     'promise',
-    'kb/common/utils',
-    'kb/common/html',
+    'kb_common/utils',
+    'kb_common/html',
     'kb_plugin_dataview'
 ],
     function (nunjucks, $, Promise, Utils, html, Plugin) {

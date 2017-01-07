@@ -12,8 +12,8 @@
 define([
     'jquery',
     'kb_dataview_googlepalette',
-    'kb/service/client/workspace',
-    'kb/common/html',
+    'kb_service/client/workspace',
+    'kb_common/html',
     'kb_dataview_communities_graph',
     'kb_dataview_communities_plot',
     

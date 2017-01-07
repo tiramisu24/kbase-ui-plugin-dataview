@@ -46,8 +46,8 @@
 define([
     'jquery',
     'd3',
-    'kb/common/html',
-    'kb/service/client/cdmi',
+    'kb_common/html',
+    'kb_service/client/cdmi',
     'kb_plugin_dataview',
     
     'kb/widget/legacy/widget',

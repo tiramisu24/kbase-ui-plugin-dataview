@@ -1,7 +1,7 @@
 /*global define*/
 /*jslint white:true,browser:true*/
 define([
-    'kb/common/html'
+    'kb_common/html'
 ], function (html) {
     'use strict';
     function factory(config) {

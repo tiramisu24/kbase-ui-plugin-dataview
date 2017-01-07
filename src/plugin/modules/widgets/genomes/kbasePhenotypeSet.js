@@ -11,12 +11,12 @@
  */
 define([
     'jquery',
-    'kb/common/html',
-    'kb/service/client/workspace',
-    'kb/service/client/fba',
-    'kb/service/workspaceClient',
-    'kb/widget/legacy/widget',
-    'kb/widget/legacy/tabs',
+    'kb_common/html',
+    'kb_service/client/workspace',
+    'kb_service/client/fba',
+    'kb_service/workspaceClient',
+    'kb_widget/legacy/widget',
+    'kb_widget/legacy/tabs',
     // 'kb_widget_mediaEditor', 
     'datatables_bootstrap'
 ],
