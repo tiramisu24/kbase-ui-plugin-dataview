@@ -25,7 +25,7 @@
 define([
     'jquery',
     'd3',
-    'kb/service/client/workspace',
+    'kb_service/client/workspace',
     'plugins/dataview/modules/widgets/modeling/modelSeedVizConfig'
 ], function ($, d3, Workspace, ModelSeedVizConfig) {
     'use strict';

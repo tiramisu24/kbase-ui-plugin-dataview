@@ -2,7 +2,7 @@
 /*jslint browser:true, white:true*/
 define([
     'promise',
-    'kb/service/utils',
+    'kb_service/utils',
     'kb_common/utils',
     'kb_common/html',
     'kb_common/dom',

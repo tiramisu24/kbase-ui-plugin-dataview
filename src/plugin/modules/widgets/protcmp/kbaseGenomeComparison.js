@@ -16,8 +16,9 @@ define([
     'kb_service/client/workspace', 
     'd3', 
     'kb/widget/legacy/authenticatedWidget'
-], function ($, html, Workspace, d3) {
-        'use strict'; 
+],
+    function ($, html, Workspace, d3) {
+        'use strict';
         $.KBWidget({
             name: "GenomeComparisonWidget",
             parent: "kbaseAuthenticatedWidget",

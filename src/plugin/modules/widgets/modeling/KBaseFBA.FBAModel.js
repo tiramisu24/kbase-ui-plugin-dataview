@@ -7,8 +7,8 @@
  */
 define([
     'jquery',
-    'kb/service/client/workspace',
-    'kb/service/client/fba',
+    'kb_service/client/workspace',
+    'kb_service/client/fba',
     'kb_dataview_widget_modeling_modeling',
     'plugins/dataview/modules/widgets/modeling/kbasePathways'
 ], function ($, Workspace, FBA, KBModeling) {

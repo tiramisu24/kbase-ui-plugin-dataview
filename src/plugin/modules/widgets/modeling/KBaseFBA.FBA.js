@@ -7,7 +7,7 @@
  */
 define([
     'jquery',
-    'kb/service/client/workspace',
+    'kb_service/client/workspace',
     'kb_dataview_widget_modeling_modeling',
     'plugins/dataview/modules/widgets/modeling/kbasePathways',
     'kb_vis_pmiBarchart',
