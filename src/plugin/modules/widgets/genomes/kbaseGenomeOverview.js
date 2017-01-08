@@ -15,11 +15,9 @@
 define([
     'jquery',
     'kb_common/html',
-    'kb_service/client/cdmi',
-    'kb_service/client/cdmiEntity',
-    'kb_service/client/workspace',
+    'numeral',
     'kb/widget/legacy/widget'
-], function ($, html, CDMI, CDMI_Entity, Workspace) {
+], function ($, html, numeral) {
     'use strict';
     $.KBWidget({
         name: "KBaseGenomeOverview",
@@ -39,13 +37,7 @@ define([
             this.$messagePane = $("<div/>").hide();
             this.$elem.append(this.$messagePane);
 
-            this.render(); // this is moved inside central store and
-            if (this.options.workspaceID === null) {
-                this.renderCentralStore();
-            } else {
-                this.renderWorkspace();
-            }
-
+            this.render();
             return this;
         },
         render: function () {
@@ -64,86 +56,10 @@ define([
 
             this.$infoPanel.hide();
             this.$elem.append(this.$infoPanel);
+            this.renderWorkspace();
         },
         addInfoRow: function (a, b) {
             return "<tr><th>" + a + "</th><td>" + b + "</td></tr>";
-        },
-        renderCentralStore: function () {
-            this.cdmiClient = new CDMI(this.runtime.getConfig('services.cdmi.url'));
-            this.entityClient = new CDMI_Entity(this.runtime.getConfig('services.cdmi.url'));
-
-            this.$infoPanel.hide();
-            this.showMessage(html.loading('loading...'));
-            /**
-             * Fields to show:
-             * ID
-             * Workspace (if from a workspace)
-             * Owner (KBase Central Store vs. username)
-             * Scientific Name
-             * Domain
-             * Complete
-             * Size in bp
-             * GC content (do we need this?)
-             * # contigs
-             * # features
-             * # genes - PEGs
-             * # RNA feats
-             * Taxonomy
-             */
-
-            var self = this;
-            this.entityClient.get_entity_Genome([this.options.genomeID],
-                ['id', 'scientific_name', 'domain', 'complete', 'dna_size', 'source_id',
-                    'contigs', 'gc_content', 'pegs', 'rnas'],
-                $.proxy(function (genome) {
-                    genome = genome[this.options.genomeID];
-                    this.genome = genome; // store it for now.
-
-                    if (!genome) {
-                        this.renderError("Genome '" + this.options.genomeID + "' not found in the KBase Central Store.");
-                        return;
-                    }
-
-                    self.pubmedQuery = genome.scientific_name;
-
-                    this.$infoTable.empty()
-                        .append(this.addInfoRow("ID", genome.id))
-                        .append(this.addInfoRow("Name", genome.scientific_name))
-                        .append(this.addInfoRow("Domain", genome.domain))
-                        .append(this.addInfoRow("DNA Length", genome.dna_size))
-                        .append(this.addInfoRow("Source ID", genome.source_id))
-                        .append(this.addInfoRow("Number of Contigs", genome.contigs))
-                        .append(this.addInfoRow("GC Content", Number(genome.gc_content).toFixed(2) + " %"))
-                        .append(this.addInfoRow("Protein Encoding Genes", genome.pegs))
-                        .append(this.addInfoRow("RNAs", genome.rnas));
-
-                    /*
-                     * Here we go. Chain of callbacks.
-                     * Get list of contigs, then get their lengths.
-                     * Sort them by length and make a dropdown menu.
-                     * Add a button that will open a new card with that contig's browser.
-                     */
-                    if (this.options.isInCard) {
-                        this.cdmiClient.genomes_to_contigs([this.options.genomeID],
-                            $.proxy(function (contigs) {
-                                this.cdmiClient.contigs_to_lengths(contigs[this.options.genomeID],
-                                    $.proxy(function (contigsToLengths) {
-                                        this.populateContigSelector(contigsToLengths);
-                                    }, this),
-                                    this.renderError
-                                    );
-                            }, this),
-                            this.renderError
-                            );
-                    }
-
-                    this.hideMessage();
-                    this.$infoPanel.show();
-
-                }, this),
-                this.renderError
-                );
-
         },
         populateContigSelector: function (contigsToLengths) {
             this.$contigSelect.empty();
@@ -164,10 +80,14 @@ define([
             this.showMessage(html.loading('loading...'));
             this.$infoPanel.hide();
 
-
-            if (self.options.genomeInfo) {
-                self.showData(self.options.genomeInfo.data);
-            } else {
+            try {
+                self.showData(self.options.genomeInfo.data, self.options.genomeInfo.info[10]);
+            }
+            catch (e) {
+                self.showError(e);
+            }
+            /*
+            else {
                 var obj = this.buildObjectIdentity(this.options.workspaceID, this.options.genomeID),
                     workspace = new Workspace(this.runtime.getConfig('services.workspace.url'), {
                     token: this.runtime.service('session').getAuthToken()
@@ -180,17 +100,20 @@ define([
                         self.renderError(err);
                     });
             }
+            */
         },
-        showData: function (genome) {
-            var self = this;
+        showData: function (genome, metadata) {
+            var self = this,
+                gcContent = "Unknown",
+                dnaLength = "Unknown",
+                nFeatures = 0,
+                num_contigs = 0,
+                contigsToLengths = {},
+                isInt = function (n) {
+                    return typeof n === 'number' && n % 1 === 0;
+                };
+
             self.pubmedQuery = genome.scientific_name;
-
-            var isInt = function (n) {
-                return typeof n === 'number' && n % 1 === 0;
-            };
-
-            var gcContent = "Unknown";
-            var dnaLength = "Unknown";
 
             /** Changes - wjriehl 22apr2016 */
             /* Assume two cases for GC content.
@@ -198,10 +121,6 @@ define([
              * 2. GC < 1 --> it's a decimal and should be x100
              * 3. (maybe?) GC > 100 --> it's an actual count of GCs and should be divided by dna length
              */
-
-            if (genome.dna_size && genome.dna_size !== 0) {
-                dnaLength = Number(genome.dna_size);
-            }
             if (genome.gc_content) {
                 gcContent = Number(genome.gc_content);
                 if (gcContent < 1.0) {
@@ -217,45 +136,36 @@ define([
                 }
             }
 
-            var nFeatures = 0;
             if (genome.features) {
                 nFeatures = genome.features.length;
             }
+            else if (metadata && metadata["Number features"]) {
+                nFeatures = metadata["Number features"];
+            }
+
+            if (genome.num_contigs) {
+                num_contigs = genome.num_contigs;
+            }
+            else if (genome.contig_ids) {
+                num_contigs = genome.contig_ids.length;
+            }
+
+            if (genome.dna_size) {
+                dnaLength = genome.dna_size;
+            }
+
             this.$infoTable.empty()
                 .append(this.addInfoRow("Name", genome.scientific_name))
                 .append(this.addInfoRow("KBase Genome ID", genome.id))
                 .append(this.addInfoRow("Domain", genome.domain))
-                .append(this.addInfoRow("DNA Length", dnaLength))
+                .append(this.addInfoRow("DNA Length", numeral(dnaLength).format('0,0')))
                 .append(this.addInfoRow("Source ID", genome.source + ": " + genome.source_id))
-                .append(this.addInfoRow("Number of Contigs", genome.contig_ids ? genome.contig_ids.length : 0))
+                .append(this.addInfoRow("Number of Contigs", numeral(num_contigs).format('0,0')))
                 .append(this.addInfoRow("GC Content", gcContent))
                 .append(this.addInfoRow("Genetic Code", genome.genetic_code))
-                .append(this.addInfoRow("Number of features", nFeatures));
-            self.alreadyRenderedTable = true;
-            var contigsToLengths = {};
-            if (genome.contig_ids && genome.contig_ids.length > 0) {
-                for (var i = 0; i < genome.contig_ids.length; i++) {
-                    var len = "Unknown";
-                    if (genome.contig_lengths && genome.contig_lengths[i])
-                        len = genome.contig_lengths[i];
-                    contigsToLengths[genome.contig_ids[i]] = len;
-                }
-            }
-            /************
-             * TEMP CODE!
-             * INFER CONTIGS FROM FEATURE LIST!
-             * OMG THIS SUCKS THAT I HAVE TO DO THIS UNTIL FBA MODEL SERVICES IS FIXED!
-             * LOUD NOISES!
-             ************/
-            else if (genome.features && genome.features.length > 0) {
-                var contigSet = {};
-                for (var i = 0; i < genome.features.length; i++) {
-                    var f = genome.features[i];
-                    if (f.location && f.location[0][0])
-                        contigsToLengths[f.location[0][0]] = "Unknown";
-                }
+                .append(this.addInfoRow("Number of features", numeral(nFeatures).format('0,0')));
 
-            }
+            self.alreadyRenderedTable = true;
 
             this.hideMessage();
             this.$infoPanel.show();

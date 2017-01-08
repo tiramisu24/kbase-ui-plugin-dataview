@@ -41,7 +41,7 @@ define([
             row.append(overview);
             var wikidescription = $('<div class="col-md-8">');
             row.append(wikidescription);
-
+            
             overview.KBaseGenomeOverview({
                 genomeID: self.options.genomeID,
                 workspaceID: self.options.workspaceID,
