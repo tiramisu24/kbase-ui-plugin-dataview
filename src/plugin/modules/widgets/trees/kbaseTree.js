@@ -10,14 +10,14 @@
  white: true
  */
 define([
-    'jquery',
-    'uuid',
-    'kb_common/html',
-    'kb_service/client/workspace',
-    'kb_service/client/userAndJobState',
-    'kb_dataview_easyTree',
-    'kb/widget/legacy/authenticatedWidget'
-],
+        'jquery',
+        'uuid',
+        'kb_common/html',
+        'kb_service/client/workspace',
+        'kb_service/client/userAndJobState',
+        'kb_dataview_easyTree',
+        'kb/widget/legacy/authenticatedWidget'
+    ],
     function ($, Uuid, html, Workspace, UserAndJobState, EasyTree) {
         'use strict';
         $.KBWidget({
@@ -81,35 +81,37 @@ define([
                     table.append('<tr><td>Output result will be stored as</td><td>' + self.options.treeID + '</td></tr>');
                     table.append('<tr><td>Current job state is</td><td id="' + self.pref + 'job"></td></tr>');
                     var timeLst = function (event) {
-                        jobSrv.get_job_status(self.options.jobID, function (data) {
-                            var status = data[2];
-                            var complete = data[5];
-                            var wasError = data[6];
-                            var tdElem = $('#' + self.pref + 'job');
-                            if (status === 'running') {
-                                tdElem.html(html.loading(status));
-                            } else {
-                                tdElem.html(status);
-                            }
-                            if (complete === 1) {
+                        jobSrv.get_job_status(self.options.jobID)
+                            .then(function (data) {
+                                var status = data[2];
+                                var complete = data[5];
+                                var wasError = data[6];
+                                var tdElem = $('#' + self.pref + 'job');
+                                if (status === 'running') {
+                                    tdElem.html(html.loading(status));
+                                } else {
+                                    tdElem.html(status);
+                                }
+                                if (complete === 1) {
+                                    clearInterval(self.timer);
+                                    if (this.treeWsRef) {
+                                        // Just skip all this cause data was already showed through setState()
+                                    } else {
+                                        if (wasError === 0) {
+                                            self.loadTree();
+                                        }
+                                    }
+                                }
+                            })
+                            .catch(function (data) {
                                 clearInterval(self.timer);
                                 if (this.treeWsRef) {
                                     // Just skip all this cause data was already showed through setState()
                                 } else {
-                                    if (wasError === 0) {
-                                        self.loadTree();
-                                    }
+                                    var tdElem = $('#' + self.pref + 'job');
+                                    tdElem.html('Error accessing job status: ' + data.error.message);
                                 }
-                            }
-                        }, function (data) {
-                            clearInterval(self.timer);
-                            if (this.treeWsRef) {
-                                // Just skip all this cause data was already showed through setState()
-                            } else {
-                                var tdElem = $('#' + self.pref + 'job');
-                                tdElem.html('Error accessing job status: ' + data.error.message);
-                            }
-                        });
+                            });
                     };
                     timeLst();
                     self.timer = setInterval(timeLst, 5000);
@@ -128,7 +130,7 @@ define([
                             .append($('<canvas id="' + self.canvasId + '">'));
 
                         if (self.options.height) {
-                            self.$canvas.css({'max-height': self.options.height - 85, 'overflow': 'scroll'});
+                            self.$canvas.css({ 'max-height': self.options.height - 85, 'overflow': 'scroll' });
                         }
                         self.$elem.append(self.$canvas);
 
@@ -147,28 +149,32 @@ define([
                             var key;
                             for (key in tree.ws_refs) {
                                 if (tree.ws_refs[key]['g'] && tree.ws_refs[key]['g'].length > 0)
-                                    objIdentityList.push({ref: tree.ws_refs[key]['g'][0]});
+                                    objIdentityList.push({ ref: tree.ws_refs[key]['g'][0] });
                             }
                         }
-                        
+
                         if (objIdentityList.length > 0) {
-                            self.wsClient.get_object_info_new({objects: objIdentityList}, function (data) {
-                                var i;
-                                for (i in data) {
-                                    var objInfo = data[i];
-                                    refToInfoMap[objIdentityList[i].ref] = objInfo;
-                                }
-                            }, function (err) {
-                                console.error('Error getting genomes info:');
-                                console.error(err);
-                            });
+                            return self.wsClient.get_object_info_new({ objects: objIdentityList })
+                                .then(function (data) {
+                                    var i;
+                                    for (i in data) {
+                                        var objInfo = data[i];
+                                        refToInfoMap[objIdentityList[i].ref] = objInfo;
+                                    }
+                                    return [tree, refToInfoMap];
+                                });
+                        } else {
+                            return [tree, refToInfoMap];
                         }
+                    })
+                    .spread(function (tree, refToInfoMap) {
+                        var url;
                         new EasyTree(self.canvasId, tree.tree, tree.default_node_labels, function (node) {
                             if ((!tree.ws_refs) || (!tree.ws_refs[node.id])) {
                                 var node_name = tree.default_node_labels[node.id];
-                                if (node_name.indexOf('/') > 0) {  // Gene label
+                                if (node_name.indexOf('/') > 0) { // Gene label
                                     /* TODO: reroute #genes to #dataview */
-                                    var url = '#genes/' + self.options.workspaceID + '/' + node_name;
+                                    url = '#genes/' + self.options.workspaceID + '/' + node_name;
                                     window.open(url, '_blank');
                                 }
                                 return;
@@ -176,7 +182,7 @@ define([
                             var ref = tree.ws_refs[node.id]['g'][0];
                             var objInfo = refToInfoMap[ref];
                             if (objInfo) {
-                                var url = '#dataview/' + objInfo[7] + '/' + objInfo[1];
+                                url = '#dataview/' + objInfo[7] + '/' + objInfo[1];
                                 window.open(url, '_blank');
                             }
                         }, function (node) {
@@ -186,9 +192,10 @@ define([
                             return null;
                         });
                         self.loading(true);
+                        return true;
                     })
                     .catch(function (error) {
-                        this.renderError(error);
+                        self.renderError(error);
                     });
             },
             renderError: function (error) {
