@@ -21,10 +21,21 @@ define([
 ],
     function ($, html, Workspace) {
         'use strict';
+
+        var t = html.tag,
+            a = t('a'),
+            span = t('span');
+
+        function encodeQuery(queryMap) {
+            return Object.keys(queryMap).map(function (key) {
+                return [key, queryMap[key]].map(encodeURIComponent).join('=');
+            }).join('&');
+        }
+
         $.KBWidget({
-            name: "kbasePanGenome",
-            parent: "kbaseAuthenticatedWidget",
-            version: "1.0.0",
+            name: 'kbasePanGenome',
+            parent: 'kbaseAuthenticatedWidget',
+            version: '1.0.0',
             options: {
                 ws: null,
                 name: null,
@@ -59,7 +70,7 @@ define([
 
                 if (!this.runtime.service('session').isLoggedIn()) {
                     container.empty();
-                    container.append("<div>[Error] You're not logged in</div>");
+                    container.append('<div>[Error] You\'re not logged in</div>');
                     return;
                 }
 
@@ -71,12 +82,14 @@ define([
                         if (self.loaded) {
                             return;
                         }
-                        var data2 = data[0].data;
-                        self.cacheGeneFunctions(data2.genome_refs, function () {
-                            buildTable(data2);
-                        });
+                        return [data[0].data, self.cacheGeneFunctions(data[0].data.genome_refs)];
+                    }) 
+                    .spread(function (data) {
+                        buildTable(data);
+                        return null;
                     })
                     .catch(function (err) {
+                        console.error('ERROR', err);
                         container.empty();
                         container.append('<div class="alert alert-danger">' +
                             err.error.message + '</div>');
@@ -93,7 +106,7 @@ define([
                         showOverview = false;
                     }
                     ///////////////////////////////////// Statistics ////////////////////////////////////////////
-                    var tabStat = $("<div/>");
+                    var tabStat = $('<div/>');
                     tabs.addTab({name: 'Overview', content: tabStat, active: showOverview, removable: false});
 
                     var tableOver = $('<table class="table table-striped table-bordered" ' +
@@ -134,7 +147,7 @@ define([
                             if (!orthologStat[orth_id][1][genomeRef])
                                 orthologStat[orth_id][1][genomeRef] = 0;
                             orthologStat[orth_id][1][genomeRef]++;
-                            var geneKey = genomeRef + "/" + gene[0];
+                            var geneKey = genomeRef + '/' + gene[0];
                             if (!genesInHomFams[geneKey]) {
                                 if (orth_size > 1) {
                                     genesInHomFams[geneKey] = 1;
@@ -191,12 +204,12 @@ define([
                     }
 
                     ///////////////////////////////////// Shared orthologs ////////////////////////////////////////////
-                    var tabShared = $("<div/>");
+                    var tabShared = $('<div/>');
                     tabs.addTab({name: 'Shared homolog families', content: tabShared, active: false, removable: false});
                     var tableShared = $('<table class="table table-striped table-bordered" ' +
                         'style="margin-left: auto; margin-right: auto;" id="' + self.pref + 'shared-table"/>');
                     tabShared.append(tableShared);
-                    var header = "";
+                    var header = '';
                     for (var genomePos in genomeOrder) {
                         var genomeNum = genomeOrder[genomePos][2];
                         header += '<td width="40"><center><b>G' + genomeNum + '</b></center></td>';
@@ -204,7 +217,7 @@ define([
                     tableShared.append('<tr>' + header + '<td/></tr>');
                     for (var genomePos in genomeOrder) {
                         var genomeRef = genomeOrder[genomePos][0];
-                        var row = "";
+                        var row = '';
                         for (var genomePos2 in genomeOrder) {
                             var genomeRef2 = genomeOrder[genomePos2][0];
                             var count = 0;
@@ -214,7 +227,7 @@ define([
                                 if (orthologStat[orth_id][1][genomeRef] && orthologStat[orth_id][1][genomeRef2])
                                     count++;
                             }
-                            var color = genomeRef === genomeRef2 ? "#d2691e" : "black";
+                            var color = genomeRef === genomeRef2 ? '#d2691e' : 'black';
                             row += '<td width="40"><font color="' + color + '">' + count + '</font></td>';
                         }
                         var genomeNum = genomeOrder[genomePos][2];
@@ -224,10 +237,10 @@ define([
                     ///////////////////////////////////// Orthologs /////////////////////////////////////////////
                     var tableOrth = $('<table cellpadding="0" cellspacing="0" border="0" class="table table-bordered ' +
                         'table-striped" style="width: 100%; margin-left: 0px; margin-right: 0px;">');
-                    var tabOrth = $("<div/>");
+                    var tabOrth = $('<div/>');
                     if (self.options.withExport) {
-                        tabOrth.append("<p><b>Please choose homolog family and push 'Export' " +
-                            "button on opened ortholog tab.</b></p><br>");
+                        tabOrth.append('<p><b>Please choose homolog family and push \'Export\' ' +
+                            'button on opened ortholog tab.</b></p><br>');
                     }
                     tabOrth.append(tableOrth);
 
@@ -245,22 +258,22 @@ define([
                     }
 
                     var tableSettings = {
-                        "sPaginationType": "full_numbers",
-                        "iDisplayLength": 10,
-                        "aaData": orth_data,
-                        "aaSorting": [[2, "desc"], [0, "asc"]],
-                        "aoColumns": [
-                            {"sTitle": "Function", 'mData': 'func'},
-                            {"sTitle": "ID", 'mData': 'id'},
-                            {"sTitle": "Protein Count", 'mData': 'len'},
-                            {"sTitle": "Genome Count", 'mData': 'genomes'}
+                        'sPaginationType': 'full_numbers',
+                        'iDisplayLength': 10,
+                        'aaData': orth_data,
+                        'aaSorting': [[2, 'desc'], [0, 'asc']],
+                        'aoColumns': [
+                            {'sTitle': 'Function', 'mData': 'func'},
+                            {'sTitle': 'ID', 'mData': 'id'},
+                            {'sTitle': 'Protein Count', 'mData': 'len'},
+                            {'sTitle': 'Genome Count', 'mData': 'genomes'}
                         ],
-                        "oLanguage": {
+                        'oLanguage': {
 //        				            	  "sEmptyTable": "No objects in workspace",
 
                             // We are moving away from the workspace concept 
-                            "sEmptyTable": "No objects found",
-                            "sSearch": "Search: "
+                            'sEmptyTable': 'No objects found',
+                            'sSearch': 'Search: '
                         },
                         'fnDrawCallback': events
                     };
@@ -298,17 +311,17 @@ define([
 
                 return this;
             },
-            cacheGeneFunctions: function (genomeRefs, callback) {
+            cacheGeneFunctions: function (genomeRefs) {
                 var self = this,
                     req = genomeRefs.map(function (ref) {
                         return {ref: ref, included: ['scientific_name', 'features/[*]/id']};
                     });
-                this.workspace.get_object_subset(req)
+                return this.workspace.get_object_subset(req)
                     .then(function (data) {
                         for (var genomePos in genomeRefs) {
                             var ref = genomeRefs[genomePos];
                             self.genomeNames[ref] = data[genomePos].data.scientific_name;
-                            self.genomeRefs[ref] = data[genomePos].info[7] + "/" + data[genomePos].info[1];
+                            self.genomeRefs[ref] = data[genomePos].info[7] + '/' + data[genomePos].info[1];
                             var geneIdToIndex = {};
                             for (var genePos in data[genomePos].data.features) {
                                 var gene = data[genomePos].data.features[genePos];
@@ -316,15 +329,15 @@ define([
                             }
                             self.geneIndex[ref] = geneIdToIndex;
                         }
-                        callback();
-                    })
-                    .catch(function (err) {
-                        console.error('ERROR cacheGeneFunctions');
-                        console.error(err);
-                        this.$elem.empty();
-                        this.$elem.append('<div class="alert alert-danger">' +
-                            err.error.message + '</div>');
+                        return genomeRefs;
                     });
+                    // .catch(function (err) {
+                    //     console.error('ERROR cacheGeneFunctions');
+                    //     console.error(err);
+                    //     this.$elem.empty();
+                    //     this.$elem.append('<div class="alert alert-danger">' +
+                    //         err.error.message + '</div>');
+                    // });
             },
             buildOrthoTable: function (orth_id, ortholog) {
                 var self = this;
@@ -334,7 +347,7 @@ define([
                     var genomeRef = ortholog.orthologs[i][2];
                     var featureId = ortholog.orthologs[i][0];
                     var featurePos = self.geneIndex[genomeRef][featureId];
-                    req.push({ref: genomeRef, included: ["features/" + featurePos]});
+                    req.push({ref: genomeRef, included: ['features/' + featurePos]});
                 }
                 this.workspace.get_object_subset(req)
                     .then(function (data) {
@@ -342,7 +355,7 @@ define([
                         for (var i in data) {
                             var feature = data[i].data.features[0];
                             var genomeRef = req[i].ref;
-                            feature["genome_ref"] = genomeRef;
+                            feature['genome_ref'] = genomeRef;
                             var ref = self.genomeRefs[genomeRef];
                             var genome = self.genomeNames[genomeRef];
                             var id = feature.id;
@@ -356,7 +369,7 @@ define([
                         self.buildOrthoTableLoaded(orth_id, genes, tab);
                     })
                     .catch(function (e) {
-                        console.error("Error caching genes: " + e.error.message);
+                        console.error('Error caching genes: ' + e.error.message);
                     });
                 return tab;
             },
@@ -376,35 +389,60 @@ define([
                 }
                 tab.append(table);
                 var tableSettings = {
-                    "sPaginationType": "full_numbers",
-                    "iDisplayLength": 10,
-                    "aaData": genes,
-                    "aaSorting": [[0, "asc"], [1, "asc"]],
-                    "aoColumns": [
-                        {"sTitle": "Genome name", 'mData': function (d) {
-                                return '<a class="show-genomes_' + pref2 + '" data-id="' + d.ref + '">' +
-                                    '<span style="white-space: nowrap;">' + d.genome + '</span></a>';
-                            }},
-                        {"sTitle": "Feature ID", 'mData': function (d) {
-                                return '<a class="show-genes_' + pref2 + '" data-id="' + d.ref + "/" + d.id + '">' + d.id + '</a>';
-                            }},
-                        {"sTitle": "Function", 'mData': 'func'},
-                        {"sTitle": "Protein sequence length", 'mData': 'len'}
+                    sPaginationType: 'full_numbers',
+                    iDisplayLength: 10,
+                    aaData: genes,
+                    aaSorting: [[0, 'asc'], [1, 'asc']],
+                    aoColumns: [
+                        {
+                            sTitle: 'Genome name', 
+                            mData: function (d) {
+                                return a({
+                                    target: '_blank',
+                                    href: '#dataview/' + d.ref 
+                                }, span({
+                                    style: {
+                                        whiteSpace: 'nowrap'
+                                    }
+                                }, d.genome));
+                                // return '<a class="show-genomes_' + pref2 + '" data-id="' + d.ref + '">' +
+                                //     '<span style="white-space: nowrap;">' + d.genome + '</span></a>';
+                            }
+                        },
+                        {
+                            sTitle: 'Feature ID', 
+                            mData: function (d) {
+                                var query = {
+                                    sub: 'Feature',
+                                    subid: d.id
+                                };
+                                return a({
+                                    target: '_blank',
+                                    href: '#dataview/' + d.ref + '?' + encodeQuery(query)
+                                }, d.id);
+                            }
+                        },
+                        {
+                            sTitle: 'Function', 'mData': 'func'
+                        },
+                        {
+                            sTitle: 'Protein sequence length', 'mData': 'len'
+                        }
                     ],
-                    "oLanguage": {
-                        "sEmptyTable": "No objects in workspace",
-                        "sSearch": "Search: "
+                    oLanguage: {
+                        sEmptyTable: 'No objects in workspace',
+                        sSearch: 'Search: '
                     },
-                    'fnDrawCallback': events2
+                    fnDrawCallback: events2
                 };
 
                 // create the table
                 table.dataTable(tableSettings);
                 if (self.options.withExport) {
                     $('#btn_' + pref2).click(function (e) {
-                        var target_obj_name = $("#input_" + pref2).val();
+                        var target_obj_name = $('#input_' + pref2).val();
                         if (target_obj_name.length === 0) {
-                            alert("Error: feature set object name shouldn't be empty");
+                            alert('Error: feature set object name shouldn\'t be empty');
                             return;
                         }
                         self.exportFeatureSet(orth_id, target_obj_name, genes);
@@ -414,24 +452,26 @@ define([
                     $('.show-genomes_' + pref2).unbind('click');
                     $('.show-genomes_' + pref2).click(function () {
                         var id = $(this).data('id');
-                        var url = "/functional-site/#/genomes/" + id;
+                        var url = '/#dataview/' + id;
                         window.open(url, '_blank');
                     });
                     $('.show-genes_' + pref2).unbind('click');
                     $('.show-genes_' + pref2).click(function () {
                         var id = $(this).data('id');
-                        var url = "/functional-site/#/genes/" + id;
+                        var url = '/#dataview/' + id ;
                         window.open(url, '_blank');
                     });
                 }
             },
+
+            // landml:1470156029700/Anaerocellum_thermophilum_DSM_6725?sub=Feature&subid=kb|g.1962.peg.2180
             exportFeatureSet: function (orth_id, target_obj_name, genes) {
                 var elements = {};
                 var size = 0;
                 for (var i in genes) {
                     var gene = genes[i];
                     if (gene.original.protein_translation) {
-                        elements["" + i] = {data: gene.original};
+                        elements['' + i] = {data: gene.original};
                         size++;
                     }
                 }
@@ -439,18 +479,18 @@ define([
                         this.options.name + '", otholog "' + orth_id + '"', elements: elements};
                 this.workspace.save_objects({
                     workspace: this.options.ws,
-                    objects: [{type: "KBaseSearch.FeatureSet", name: target_obj_name, data: featureSet}]
+                    objects: [{type: 'KBaseSearch.FeatureSet', name: target_obj_name, data: featureSet}]
                 })
                     .then(function (data) {
-                        alert("Feature set object containing " + size + " genes " +
-                            "was successfuly exported");
+                        alert('Feature set object containing ' + size + ' genes ' +
+                            'was successfuly exported');
                     })
                     .catch(function (err) {
-                        alert("Error: " + err.error.message);
+                        alert('Error: ' + err.error.message);
                     });
             },
             getData: function () {
-                return {title: "Pangenome", id: this.options.name, workspace: this.options.ws};
+                return {title: 'Pangenome', id: this.options.name, workspace: this.options.ws};
             },
             loggedInCallback: function (event, auth) {
                 this.token = auth.token;
