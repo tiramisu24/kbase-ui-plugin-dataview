@@ -7,7 +7,7 @@
  */
 define([
     'jquery',
-    'kb/service/client/workspace',
+    'kb_service/client/workspace',
     'kb_widget_dataview_modeling_modeling'
 ],
     function ($, Workspace, KBModeling) {

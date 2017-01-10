@@ -14,7 +14,7 @@
  */
 define([
     'jquery',
-    'kb/common/html',
+    'kb_common/html',
     'numeral',
     'kb/widget/legacy/widget'
 ], function ($, html, numeral) {

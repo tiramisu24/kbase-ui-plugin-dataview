@@ -2,14 +2,14 @@
 /*jslint white:true,browser:true */
 define([
     'numeral',
-    'kb/common/html',
-    'kb/common/dom',
+    'kb_common/html',
+    'kb_common/dom',
     'plugins/dataview/modules/places',
     'yaml!plugins/dataview/modules/widgets/download/typeSupport.yml',
-    'kb/service/client/workspace',
-    'kb/service/client/transform',
-    'kb/service/client/userAndJobState',
-    'kb/service/utils',
+    'kb_service/client/workspace',
+    'kb_service/client/transform',
+    'kb_service/client/userAndJobState',
+    'kb_service/utils',
     'plugins/dataview/modules/poller',
     'kb_plugin_dataview',
     'plugins/dataview/modules/toggler'

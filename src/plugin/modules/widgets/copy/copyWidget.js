@@ -2,9 +2,9 @@
 /*jslint white:true,browser:true */
 define([
     'knockout',
-    'kb/common/html',
-    'kb/service/client/workspace',
-    'kb/service/utils'
+    'kb_common/html',
+    'kb_service/client/workspace',
+    'kb_service/utils'
 ], function (ko, html, WorkspaceClient, apiUtils) {
     'use strict';
     function factory(config) {

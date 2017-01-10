@@ -12,9 +12,9 @@
 define([
     'jquery',
     'uuid',
-    'kb/common/html',
-    'kb/service/client/workspace',
-    'kb/service/client/userAndJobState',
+    'kb_common/html',
+    'kb_service/client/workspace',
+    'kb_service/client/userAndJobState',
     'kb_dataview_easyTree',
     'kb/widget/legacy/authenticatedWidget'
 ],
@@ -41,20 +41,20 @@ define([
                 this.pref = new Uuid(4).format();
 
                 if (!this.options.treeID) {
-                    this.renderError("No tree to render!");
+                    this.renderError('No tree to render!');
                     return this;
                 }
 
                 if (!this.options.workspaceID) {
-                    this.renderError("No workspace given!");
+                    this.renderError('No workspace given!');
                     return this;
                 }
 
                 this.wsClient = new Workspace(this.runtime.getConfig('services.workspace.url'), {
                     token: this.runtime.service('session').getAuthToken()
                 });
-                this.$messagePane = $("<div/>")
-                    .addClass("kbwidget-message-pane kbwidget-hide-message");
+                this.$messagePane = $('<div/>')
+                    .addClass('kbwidget-message-pane kbwidget-hide-message');
                 this.$elem.append(this.$messagePane);
 
                 this.render();
@@ -107,7 +107,7 @@ define([
                                 // Just skip all this cause data was already showed through setState()
                             } else {
                                 var tdElem = $('#' + self.pref + 'job');
-                                tdElem.html("Error accessing job status: " + data.error.message);
+                                tdElem.html('Error accessing job status: ' + data.error.message);
                             }
                         });
                     };
@@ -122,8 +122,8 @@ define([
                     .then(function (objArr) {
                         self.$elem.empty();
 
-                        var canvasDivId = "knhx-canvas-div-" + self.pref;
-                        self.canvasId = "knhx-canvas-" + self.pref;
+                        var canvasDivId = 'knhx-canvas-div-' + self.pref;
+                        self.canvasId = 'knhx-canvas-' + self.pref;
                         self.$canvas = $('<div id="' + canvasDivId + '">')
                             .append($('<canvas id="' + self.canvasId + '">'));
 
@@ -137,7 +137,7 @@ define([
 
                         if (!self.treeWsRef) {
                             var info = objArr[0].info;
-                            self.treeWsRef = info[6] + "/" + info[0] + "/" + info[4];
+                            self.treeWsRef = info[6] + '/' + info[0] + '/' + info[4];
                         }
                         var tree = objArr[0].data;
 
@@ -159,7 +159,7 @@ define([
                                     refToInfoMap[objIdentityList[i].ref] = objInfo;
                                 }
                             }, function (err) {
-                                console.error("Error getting genomes info:");
+                                console.error('Error getting genomes info:');
                                 console.error(err);
                             });
                         }
@@ -168,7 +168,7 @@ define([
                                 var node_name = tree.default_node_labels[node.id];
                                 if (node_name.indexOf('/') > 0) {  // Gene label
                                     /* TODO: reroute #genes to #dataview */
-                                    var url = "#genes/" + self.options.workspaceID + "/" + node_name;
+                                    var url = '#genes/' + self.options.workspaceID + '/' + node_name;
                                     window.open(url, '_blank');
                                 }
                                 return;
@@ -176,12 +176,12 @@ define([
                             var ref = tree.ws_refs[node.id]['g'][0];
                             var objInfo = refToInfoMap[ref];
                             if (objInfo) {
-                                var url = "#dataview/" + objInfo[7] + "/" + objInfo[1];
+                                var url = '#dataview/' + objInfo[7] + '/' + objInfo[1];
                                 window.open(url, '_blank');
                             }
                         }, function (node) {
-                            if (node.id && node.id.indexOf("user") === 0) {
-                                return "#0000ff";
+                            if (node.id && node.id.indexOf('user') === 0) {
+                                return '#0000ff';
                             }
                             return null;
                         });
@@ -192,17 +192,17 @@ define([
                     });
             },
             renderError: function (error) {
-                var errString = "Sorry, an unknown error occurred";
-                if (typeof error === "string") {
+                var errString = 'Sorry, an unknown error occurred';
+                if (typeof error === 'string') {
                     errString = error;
                 } else if (error.error && error.error.message) {
                     errString = error.error.message;
                 }
 
-                var $errorDiv = $("<div>")
-                    .addClass("alert alert-danger")
-                    .append("<b>Error:</b>")
-                    .append("<br>" + errString);
+                var $errorDiv = $('<div>')
+                    .addClass('alert alert-danger')
+                    .append('<b>Error:</b>')
+                    .append('<br>' + errString);
                 this.$elem.empty();
                 this.$elem.append($errorDiv);
             },
@@ -246,7 +246,7 @@ define([
                 }
             },
             showMessage: function (message) {
-                var span = $("<span/>").append(message);
+                var span = $('<span/>').append(message);
 
                 this.$messagePane.append(span);
                 this.$messagePane.show();

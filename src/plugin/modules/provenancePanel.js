@@ -8,11 +8,11 @@
 define([
     'jquery',
     'bluebird',
-    'kb/common/html',
+    'kb_common/html',
     'kb/widget/adapters/objectWidget',
     'kb/widget/widgetSet',
-    'kb/service/utils',
-    'kb/service/client/workspace'
+    'kb_service/utils',
+    'kb_service/client/workspace'
 ],
     function ($, Promise, html, widgetAdapter, WidgetSet, apiUtils, Workspace) {
         'use strict';

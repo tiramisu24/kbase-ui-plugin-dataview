@@ -2,8 +2,8 @@
 /*jslint white:true,browser:true */
 define([
     'bluebird',
-    'kb/service/utils',
-    'kb/service/client/workspace'
+    'kb_service/utils',
+    'kb_service/client/workspace'
 ], function (Promise, apiUtils, Workspace) {
     function getObjectInfo(runtime, params) {
         return Promise.try(function () {

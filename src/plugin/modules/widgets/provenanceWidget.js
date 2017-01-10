@@ -4,9 +4,9 @@ define([
     'bluebird',
     'jquery',
     'd3',
-    'kb/common/html',
-    'kb/common/dom',
-    'kb/service/client/workspace',
+    'kb_common/html',
+    'kb_common/dom',
+    'kb_service/client/workspace',
     'd3_sankey'
 ],
     function (Promise, $, d3, html, dom, Workspace) {

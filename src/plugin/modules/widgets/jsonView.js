@@ -1,8 +1,8 @@
 /*global define*/
 /*jslint white:true,browser:true*/
 define([
-    'kb/common/html',
-    'kb/common/domEvent',
+    'kb_common/html',
+    'kb_common/domEvent',
     'highlight',
     'numeral'
 ], function (html, domEvent, highlight, numeral) {

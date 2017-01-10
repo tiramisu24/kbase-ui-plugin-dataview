@@ -8,7 +8,7 @@
 define([
     'jquery',
     'bluebird',
-    'kb/service/client/workspace',
+    'kb_service/client/workspace',
     'plugins/dataview/modules/widgets/modeling/modelSeedPathway',
     'kb/widget/legacy/widget',
     'kb/widget/legacy/tabs'

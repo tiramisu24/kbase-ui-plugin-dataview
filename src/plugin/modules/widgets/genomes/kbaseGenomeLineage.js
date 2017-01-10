@@ -12,11 +12,11 @@
  */
 define([
     'jquery',
-    'kb/common/html',
-    'kb/service/client/cdmi',
-    'kb/service/client/cdmiEntity',
-    'kb/service/client/workspace',
-    'kb/service/client/trees',
+    'kb_common/html',
+    'kb_service/client/cdmi',
+    'kb_service/client/cdmiEntity',
+    'kb_service/client/workspace',
+    'kb_service/client/trees',
 
     'kb/widget/legacy/authenticatedWidget'
 ],

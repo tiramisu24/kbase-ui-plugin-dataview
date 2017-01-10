@@ -3,7 +3,7 @@
 define([
     './reactive',
     './minidom',
-    'kb/common/html'
+    'kb_common/html'
 ], function (Reactive, Minidom, html) {
     'use strict';
     function factory(config) {

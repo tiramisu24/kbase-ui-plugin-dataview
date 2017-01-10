@@ -12,8 +12,8 @@
  */
 define([
     'jquery', 
-    'kb/common/html',
-    'kb/service/client/workspace', 
+    'kb_common/html',
+    'kb_service/client/workspace', 
     'd3', 
     'kb/widget/legacy/authenticatedWidget'
 ],

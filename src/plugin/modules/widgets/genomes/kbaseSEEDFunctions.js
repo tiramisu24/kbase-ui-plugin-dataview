@@ -16,7 +16,7 @@
 define([
     'jquery',
     'd3',
-    'kb/service/client/workspace',
+    'kb_service/client/workspace',
     'kb_plugin_dataview',
     
     'kb/widget/legacy/authenticatedWidget'

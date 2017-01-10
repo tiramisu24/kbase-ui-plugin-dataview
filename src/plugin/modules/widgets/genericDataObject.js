@@ -1,7 +1,7 @@
 /*global define */
 /*jslint browser: true, white: true */
 define([
-    'kb/common/html'
+    'kb_common/html'
 ],
     function (html) {
         'use strict';

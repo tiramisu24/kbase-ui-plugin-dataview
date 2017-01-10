@@ -12,8 +12,8 @@
  */
 define([
     'jquery',
-    'kb/common/html',
-    'kb/service/client/workspace',
+    'kb_common/html',
+    'kb_service/client/workspace',
     'kb/widget/legacy/authenticatedWidget'
 ], function ($, html, Workspace) {
     'use strict';
