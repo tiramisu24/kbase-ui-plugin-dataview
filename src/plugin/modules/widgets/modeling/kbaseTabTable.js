@@ -27,9 +27,9 @@ define([
     function ($, Promise, html, Workspace, FBA, KBModeling) {
         'use strict';
         $.KBWidget({
-            name: "kbaseTabTable",
-            parent: "kbaseAuthenticatedWidget",
-            version: "1.0.0",
+            name: 'kbaseTabTable',
+            parent: 'kbaseAuthenticatedWidget',
+            version: '1.0.0',
             options: {
             },
             init: function (input) {
@@ -79,10 +79,19 @@ define([
                 //
                 // 3) get meta data, add any metadata tables
                 //
-                if (isNaN(input.ws) && isNaN(input.obj))
-                    var param = {workspace: input.ws, name: input.obj};
-                else if (!isNaN(input.ws) && !isNaN(input.obj))
-                    var param = {ref: input.ws + '/' + input.obj};
+                var param;
+                if (isNaN(input.ws) && isNaN(input.obj)) {
+                    param = {
+                        workspace: input.ws, 
+                        name: input.obj
+                    };
+                } else if (!isNaN(input.ws) && !isNaN(input.obj)) {
+                    param = {
+                        ref: input.ws + '/' + input.obj
+                    };
+                } else {
+                    throw new Error('Invalid input object reference');
+                }
 
                 this.workspaceClient = new Workspace(this.runtime.config('services.workspace.url'), {
                     token: this.runtime.service('session').getAuthToken()
@@ -115,15 +124,6 @@ define([
                         console.error(err);
                     });
 
-                //
-                // 4) get object data, create tabs
-                //
-                if (isNaN(input.ws) && isNaN(input.obj)) {
-                    var param = {workspace: input.ws, name: input.obj};
-                } else if (!isNaN(input.ws) && !isNaN(input.obj)) {
-                    var param = {ref: input.ws + '/' + input.obj};
-                }
-
                 this.workspaceClient.get_objects([param])
                     .then(function (data) {
                         return Promise.try(function () {
@@ -134,8 +134,7 @@ define([
                             });
                     })
                     .catch(function (err) {
-                        console.error('ERROR getting objects');
-                        console.error(err);
+                        console.error('ERROR getting objects', err);
                     });
 
                 var refLookup = {};
@@ -245,7 +244,7 @@ define([
                         aaData: self.obj[tab.key],
                         aoColumns: tableColumns,
                         language: {
-                            search: "_INPUT_",
+                            search: '_INPUT_',
                             searchPlaceholder: 'Search ' + tab.name
                         }
                     };
@@ -268,15 +267,15 @@ define([
                     ids.unbind('click');
                     ids.click(function () {
                         var info = {
-                            id: $(this).data('id'),
-                            type: $(this).data('type'),
-                            method: $(this).data('method'),
-                            ref: $(this).data('ref'),
-                            name: $(this).data('name'),
-                            ws: $(this).data('ws'),
-                            action: $(this).data('action')
-                        },
-                        contentDiv = $('<div>'),
+                                id: $(this).data('id'),
+                                type: $(this).data('type'),
+                                method: $(this).data('method'),
+                                ref: $(this).data('ref'),
+                                name: $(this).data('name'),
+                                ws: $(this).data('ws'),
+                                action: $(this).data('action')
+                            },
+                            contentDiv = $('<div>'),
                             methodResult;
 
                         if (info.method && info.method !== 'undefined') {
@@ -351,7 +350,7 @@ define([
                     return function (d) {
                         if (type === 'tabLink' && format === 'dispIDCompart') {
                             var dispid = d[key];
-                            if ("dispid" in d) {
+                            if ('dispid' in d) {
                                 dispid = d.dispid;
                             }
                             return '<a class="id-click" data-id="' + d[key] + '" data-method="' + method + '">' +
@@ -396,7 +395,7 @@ define([
                     var links = [];
                     a.forEach(function (d) {
                         var dispid = d.id;
-                        if ("dispid" in d) {
+                        if ('dispid' in d) {
                             dispid = d.dispid;
                         }
                         links.push('<a class="id-click" data-id="' + d.id + '" data-method="' + method + '">' + dispid + '</a>');
@@ -447,7 +446,7 @@ define([
                                     .then(function (info) {
                                         var name = info.url.split('/')[1];
                                         var ref = info.ref;
-                                        table.find("[data-ref='" + ref + "']")
+                                        table.find('[data-ref=\'' + ref + '\']')
                                             .html('<a href="' + DATAVIEW_URL + info.url + '" target="_blank">' + name + '</a>');
                                         return null;
                                     })
@@ -460,7 +459,7 @@ define([
                                 r.append('<td>' + data[row.key] + '</td>');
                             }
                         } else if (row.type === 'pictureEquation') {
-                            r.append('<td>' + pictureEquation(row.data) + '</td>');
+                            r.append($('<td></td>').append(this.pictureEquation(row.data)));
                         }
 
                         table.append(r);
@@ -492,9 +491,10 @@ define([
                     return 'http://bioseed.mcs.anl.gov/~chenry/jpeg/' + id + '.jpeg';
                 };
 
-                var imageURL = "http://bioseed.mcs.anl.gov/~chenry/jpeg/";
+                var imageURL = 'http://bioseed.mcs.anl.gov/~chenry/jpeg/';
                 this.pictureEquation = function (eq) {
                     var cpds = get_cpds(eq);
+                    var panel = $('<div></div>');
 
                     for (var i = 0; i < cpds.left.length; i++) {
                         var cpd = cpds.left[i];
