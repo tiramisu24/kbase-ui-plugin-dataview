@@ -1,12 +1,12 @@
 define([
     'bluebird',
     'kb_common/html',
-    'kb/widget/widgetSet',
-    'plugins/dataview/modules/utils'
-], function (
-    Promise, 
-    html, 
-    WidgetSet, 
+    'kb_widget/widgetSet',
+    './utils'
+], function(
+    Promise,
+    html,
+    WidgetSet,
     utils) {
     'use strict';
 
@@ -80,16 +80,16 @@ define([
 
         function start(params) {
             return utils.getObjectInfo(runtime, params)
-                .then(function (objectInfo) {
+                .then(function(objectInfo) {
                     runtime.send('ui', 'setTitle', 'Data View for ' + objectInfo.name);
                     return objectInfo;
                 })
-                .then(function (objectInfo) {
+                .then(function(objectInfo) {
                     params.objectInfo = objectInfo;
                     return Promise.all([objectInfo, widgetSet.start(params)]);
                 })
 
-            .spread(function (objectInfo) {
+            .spread(function(objectInfo) {
                 // Disable download button for the time being.
                 // Will re-enable when we have time to deal with it.
                 //     runtime.send('ui', 'addButton', {
@@ -115,7 +115,7 @@ define([
                     params: {
                         ref: objectInfo.ref
                     },
-                    callback: function () {
+                    callback: function() {
                         runtime.send('copyWidget', 'toggle');
                     }
                 });
@@ -132,7 +132,7 @@ define([
 
         function detach() {
             return widgetSet.detach()
-                .finally(function () {
+                .finally(function() {
                     if (mount && container) {
                         mount.removeChild(container);
                         container.innerHTML = '';
@@ -151,7 +151,7 @@ define([
     }
 
     return {
-        make: function (config) {
+        make: function(config) {
             return widget(config);
         }
     };

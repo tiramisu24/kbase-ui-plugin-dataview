@@ -1,10 +1,3 @@
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
 /**
  * Output widget for visualization of genome annotation.
  * @author Roman Sutormin <rsutormin@lbl.gov>
@@ -15,15 +8,15 @@ define([
     'bluebird',
     'kb_service/client/workspace',
     'kb_common/html',
-    
+
     'datatables_bootstrap',
-    'kb/widget/legacy/authenticatedWidget',
-], function ($, Promise, Workspace, html) {
+    'kb_widget/legacy/authenticatedWidget',
+], function($, Promise, Workspace, html) {
     'use strict';
     $.KBWidget({
-        name: "kbaseContigSetView",
-        parent: "kbaseAuthenticatedWidget",
-        version: "1.0.0",
+        name: 'kbaseContigSetView',
+        parent: 'kbaseAuthenticatedWidget',
+        version: '1.0.0',
         ws_id: null,
         ws_name: null,
         token: null,
@@ -33,7 +26,7 @@ define([
             ws_name: null,
             width: 850
         },
-        init: function (options) {
+        init: function(options) {
             this._super(options);
 
             // TODO: these should be named more sensibly ... 
@@ -53,13 +46,13 @@ define([
             this.render();
             return this;
         },
-        render: function () {
+        render: function() {
             var self = this;
             var pref = this.uuid();
 
             var container = this.$elem;
 
-            var ready = function () {
+            var ready = function() {
                 container.empty();
                 container.append(html.loading('loading data...'));
 
@@ -69,7 +62,7 @@ define([
                         ref: self.ws_name + '/' + self.ws_id,
                         included: ['contigs/[*]/id', 'contigs/[*]/length', 'id', 'name', 'source', 'source_id', 'type']
                     }]))
-                    .then(function (data) {
+                    .then(function(data) {
                         container.empty();
                         var cs = data[0].data,
                             tabNames = ['Overview', 'Contigs'],
@@ -90,7 +83,7 @@ define([
                         }
                         container.append(tab_pane);
 
-                        $('#' + pref + 'table-tabs a').click(function (e) {
+                        $('#' + pref + 'table-tabs a').click(function(e) {
                             e.preventDefault();
                             $(this).tab('show');
                         });
@@ -98,7 +91,7 @@ define([
                         ////////////////////////////// Overview Tab //////////////////////////////
                         $('#' + pref + 'overview').append('<table class="table table-striped table-bordered" ' +
                             'style="margin-left: auto; margin-right: auto;" id="' + pref + 'overview-table"/>');
-                        var overviewLabels = ['KBase ID', 'Name', 'Object ID', 'Source', "Source ID", "Type"];
+                        var overviewLabels = ['KBase ID', 'Name', 'Object ID', 'Source', 'Source ID', 'Type'];
                         var overviewData = [cs.id, cs.name, self.ws_id, cs.source, cs.source_id, cs.type];
                         var overviewTable = $('#' + pref + 'overview-table');
                         for (i = 0; i < overviewData.length; i += 1) {
@@ -110,30 +103,30 @@ define([
                         $('#' + pref + 'contigs').append('<table cellpadding="0" cellspacing="0" border="0" id="' + pref + 'contigs-table" ' +
                             'class="table table-bordered table-striped" style="width: 100%; margin-left: 0px; margin-right: 0px;"/>');
 
-                        
-                        var contigsData = cs.contigs.map(function (contig) {
+
+                        var contigsData = cs.contigs.map(function(contig) {
                             return {
-                                name: contig.id, 
+                                name: contig.id,
                                 length: contig.length
                             };
                         });
                         var contigsSettings = {
-                            sPaginationType: "full_numbers",
+                            sPaginationType: 'full_numbers',
                             iDisplayLength: 10,
                             aoColumns: [
-                                {sTitle: "Contig name", mData: "name"},
-                                {sTitle: "Length", mData: "length"}
+                                { sTitle: 'Contig name', mData: 'name' },
+                                { sTitle: 'Length', mData: 'length' }
                             ],
                             aaData: contigsData,
                             oLanguage: {
-                                sSearch: "Search contig:",
-                                sEmptyTable: "No contigs found."
+                                sSearch: 'Search contig:',
+                                sEmptyTable: 'No contigs found.'
                             }
                         };
                         var contigsTable = $('#' + pref + 'contigs-table').dataTable(contigsSettings);
 
                     })
-                    .catch(function (data) {
+                    .catch(function(data) {
                         container.empty();
                         var message;
                         if (data.error && data.error.message) {
@@ -150,28 +143,29 @@ define([
             ready();
             return this;
         },
-        getData: function () {
+        getData: function() {
             return {
-                type: "NarrativeTempCard",
+                type: 'NarrativeTempCard',
                 id: this.ws_id,
                 workspace: this.ws_name,
-                title: "Contig-set"
+                title: 'Contig-set'
             };
         },
-        loggedInCallback: function (event, auth) {
+        loggedInCallback: function(event, auth) {
             this.token = auth.token;
             //this.render();
             return this;
         },
-        loggedOutCallback: function (event, auth) {
+        loggedOutCallback: function(event, auth) {
             this.token = null;
             //this.render();
             return this;
         },
-        uuid: function () {
+        uuid: function() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,
-                function (c) {
-                    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                function(c) {
+                    var r = Math.random() * 16 | 0,
+                        v = c === 'x' ? r : (r & 0x3 | 0x8);
                     return v.toString(16);
                 });
         }

@@ -1,10 +1,3 @@
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
 /**
  * Shows general gene info.
  * Such as its name, synonyms, annotation, publications, etc.
@@ -16,13 +9,13 @@ define([
     'jquery',
     'kb_common/html',
     'numeral',
-    'kb/widget/legacy/widget'
-], function ($, html, numeral) {
+    'kb_widget/legacy/widget'
+], function($, html, numeral) {
     'use strict';
     $.KBWidget({
-        name: "KBaseGenomeOverview",
-        parent: "kbaseWidget",
-        version: "1.0.0",
+        name: 'KBaseGenomeOverview',
+        parent: 'kbaseWidget',
+        version: '1.0.0',
         options: {
             genomeID: null,
             workspaceID: null,
@@ -30,60 +23,59 @@ define([
             genomeInfo: null
         },
         $infoTable: null,
-        noContigs: "No Contigs",
-        init: function (options) {
+        noContigs: 'No Contigs',
+        init: function(options) {
             this._super(options);
 
-            this.$messagePane = $("<div/>").hide();
+            this.$messagePane = $('<div/>').hide();
             this.$elem.append(this.$messagePane);
 
             this.render();
             return this;
         },
-        render: function () {
-            this.$infoPanel = $("<div>");
+        render: function() {
+            this.$infoPanel = $('<div>');
 
-            this.$infoTable = $("<table>")
-                .addClass("table table-striped table-bordered");
-            this.$infoPanel.append($("<div>").css("overflow", "auto").append(this.$infoTable));
+            this.$infoTable = $('<table>')
+                .addClass('table table-striped table-bordered');
+            this.$infoPanel.append($('<div>').css('overflow', 'auto').append(this.$infoTable));
 
-            this.$contigSelect = $("<select>")
-                .addClass("form-control")
-                .css({"width": "60%", "margin-right": "5px"})
-                .append($("<option>")
-                    .attr("id", this.noContigs)
+            this.$contigSelect = $('<select>')
+                .addClass('form-control')
+                .css({ 'width': '60%', 'margin-right': '5px' })
+                .append($('<option>')
+                    .attr('id', this.noContigs)
                     .append(this.noContigs));
 
             this.$infoPanel.hide();
             this.$elem.append(this.$infoPanel);
             this.renderWorkspace();
         },
-        addInfoRow: function (a, b) {
-            return "<tr><th>" + a + "</th><td>" + b + "</td></tr>";
+        addInfoRow: function(a, b) {
+            return '<tr><th>' + a + '</th><td>' + b + '</td></tr>';
         },
-        populateContigSelector: function (contigsToLengths) {
+        populateContigSelector: function(contigsToLengths) {
             this.$contigSelect.empty();
             if (!contigsToLengths || contigsToLengths.length === 0) {
-                this.$contigSelect.append($("<option>")
-                    .attr("id", this.noContigs)
+                this.$contigSelect.append($('<option>')
+                    .attr('id', this.noContigs)
                     .append(this.noContigs));
             }
             for (var contig in contigsToLengths) {
-                this.$contigSelect.append($("<option>")
-                    .attr("id", contig)
-                    .append(contig + " - " + contigsToLengths[contig] + " bp"));
+                this.$contigSelect.append($('<option>')
+                    .attr('id', contig)
+                    .append(contig + ' - ' + contigsToLengths[contig] + ' bp'));
             }
         },
         alreadyRenderedTable: false,
-        renderWorkspace: function () {
+        renderWorkspace: function() {
             var self = this;
             this.showMessage(html.loading('loading...'));
             this.$infoPanel.hide();
 
             try {
                 self.showData(self.options.genomeInfo.data, self.options.genomeInfo.info[10]);
-            }
-            catch (e) {
+            } catch (e) {
                 self.showError(e);
             }
             /*
@@ -102,14 +94,14 @@ define([
             }
             */
         },
-        showData: function (genome, metadata) {
+        showData: function(genome, metadata) {
             var self = this,
-                gcContent = "Unknown",
-                dnaLength = "Unknown",
+                gcContent = 'Unknown',
+                dnaLength = 'Unknown',
                 nFeatures = 0,
                 num_contigs = 0,
                 contigsToLengths = {},
-                isInt = function (n) {
+                isInt = function(n) {
                     return typeof n === 'number' && n % 1 === 0;
                 };
 
@@ -124,29 +116,25 @@ define([
             if (genome.gc_content) {
                 gcContent = Number(genome.gc_content);
                 if (gcContent < 1.0) {
-                    gcContent = (gcContent * 100).toFixed(2) + " %";
-                }
-                else if (gcContent > 100) {
+                    gcContent = (gcContent * 100).toFixed(2) + ' %';
+                } else if (gcContent > 100) {
                     if (genome.dna_size && genome.dna_size !== 0) {
-                        gcContent = gcContent + Number(genome.dna_size) + " %";
+                        gcContent = gcContent + Number(genome.dna_size) + ' %';
                     }
-                }
-                else {
-                    gcContent = gcContent.toFixed(2) + " %";
+                } else {
+                    gcContent = gcContent.toFixed(2) + ' %';
                 }
             }
 
             if (genome.features) {
                 nFeatures = genome.features.length;
-            }
-            else if (metadata && metadata["Number features"]) {
-                nFeatures = metadata["Number features"];
+            } else if (metadata && metadata['Number features']) {
+                nFeatures = metadata['Number features'];
             }
 
             if (genome.num_contigs) {
                 num_contigs = genome.num_contigs;
-            }
-            else if (genome.contig_ids) {
+            } else if (genome.contig_ids) {
                 num_contigs = genome.contig_ids.length;
             }
 
@@ -155,43 +143,43 @@ define([
             }
 
             this.$infoTable.empty()
-                .append(this.addInfoRow("Name", genome.scientific_name))
-                .append(this.addInfoRow("KBase Genome ID", genome.id))
-                .append(this.addInfoRow("Domain", genome.domain))
-                .append(this.addInfoRow("DNA Length", numeral(dnaLength).format('0,0')))
-                .append(this.addInfoRow("Source ID", genome.source + ": " + genome.source_id))
-                .append(this.addInfoRow("Number of Contigs", numeral(num_contigs).format('0,0')))
-                .append(this.addInfoRow("GC Content", gcContent))
-                .append(this.addInfoRow("Genetic Code", genome.genetic_code))
-                .append(this.addInfoRow("Number of features", numeral(nFeatures).format('0,0')));
+                .append(this.addInfoRow('Name', genome.scientific_name))
+                .append(this.addInfoRow('KBase Genome ID', genome.id))
+                .append(this.addInfoRow('Domain', genome.domain))
+                .append(this.addInfoRow('DNA Length', numeral(dnaLength).format('0,0')))
+                .append(this.addInfoRow('Source ID', genome.source + ': ' + genome.source_id))
+                .append(this.addInfoRow('Number of Contigs', numeral(num_contigs).format('0,0')))
+                .append(this.addInfoRow('GC Content', gcContent))
+                .append(this.addInfoRow('Genetic Code', genome.genetic_code))
+                .append(this.addInfoRow('Number of features', numeral(nFeatures).format('0,0')));
 
             self.alreadyRenderedTable = true;
 
             this.hideMessage();
             this.$infoPanel.show();
         },
-        getData: function () {
+        getData: function() {
             return {
-                type: "Genome",
+                type: 'Genome',
                 id: this.options.genomeID,
                 workspace: this.options.workspaceID,
-                title: "Genome Overview"
+                title: 'Genome Overview'
             };
         },
-        showMessage: function (message) {
+        showMessage: function(message) {
             // kbase panel now does this for us, should probably remove this
-            var span = $("<span/>").append(message);
+            var span = $('<span/>').append(message);
 
             this.$messagePane.empty()
                 .append(span)
                 .show();
         },
-        hideMessage: function () {
+        hideMessage: function() {
             // kbase panel now does this for us, should probably remove this
             this.$messagePane.hide();
 
         },
-        buildObjectIdentity: function (workspaceID, objectID) {
+        buildObjectIdentity: function(workspaceID, objectID) {
             var obj = {};
             if (/^\d+$/.exec(workspaceID))
                 obj['wsid'] = workspaceID;
@@ -205,18 +193,18 @@ define([
                 obj['name'] = objectID;
             return obj;
         },
-        renderError: function (error) {
-            errString = "Sorry, an unknown error occurred";
-            if (typeof error === "string")
+        renderError: function(error) {
+            errString = 'Sorry, an unknown error occurred';
+            if (typeof error === 'string')
                 errString = error;
             else if (error.error && error.error.message)
                 errString = error.error.message;
 
 
-            var $errorDiv = $("<div>")
-                .addClass("alert alert-danger")
-                .append("<b>Error:</b>")
-                .append("<br>" + errString);
+            var $errorDiv = $('<div>')
+                .addClass('alert alert-danger')
+                .append('<b>Error:</b>')
+                .append('<br>' + errString);
             this.$elem.empty();
             this.$elem.append($errorDiv);
         }

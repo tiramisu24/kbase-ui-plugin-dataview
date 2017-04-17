@@ -2,13 +2,6 @@
  * @author Bill Riehl <wjriehl@lbl.gov>, Roman Sutormin <rsutormin@lbl.gov>
  * @public
  */
-/*global
- define, console
- */
-/*jslint
- browser: true,
- white: true
- */
 define([
     'jquery',
     'uuid',
@@ -16,8 +9,8 @@ define([
     'kb_service/client/workspace',
     'kb_service/client/userAndJobState',
     'kb_dataview_easyTree',
-    'kb/widget/legacy/authenticatedWidget'
-], function ($, Uuid, html, Workspace, UserAndJobState, EasyTree) {
+    'kb_widget/legacy/authenticatedWidget'
+], function($, Uuid, html, Workspace, UserAndJobState, EasyTree) {
     'use strict';
     $.KBWidget({
         name: 'kbaseTree',
@@ -35,7 +28,7 @@ define([
         treeWsRef: null,
         pref: null,
         timer: null,
-        init: function (options) {
+        init: function(options) {
             this._super(options);
             this.pref = new Uuid(4).format();
 
@@ -60,7 +53,7 @@ define([
 
             return this;
         },
-        render: function () {
+        render: function() {
             this.loading(false);
             if (this.treeWsRef || this.options.jobID === null) {
                 this.loadTree();
@@ -79,9 +72,9 @@ define([
                 table.append('<tr><td>Job was created with id</td><td>' + self.options.jobID + '</td></tr>');
                 table.append('<tr><td>Output result will be stored as</td><td>' + self.options.treeID + '</td></tr>');
                 table.append('<tr><td>Current job state is</td><td id="' + self.pref + 'job"></td></tr>');
-                var timeLst = function (event) {
+                var timeLst = function(event) {
                     jobSrv.get_job_status(self.options.jobID)
-                        .then(function (data) {
+                        .then(function(data) {
                             var status = data[2];
                             var complete = data[5];
                             var wasError = data[6];
@@ -102,7 +95,7 @@ define([
                                 }
                             }
                         })
-                        .catch(function (data) {
+                        .catch(function(data) {
                             clearInterval(self.timer);
                             if (this.treeWsRef) {
                                 // Just skip all this cause data was already showed through setState()
@@ -116,11 +109,11 @@ define([
                 self.timer = setInterval(timeLst, 5000);
             }
         },
-        loadTree: function () {
+        loadTree: function() {
             var objId = this.buildObjectIdentity(this.options.workspaceID, this.options.treeID, this.options.treeObjVer, this.treeWsRef);
             var self = this;
             this.wsClient.get_objects([objId])
-                .then(function (objArr) {
+                .then(function(objArr) {
                     self.$elem.empty();
 
                     var canvasDivId = 'knhx-canvas-div-' + self.pref;
@@ -154,7 +147,7 @@ define([
 
                     if (objIdentityList.length > 0) {
                         return self.wsClient.get_object_info_new({ objects: objIdentityList })
-                            .then(function (data) {
+                            .then(function(data) {
                                 var i;
                                 for (i in data) {
                                     var objInfo = data[i];
@@ -166,9 +159,9 @@ define([
                         return [tree, refToInfoMap];
                     }
                 })
-                .spread(function (tree, refToInfoMap) {
+                .spread(function(tree, refToInfoMap) {
                     var url;
-                    new EasyTree(self.canvasId, tree.tree, tree.default_node_labels, function (node) {
+                    new EasyTree(self.canvasId, tree.tree, tree.default_node_labels, function(node) {
                         if ((!tree.ws_refs) || (!tree.ws_refs[node.id])) {
                             var node_name = tree.default_node_labels[node.id];
                             if (node_name.indexOf('/') > 0) { // Gene label
@@ -184,7 +177,7 @@ define([
                             url = '#dataview/' + objInfo[7] + '/' + objInfo[1];
                             window.open(url, '_blank');
                         }
-                    }, function (node) {
+                    }, function(node) {
                         if (node.id && node.id.indexOf('user') === 0) {
                             return '#0000ff';
                         }
@@ -193,11 +186,11 @@ define([
                     self.loading(true);
                     return true;
                 })
-                .catch(function (error) {
+                .catch(function(error) {
                     self.renderError(error);
                 });
         },
-        renderError: function (error) {
+        renderError: function(error) {
             var errString = 'Sorry, an unknown error occurred';
             if (typeof error === 'string') {
                 errString = error;
@@ -212,7 +205,7 @@ define([
             this.$elem.empty();
             this.$elem.append($errorDiv);
         },
-        getData: function () {
+        getData: function() {
             return {
                 type: 'Tree',
                 id: this.options.treeID,
@@ -220,7 +213,7 @@ define([
                 title: 'Tree'
             };
         },
-        buildObjectIdentity: function (workspaceID, objectID, objectVer, wsRef) {
+        buildObjectIdentity: function(workspaceID, objectID, objectVer, wsRef) {
             var obj = {};
             if (wsRef) {
                 obj['ref'] = wsRef;
@@ -244,31 +237,31 @@ define([
             }
             return obj;
         },
-        loading: function (doneLoading) {
+        loading: function(doneLoading) {
             if (doneLoading) {
                 this.hideMessage();
             } else {
                 this.showMessage(html.loading());
             }
         },
-        showMessage: function (message) {
+        showMessage: function(message) {
             var span = $('<span/>').append(message);
 
             this.$messagePane.append(span);
             this.$messagePane.show();
         },
-        hideMessage: function () {
+        hideMessage: function() {
             this.$messagePane.hide();
             this.$messagePane.empty();
         },
-        getState: function () {
+        getState: function() {
             var self = this;
             var state = {
                 treeWsRef: self.treeWsRef
             };
             return state;
         },
-        loadState: function (state) {
+        loadState: function(state) {
             var self = this;
             if (state && state.treeWsRef) {
                 self.treeWsRef = state.treeWsRef;

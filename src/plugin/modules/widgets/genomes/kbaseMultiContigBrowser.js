@@ -1,10 +1,3 @@
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
 /**
  * @class KBaseContigBrowser
  *
@@ -49,15 +42,15 @@ define([
     'kb_common/html',
     'kb_service/client/cdmi',
     'kb_plugin_dataview',
-    
-    'kb/widget/legacy/widget',
+
+    'kb_widget/legacy/widget',
     'kb_dataview_genomes_contigBrowserButtons'
-], function ($, d3, html, CDMI, Plugin) {
+], function($, d3, html, CDMI, Plugin) {
     'use strict';
     $.KBWidget({
-        name: "KBaseMultiContigBrowser",
-        parent: "kbaseWidget",
-        version: "1.0.0",
+        name: 'KBaseMultiContigBrowser',
+        parent: 'kbaseWidget',
+        version: '1.0.0',
         options: {
             genomeID: null,
             workspaceID: null,
@@ -113,12 +106,12 @@ define([
         tooltip: null,
         operonFeatures: [],
         $messagePane: null,
-        noContigs: "No Contigs",
+        noContigs: 'No Contigs',
         genome: null,
         $selectPanel: null,
         $contigViewPanel: null,
         $featureInfoPanel: null,
-        init: function (options) {
+        init: function(options) {
             this._super(options);
 
             var self = this;
@@ -128,50 +121,50 @@ define([
                 // throw an error.
             }
 
-            this.$messagePane = $("<div/>");
+            this.$messagePane = $('<div/>');
             this.$elem.append(this.$messagePane);
             this.showMessage(html.loading('loading contig details'));
 
             var $maindiv = $('<div class="row"/>');
 
             // panel with contig selector
-            this.$contigSelect = $("<select>")
-                .addClass("form-control")
-                .css({"width": "60%", "margin-right": "5px"})
-                .append($("<option>")
-                    .attr("id", this.noContigs)
+            this.$contigSelect = $('<select>')
+                .addClass('form-control')
+                .css({ 'width': '60%', 'margin-right': '5px' })
+                .append($('<option>')
+                    .attr('id', this.noContigs)
                     .append(this.noContigs));
-            this.$contigButton = $("<button>")
-                .addClass("kb-primary-btn")
-                .append("Show Contig")
-                .click(function (event) {
-                    self.$elem.find("select option:selected").each(function () {
-                        var contigId = $(this).attr("id");
+            this.$contigButton = $('<button>')
+                .addClass('kb-primary-btn')
+                .append('Show Contig')
+                .click(function(event) {
+                    self.$elem.find('select option:selected').each(function() {
+                        var contigId = $(this).attr('id');
                         if (contigId !== self.noContigs) {
-                            self.contig = $(this).attr("id");
-                            self.options.contig = $(this).attr("id");
+                            self.contig = $(this).attr('id');
+                            self.options.contig = $(this).attr('id');
                             self.render();
                         }
                     });
                 });
             this.$selectPanel = $('<div class="col-md-3"/>');
-            this.$selectPanel.append($("<div>")
-                .addClass("form-inline")
+            this.$selectPanel.append($('<div>')
+                .addClass('form-inline')
                 .append(this.$contigSelect)
                 .append(this.$contigButton));
             $maindiv.append(this.$selectPanel);
 
             // panel where contig browser is defined
             var $contigViewPanelWrapper = $('<div class="col-md-6"/>');
-            this.$contigViewPanel = $('<div id="contigmainview" align="center"/>').css({'overflow': 'auto'});
+            this.$contigViewPanel = $('<div id="contigmainview" align="center"/>').css({ 'overflow': 'auto' });
             $contigViewPanelWrapper
                 .append(this.$contigViewPanel)
-                .append("<div>").KBaseContigBrowserButtons({browser: self});
+                .append('<div>').KBaseContigBrowserButtons({ browser: self });
 
             $maindiv.append($contigViewPanelWrapper);
 
             // panel where feature info is displayed
-            this.$featureInfoPanel = $('<div class="col-md-3"/>').html("<b>Click on a feature to view details</b>");
+            this.$featureInfoPanel = $('<div class="col-md-3"/>').html('<b>Click on a feature to view details</b>');
             $maindiv.append(this.$featureInfoPanel);
 
             this.cdmiClient = new CDMI(this.runtime.getConfig('services.cdmi.url'));
@@ -186,29 +179,29 @@ define([
             } else {
                 var obj = this.buildObjectIdentity(this.options.workspaceID, this.options.genomeID);
                 var prom = this.options.kbCache.req('ws', 'get_objects', [obj]);
-                $.when(prom).done($.proxy(function (genome) {
+                $.when(prom).done($.proxy(function(genome) {
                     genome = genome[0].data;
                     self.showData(genome, $maindiv);
                 }, this));
-                $.when(prom).fail($.proxy(function (error) {
+                $.when(prom).fail($.proxy(function(error) {
                     this.renderError(error);
                 }, this));
             }
 
             if (!this.options.onClickFunction) {
-                this.options.onClickFunction = function (svgobj, d) {
+                this.options.onClickFunction = function(svgobj, d) {
                     self.$featureInfoPanel.empty();
-                    var $infoTable = $("<table>").addClass("table table-striped table-bordered");
+                    var $infoTable = $('<table>').addClass('table table-striped table-bordered');
                     if (d.id) {
-                        
-                        
-                        $infoTable.append(self.addInfoRow("Feature ID", '<a href="#dataview/' + self.options.workspaceID + '/' + self.options.genomeID + "?sub=Feature&subid=" +  d.id + '" target="_blank">' + d.id + '</a>'));
+
+
+                        $infoTable.append(self.addInfoRow('Feature ID', '<a href="#dataview/' + self.options.workspaceID + '/' + self.options.genomeID + '?sub=Feature&subid=' + d.id + '" target="_blank">' + d.id + '</a>'));
                     }
                     if (d.type) {
-                        $infoTable.append(self.addInfoRow("Type", d.type));
+                        $infoTable.append(self.addInfoRow('Type', d.type));
                     }
                     if (d.function) {
-                        $infoTable.append(self.addInfoRow("Function", d.function));
+                        $infoTable.append(self.addInfoRow('Function', d.function));
                     }
 
                     self.$featureInfoPanel.append($infoTable);
@@ -217,13 +210,13 @@ define([
 
             return this;
         },
-        showData: function (genome, $maindiv) {
+        showData: function(genome, $maindiv) {
             var self = this;
             self.genome = genome;
             var contigsToLengths = {};
             if (genome.contig_ids && genome.contig_ids.length > 0) {
                 for (var i = 0; i < genome.contig_ids.length; i++) {
-                    var len = "Unknown";
+                    var len = 'Unknown';
                     if (genome.contig_lengths && genome.contig_lengths[i])
                         len = genome.contig_lengths[i];
                     contigsToLengths[genome.contig_ids[i]] = len;
@@ -240,7 +233,7 @@ define([
                 for (var i = 0; i < genome.features.length; i++) {
                     var f = genome.features[i];
                     if (f.location && f.location[0][0])
-                        contigsToLengths[f.location[0][0]] = "Unknown";
+                        contigsToLengths[f.location[0][0]] = 'Unknown';
                 }
 
             }
@@ -257,31 +250,31 @@ define([
                 self.render();
             }
         },
-        addInfoRow: function (a, b) {
-            return "<tr><th>" + a + "</th><td>" + b + "</td></tr>";
+        addInfoRow: function(a, b) {
+            return '<tr><th>' + a + '</th><td>' + b + '</td></tr>';
         },
         /**
          * 
          */
-        render: function () {
+        render: function() {
             this.loading(false);
             var self = this;
             self.$contigViewPanel.empty();
 
             // tooltip inspired from
             // https://gist.github.com/1016860
-            this.tooltip = d3.select("body")
-                .append("div")
-                .classed("kbcb-tooltip", true);
+            this.tooltip = d3.select('body')
+                .append('div')
+                .classed('kbcb-tooltip', true);
 
             // Init the SVG container to be the right size.
             this.svg = d3.select(self.$contigViewPanel[0])
-                .append("svg")
-                .attr("width", this.options.svgWidth)
-                .attr("height", this.options.svgHeight)
-                .classed("kbcb-widget", true);
+                .append('svg')
+                .attr('width', this.options.svgWidth)
+                .attr('height', this.options.svgHeight)
+                .classed('kbcb-widget', true);
 
-            this.trackContainer = this.svg.append("g");
+            this.trackContainer = this.svg.append('g');
 
             this.xScale = d3.scale.linear()
                 .domain([this.options.start, this.options.start + this.options.length])
@@ -289,12 +282,12 @@ define([
 
             this.xAxis = d3.svg.axis()
                 .scale(this.xScale)
-                .orient("top")
-                .tickFormat(d3.format(",.0f"));
+                .orient('top')
+                .tickFormat(d3.format(',.0f'));
 
-            this.axisSvg = this.svg.append("g")
-                .attr("class", "kbcb-axis")
-                .attr("transform", "translate(0, " + this.options.topMargin + ")")
+            this.axisSvg = this.svg.append('g')
+                .attr('class', 'kbcb-axis')
+                .attr('transform', 'translate(0, ' + this.options.topMargin + ')')
                 .call(this.xAxis);
 
 
@@ -303,7 +296,7 @@ define([
 
             return this;
         },
-        wait_for_seed_load: function () {
+        wait_for_seed_load: function() {
             this.assignSeedColors(this.seedTermsUniq);
 
             var self = this;
@@ -317,16 +310,16 @@ define([
 
             return true;
         },
-        populateContigSelector: function (contigsToLengths) {
+        populateContigSelector: function(contigsToLengths) {
             this.$contigSelect.empty();
             if (!contigsToLengths || contigsToLengths.length === 0)
-                this.$contigSelect.append($("<option>")
-                    .attr("id", this.noContigs)
+                this.$contigSelect.append($('<option>')
+                    .attr('id', this.noContigs)
                     .append(this.noContigs));
             for (var contig in contigsToLengths) {
-                this.$contigSelect.append($("<option>")
-                    .attr("id", contig)
-                    .append(contig + " - " + contigsToLengths[contig] + " bp"));
+                this.$contigSelect.append($('<option>')
+                    .attr('id', contig)
+                    .append(contig + ' - ' + contigsToLengths[contig] + ' bp'));
             }
         },
         /**
@@ -336,7 +329,7 @@ define([
          *
          * This is only used internally to shuffle the features and avoid visual overlapping.
          */
-        track: function () {
+        track: function() {
             var that = {};
 
             that.regions = [];
@@ -344,13 +337,13 @@ define([
             that.max = Number.NEGATIVE_INFINIITY;
             that.numRegions = 0;
 
-            that.addRegion = function (feature_location) {
+            that.addRegion = function(feature_location) {
                 for (var i = 0; i < feature_location.length; i++) {
 
                     var start = Number(feature_location[i][1]);
                     var length = Number(feature_location[i][3]);
-                    var end = (feature_location[i][2] === "+" ? start + length - 1
-                        : start - length + 1);
+                    var end = (feature_location[i][2] === '+' ? start + length - 1 :
+                        start - length + 1);
                     if (start > end) {
                         var x = end;
                         end = start;
@@ -368,11 +361,11 @@ define([
                 }
             };
 
-            that.hasOverlap = function (feature_location) {
+            that.hasOverlap = function(feature_location) {
                 for (var i = 0; i < feature_location.length; i++) {
                     var start = Number(feature_location[i][1]);
                     var length = Number(feature_location[i][3]);
-                    var end = (feature_location[i][2] === "+" ? start + length - 1 :
+                    var end = (feature_location[i][2] === '+' ? start + length - 1 :
                         start - length + 1);
 
                     // double check the orientation
@@ -392,7 +385,7 @@ define([
                     for (var ii = 0; ii < this.regions.length; ii++) {
                         var region = this.regions[ii];
                         if (!((start <= region[0] && end <= region[0]) ||
-                            start >= region[1] && end >= region[1]))
+                                start >= region[1] && end >= region[1]))
                             return true;
                     }
 
@@ -405,7 +398,7 @@ define([
         /**
          * Updates the internal representation of a contig to match what should be displayed.
          */
-        setCdmiContig: function (contigId) {
+        setCdmiContig: function(contigId) {
             // If we're getting a new contig, then our central feature (if we have one)
             // isn't on it. So remove that center feature and its associated operon info.
             if (contigId && this.options.contig !== contigId) {
@@ -416,7 +409,7 @@ define([
 
             var self = this;
 
-            this.cdmiClient.contigs_to_lengths([this.options.contig], function (contigLength) {
+            this.cdmiClient.contigs_to_lengths([this.options.contig], function(contigLength) {
                 self.contigLength = parseInt(contigLength[self.options.contig]);
                 self.options.start = 0;
                 if (self.options.length > self.contigLength)
@@ -429,18 +422,19 @@ define([
                 this.update();
             }
         },
-        calcFeatureRange: function (loc) {
-            var calcLocRange = function (loc) {
+        calcFeatureRange: function(loc) {
+            var calcLocRange = function(loc) {
                 var firstBase = Number(loc[1]);
                 var lastBase = Number(loc[1]) + Number(loc[3]) - 1;
-                if (loc[2] === "-") {
+                if (loc[2] === '-') {
                     lastBase = firstBase;
                     firstBase -= Number(loc[3]) + 1;
                 }
                 return [firstBase, lastBase];
             };
 
-            var range = calcLocRange(loc[0]), nextRange;
+            var range = calcLocRange(loc[0]),
+                nextRange;
             for (var i = 1; i < loc.length; i++) {
                 nextRange = calcLocRange(loc[i]);
                 if (nextRange[0] < range[0])
@@ -450,7 +444,7 @@ define([
             }
             return range;
         },
-        setWorkspaceContig: function (workspaceID, genomeID, contigId) {
+        setWorkspaceContig: function(workspaceID, genomeID, contigId) {
             var self = this;
             if (contigId && this.options.contig !== contigId) {
                 this.options.centerFeature = null;
@@ -478,7 +472,7 @@ define([
             this.wsFeatureSet = {};
             for (var i = 0; i < genome.features.length; i++) {
                 var f = genome.features[i];
-                if (f.location && f.location.length > 0) {  // assume it has at least one valid 4-tuple
+                if (f.location && f.location.length > 0) { // assume it has at least one valid 4-tuple
                     if (f.location[0][0] === contigId) {
                         var range = this.calcFeatureRange(f.location);
                         // store the range in the feature!
@@ -536,13 +530,13 @@ define([
          */
         // DISABLED ^     
 
-        setGenome: function (genomeID) {
+        setGenome: function(genomeID) {
             this.options.genomeID = genomeID;
-            var genomeList = this.cdmiClient.genomes_to_contigs([genomeID], function (genomeList) {
+            var genomeList = this.cdmiClient.genomes_to_contigs([genomeID], function(genomeList) {
                 setContig(this.genomeList[genomeID][0]);
             });
         },
-        setRange: function (start, length) {
+        setRange: function(start, length) {
             // set range and re-render
             this.options.start = start;
             this.options.length = length;
@@ -551,7 +545,7 @@ define([
         /*
          * Figures out which track each feature should be on, based on starting point and length.
          */
-        processFeatures: function (features) {
+        processFeatures: function(features) {
             var tracks = [];
             tracks[0] = this.track(); //init with one track.
 
@@ -568,7 +562,7 @@ define([
             features = feature_arr;
 
             // First, sort the features by their start location (first pass = features[fid].feature_location[0][1], later include strand)
-            features.sort(function (a, b) {
+            features.sort(function(a, b) {
                 return a.feature_location[0][1] - b.feature_location[0][1];
             });
 
@@ -603,23 +597,23 @@ define([
             this.numTracks = tracks.length;
             return features;
         },
-        update: function (useCenter) {
+        update: function(useCenter) {
             var self = this;
-            var renderFromCenter = function (feature) {
+            var renderFromCenter = function(feature) {
                 if (feature) {
                     feature = feature[self.options.centerFeature];
                     self.options.start = Math.max(0, Math.floor(parseInt(feature.feature_location[0][1]) + (parseInt(feature.feature_location[0][3]) / 2) - (self.options.length / 2)));
                 } else {
-                    window.alert("Error: fid '" + self.options.centerFeature + "' not found! Continuing with original range...");
+                    window.alert('Error: fid \'' + self.options.centerFeature + '\' not found! Continuing with original range...');
                 }
                 self.cdmiClient.region_to_fids([self.options.contig, self.options.start, '+', self.options.length], getFeatureData);
             };
 
-            var getFeatureData = function (fids) {
+            var getFeatureData = function(fids) {
                 self.cdmiClient.fids_to_feature_data(fids, getOperonData);
             };
 
-            var getOperonData = function (features) {
+            var getOperonData = function(features) {
                 if (self.options.centerFeature) {
                     for (var j in features) {
                         for (var i in self.operonFeatures) {
@@ -654,11 +648,11 @@ define([
                 if (self.options.centerFeature && useCenter) {
                     self.cdmiClient.fids_to_feature_data([self.options.centerFeature],
                         renderFromCenter
-                        );
+                    );
                 } else {
                     self.cdmiClient.region_to_fids([self.options.contig, self.options.start, '+', self.options.length],
                         getFeatureData
-                        );
+                    );
                 }
             }
 
@@ -667,7 +661,7 @@ define([
          * Compares two numerical ranges, r1 and r2, as ordered integers. r1[0] <= r1[1] and r2[0] <= r2[1].
          * Returns true if they overlap, false otherwise.
          */
-        rangeOverlap: function (x, y) {
+        rangeOverlap: function(x, y) {
             /* cases
              * 1: No overlap
              * x0-------x1
@@ -699,16 +693,16 @@ define([
                 return true;
             return false;
         },
-        adjustHeight: function () {
+        adjustHeight: function() {
             var neededHeight = this.numTracks *
                 (this.options.trackThickness + this.options.trackMargin) +
                 this.options.topMargin + this.options.trackMargin;
 
-            if (neededHeight > this.svg.attr("height")) {
-                this.svg.attr("height", neededHeight);
+            if (neededHeight > this.svg.attr('height')) {
+                this.svg.attr('height', neededHeight);
             }
         },
-        renderFromRange: function (features) {
+        renderFromRange: function(features) {
             features = this.processFeatures(features);
 
             // expose 'this' to d3 anonymous functions through closure
@@ -717,46 +711,46 @@ define([
             if (this.options.allowResize)
                 this.adjustHeight();
 
-            var trackSet = this.trackContainer.selectAll("path")
-                .data(features, function (d) {
+            var trackSet = this.trackContainer.selectAll('path')
+                .data(features, function(d) {
                     return d.feature_id;
                 });
 
             trackSet.enter()
-                .append("path")
-                .classed("kbcb-feature", true)  // incl feature_type later (needs call to get_entity_Feature?)
-                .classed("kbcb-operon", function (d) {
+                .append('path')
+                .classed('kbcb-feature', true) // incl feature_type later (needs call to get_entity_Feature?)
+                .classed('kbcb-operon', function(d) {
                     return self.isOperonFeature(d);
                 })
-                .classed("kbcb-center", function (d) {
+                .classed('kbcb-center', function(d) {
                     return self.isCenterFeature(d);
                 })
-                .style("fill", function (d) {
+                .style('fill', function(d) {
                     return self.calcFillColorByProtAnnot(d, 0);
                 })
-                .attr("id", function (d) {
+                .attr('id', function(d) {
                     return d.feature_id;
                 })
-                .on("mouseover",
-                    function (d) {
-                        d3.select(this).style("fill", d3.rgb(d3.select(this).style("fill")).darker());
-                        self.tooltip = self.tooltip.text(d.feature_id + ": " + d.feature_function);
-                        return self.tooltip.style("visibility", "visible");
+                .on('mouseover',
+                    function(d) {
+                        d3.select(this).style('fill', d3.rgb(d3.select(this).style('fill')).darker());
+                        self.tooltip = self.tooltip.text(d.feature_id + ': ' + d.feature_function);
+                        return self.tooltip.style('visibility', 'visible');
                     }
                 )
-                .on("mouseout",
-                    function () {
-                        d3.select(this).style("fill", d3.rgb(d3.select(this).style("fill")).brighter());
-                        return self.tooltip.style("visibility", "hidden");
+                .on('mouseout',
+                    function() {
+                        d3.select(this).style('fill', d3.rgb(d3.select(this).style('fill')).brighter());
+                        return self.tooltip.style('visibility', 'hidden');
                     }
                 )
-                .on("mousemove",
-                    function () {
-                        return self.tooltip.style("top", (d3.event.pageY + 15) + "px").style("left", (d3.event.pageX - 10) + "px");
+                .on('mousemove',
+                    function() {
+                        return self.tooltip.style('top', (d3.event.pageY + 15) + 'px').style('left', (d3.event.pageX - 10) + 'px');
                     }
                 )
-                .on("click",
-                    function (d) {
+                .on('click',
+                    function(d) {
                         if (self.options.onClickFunction) {
                             self.options.onClickFunction(this, d);
                         } else {
@@ -768,7 +762,7 @@ define([
             trackSet.exit()
                 .remove();
 
-            trackSet.attr("d", function (d) {
+            trackSet.attr('d', function(d) {
                 return self.featurePath(d);
             });
 
@@ -788,8 +782,8 @@ define([
             self.resize();
             this.loading(true);
         },
-        featurePath: function (feature) {
-            var path = "";
+        featurePath: function(feature) {
+            var path = '';
 
             var coords = [];
 
@@ -805,15 +799,15 @@ define([
                 coords.push([left, left + width]);
 
                 if (location[2] === '+')
-                    path += this.featurePathRight(left, top, height, width) + " ";
+                    path += this.featurePathRight(left, top, height, width) + ' ';
                 else
-                    path += this.featurePathLeft(left, top, height, width) + " ";
+                    path += this.featurePathLeft(left, top, height, width) + ' ';
             }
 
             // if there's more than one path, connect the arrows with line segments
             if (feature.feature_location.length > 1) {
                 // sort them
-                coords.sort(function (a, b) {
+                coords.sort(function(a, b) {
                     return a[0] - b[0];
                 });
 
@@ -821,105 +815,105 @@ define([
                     this.calcHeight(feature.feature_location[0]) / 2;
 
                 for (var i = 0; i < coords.length - 1; i++) {
-                    path += "M" + coords[i][1] + " " + mid + " L" + coords[i + 1][0] + " " + mid + " Z ";
+                    path += 'M' + coords[i][1] + ' ' + mid + ' L' + coords[i + 1][0] + ' ' + mid + ' Z ';
                 }
                 // connect the dots
             }
             return path;
         },
-        featurePathRight: function (left, top, height, width) {
+        featurePathRight: function(left, top, height, width) {
             // top left
-            var path = "M" + left + " " + top;
+            var path = 'M' + left + ' ' + top;
 
             if (width > this.options.arrowSize) {
                 // line to arrow top-back
-                path += " L" + (left + (width - this.options.arrowSize)) + " " + top +
+                path += ' L' + (left + (width - this.options.arrowSize)) + ' ' + top +
                     // line to arrow tip
-                    " L" + (left + width) + " " + (top + height / 2) +
+                    ' L' + (left + width) + ' ' + (top + height / 2) +
                     // line to arrow bottom-back
-                    " L" + (left + (width - this.options.arrowSize)) + " " + (top + height) +
+                    ' L' + (left + (width - this.options.arrowSize)) + ' ' + (top + height) +
                     // line to bottom-left edge
-                    " L" + left + " " + (top + height) + " Z";
+                    ' L' + left + ' ' + (top + height) + ' Z';
             } else {
                 // line to arrow tip
-                path += " L" + (left + width) + " " + (top + height / 2) +
+                path += ' L' + (left + width) + ' ' + (top + height / 2) +
                     // line to arrow bottom
-                    " L" + left + " " + (top + height) + " Z";
+                    ' L' + left + ' ' + (top + height) + ' Z';
             }
             return path;
         },
-        featurePathLeft: function (left, top, height, width) {
+        featurePathLeft: function(left, top, height, width) {
             // top right
-            var path = "M" + (left + width) + " " + top;
+            var path = 'M' + (left + width) + ' ' + top;
 
             if (width > this.options.arrowSize) {
                 // line to arrow top-back
-                path += " L" + (left + this.options.arrowSize) + " " + top +
+                path += ' L' + (left + this.options.arrowSize) + ' ' + top +
                     // line to arrow tip
-                    " L" + left + " " + (top + height / 2) +
+                    ' L' + left + ' ' + (top + height / 2) +
                     // line to arrow bottom-back
-                    " L" + (left + this.options.arrowSize) + " " + (top + height) +
+                    ' L' + (left + this.options.arrowSize) + ' ' + (top + height) +
                     // line to bottom-right edge
-                    " L" + (left + width) + " " + (top + height) + " Z";
+                    ' L' + (left + width) + ' ' + (top + height) + ' Z';
             } else {
                 // line to arrow tip
-                path += " L" + left + " " + (top + height / 2) +
+                path += ' L' + left + ' ' + (top + height / 2) +
                     // line to arrow bottom
-                    " L" + (left + width) + " " + (top + height) + " Z";
+                    ' L' + (left + width) + ' ' + (top + height) + ' Z';
             }
             return path;
         },
-        calcXCoord: function (location) {
+        calcXCoord: function(location) {
             var x = location[1];
-            if (location[2] === "-")
+            if (location[2] === '-')
                 x = location[1] - location[3] + 1;
 
             return (x - this.options.start) / this.options.length * this.options.svgWidth; // + this.options.leftMargin;    
         },
-        calcYCoord: function (location, track) {
+        calcYCoord: function(location, track) {
             return this.options.topMargin + this.options.trackMargin + (this.options.trackMargin * track) + (this.options.trackThickness * track);
         },
-        calcWidth: function (location) {
+        calcWidth: function(location) {
             return Math.floor((location[3] - 1) / this.options.length * this.options.svgWidth);
         },
-        calcHeight: function (location) {
+        calcHeight: function(location) {
             return this.options.trackThickness;
         },
-        isCenterFeature: function (feature) {
+        isCenterFeature: function(feature) {
             return feature.feature_id === this.options.centerFeature;
         },
-        isOperonFeature: function (feature) {
+        isOperonFeature: function(feature) {
             return feature.isInOperon;
         },
-        calcFillColor: function (feature) {
+        calcFillColor: function(feature) {
             if (feature.feature_id === this.options.centerFeature)
-                return "#00F";
+                return '#00F';
             if (feature.isInOperon === 1)
-                return "#0F0";
-            return "#F00";
+                return '#0F0';
+            return '#F00';
             // should return color based on feature type e.g. CDS vs. PEG vs. RNA vs. ...
         },
-        calcFillColorByProtAnnot: function (feature, annot_num) {
-            if (feature.feature_type !== "CDS")    // only paint protein coding
-                return "#000";
+        calcFillColorByProtAnnot: function(feature, annot_num) {
+            if (feature.feature_type !== 'CDS') // only paint protein coding
+                return '#000';
 
             // SEED
             //
             // SEED has 4 levels of classification. We are defining 0 as broadest category (e.g. "Carbohydrates") and 3 as the Subsystem Role (e.g. "Beta-galactosidase (EC 3.2.1.23)")
-            this.options.annot_namespace = "SEED";     // should be input param
+            this.options.annot_namespace = 'SEED'; // should be input param
             //this.options.annot_level = 0;          // should be input param
-            this.options.annot_level = 3;          // should be input param
+            this.options.annot_level = 3; // should be input param
             return this.colorByAnnot(feature, this.options.annot_namespace, this.options.annot_level, annot_num);
         },
-        colorByAnnot: function (feature, namespace, level, annot_num) {
-            if (namespace === "SEED") {
+        colorByAnnot: function(feature, namespace, level, annot_num) {
+            if (namespace === 'SEED') {
                 //if (! feature.subsystem_data)
                 if (!feature.feature_function)
-                    return "#CCC";
+                    return '#CCC';
                 //typedef tuple<string subsystem, string variant, string role> subsystem_data;
                 //var seed_role_pos = 2;
                 //return this.seedColorLookup (feature.subsystem_data[annot_num][seed_role_pos], level);
-                var first_feature_function = feature.feature_function.replace(/\s+\/.+/, "").replace(/\s+\#.*/, "");
+                var first_feature_function = feature.feature_function.replace(/\s+\/.+/, '').replace(/\s+\#.*/, '');
 
                 return this.seedColorLookup(first_feature_function, level);
             }
@@ -931,9 +925,9 @@ define([
             //if (namespace === "TIGRFAM") {
             //}
 
-            return "#CCC";
+            return '#CCC';
         },
-        seedColorLookup: function (annot, level) {
+        seedColorLookup: function(annot, level) {
             var self = this;
             var alt_class_i;
 
@@ -942,7 +936,7 @@ define([
             //for (var alt_class_i=0; alt_class_i < this.seedOntology[annot][level].length; alt_class_i++) {
 
             if (self.seedOntology[annot] === undefined)
-                return "#CCC";
+                return '#CCC';
             var seedClassification = self.seedOntology[annot][level][alt_class_i];
             //}
 
@@ -967,7 +961,7 @@ define([
          
          loadSeedOntology() function will parse file and populate the seedOntology and seedTermsUniq data structures
          */
-        loadSeedOntology: function (wait_for_seed_load) {
+        loadSeedOntology: function(wait_for_seed_load) {
             var seedOntology = this.seedOntology;
             var seedTermsUniq = this.seedTermsUniq;
             var self = this;
@@ -986,12 +980,12 @@ define([
             }
 
             // read subsys.txt into seedOntology and seedTermsUniq objs
-            d3.text(Plugin.plugin.fullPath + "/data/subsys.txt", function (text) {
+            d3.text(Plugin.plugin.fullPath + '/data/subsys.txt', function(text) {
                 var data = d3.tsv.parseRows(text);
 
-                var seedRole = "";
+                var seedRole = '';
                 for (var i = 0; i < data.length; i++) {
-                    if (data[i][ROLE_INDEX] === "")
+                    if (data[i][ROLE_INDEX] === '')
                         continue;
                     seedRole = data[i][ROLE_INDEX];
                     if (seedOntology[seedRole] === undefined)
@@ -1008,7 +1002,7 @@ define([
 
                         // some node names are an empty string "".
                         // set to a modified version of their parent
-                        data[i][j] = (data[i][j] === "") ? "--- " + data[i][j - 1] + " ---" : data[i][j];
+                        data[i][j] = (data[i][j] === '') ? '--- ' + data[i][j - 1] + ' ---' : data[i][j];
 
                         seedOntology[seedRole][j].push(data[i][j]);
 
@@ -1040,41 +1034,41 @@ define([
         /*
          assign colors to seed ontology
          */
-        assignSeedColors: function (seedTermsUniq) {
+        assignSeedColors: function(seedTermsUniq) {
             var seedColors = this.seedColors;
             // there are 30 top level SEED categories.  Need 30 colors
-            var colorWheel = ["#F00", // red              # carb
-                "#900", // dark red         # respiration
-                "#C30", // light brown      # nucleosides
-                "#F60", // orange           # stress
-                "#F90", // pumpkin          # protein metab
-                "#FC0", // yellow           # regulation
-                "#CF3", // yellow green     # cell wall
-                "#9FC", // aqua             # misc
-                "#9F9", // light green      # photosyn
-                "#0C0", // green            # aromatics
-                "#393", // darker green     # clust subsys
-                "#060", // darkest green    # phosporus
-                "#0F9", // blue green       # mobile elts 1
-                "#0CF", // cyan             # secondary
-                "#F39", // pink             # dormancy spore
-                "#39F", // light blue       # amino acids
-                "#69F", // light matte blue # iron
-                "#36C", // matte blue       # mobile elts 2
-                "#00F", // blue             # cell cycle
-                "#33C", // dark blue        # membrane trans
-                "#00C", // darkest blue     # nitrogen
-                "#FC9", // tan              # sulfur
-                "#96F", // violet           # dna metabolism
-                "#C9F", // light violet     # cofactors
-                "#60C", // dark violet      # fatty acids
-                "#C0C", // magenta          # vir, dis, def
-                "#F99", // light coral      # potassium
-                "#F66", // dark coral       # motility
-                "#909"  // deep purple      # virulence
+            var colorWheel = ['#F00', // red              # carb
+                '#900', // dark red         # respiration
+                '#C30', // light brown      # nucleosides
+                '#F60', // orange           # stress
+                '#F90', // pumpkin          # protein metab
+                '#FC0', // yellow           # regulation
+                '#CF3', // yellow green     # cell wall
+                '#9FC', // aqua             # misc
+                '#9F9', // light green      # photosyn
+                '#0C0', // green            # aromatics
+                '#393', // darker green     # clust subsys
+                '#060', // darkest green    # phosporus
+                '#0F9', // blue green       # mobile elts 1
+                '#0CF', // cyan             # secondary
+                '#F39', // pink             # dormancy spore
+                '#39F', // light blue       # amino acids
+                '#69F', // light matte blue # iron
+                '#36C', // matte blue       # mobile elts 2
+                '#00F', // blue             # cell cycle
+                '#33C', // dark blue        # membrane trans
+                '#00C', // darkest blue     # nitrogen
+                '#FC9', // tan              # sulfur
+                '#96F', // violet           # dna metabolism
+                '#C9F', // light violet     # cofactors
+                '#60C', // dark violet      # fatty acids
+                '#C0C', // magenta          # vir, dis, def
+                '#F99', // light coral      # potassium
+                '#F66', // dark coral       # motility
+                '#909' // deep purple      # virulence
             ];
             var maxColor = colorWheel.length;
-            var SEED_LEVELS = 4;    // parents (3) + subsystem role col (1)
+            var SEED_LEVELS = 4; // parents (3) + subsystem role col (1)
 
             for (var j = 0; j < SEED_LEVELS; j++) {
                 if (seedColors[j] === undefined)
@@ -1086,7 +1080,7 @@ define([
 
             return true;
         },
-        highlight: function (element, feature) {
+        highlight: function(element, feature) {
             // unhighlight others - only highlight one at a time.
             // if ours is highlighted, recenter on it.
 
@@ -1108,38 +1102,38 @@ define([
             //    .style("fill", "yellow");
             // }
         },
-        recenter: function (feature) {
+        recenter: function(feature) {
             centerFeature = feature.feature_id;
             if (this.options.onClickUrl)
                 this.options.onClickUrl(feature.feature_id);
             else
                 this.update(true);
         },
-        resize: function () {
+        resize: function() {
             var newWidth = Math.min(this.$elem.parent().width(), this.options.svgWidth);
-            this.svg.attr("width", newWidth);
+            this.svg.attr('width', newWidth);
         },
-        moveLeftEnd: function () {
+        moveLeftEnd: function() {
             this.options.start = 0;
             this.update();
         },
-        moveLeftStep: function () {
+        moveLeftStep: function() {
             this.options.start = Math.max(0, this.options.start - Math.ceil(this.options.length / 2));
             this.update();
         },
-        zoomIn: function () {
+        zoomIn: function() {
             this.options.start = Math.min(this.contigLength - Math.ceil(this.options.length / 2), this.options.start + Math.ceil(this.options.length / 4));
             this.options.length = Math.max(1, Math.ceil(this.options.length / 2));
             this.update();
         },
-        zoomOut: function () {
+        zoomOut: function() {
             this.options.length = Math.min(this.contigLength, this.options.length * 2);
             this.options.start = Math.max(0, this.options.start - Math.ceil(this.options.length / 4));
             if (this.options.start + this.options.length > this.contigLength)
                 this.options.start = this.contigLength - this.options.length;
             this.update();
         },
-        moveRightStep: function () {
+        moveRightStep: function() {
             this.options.start = Math.min(this.options.start + Math.ceil(this.options.length / 2), this.contigLength - this.options.length);
             this.update();
         },
@@ -1148,52 +1142,52 @@ define([
          * current view window size.
          * @method
          */
-        moveRightEnd: function () {
+        moveRightEnd: function() {
             this.options.start = this.contigLength - this.options.length;
             this.update();
         },
-        loading: function (doneLoading) {
+        loading: function(doneLoading) {
             if (doneLoading)
                 this.hideMessage();
             else
                 this.showMessage(html.loading());
         },
-        showMessage: function (message) {
+        showMessage: function(message) {
             // kbase panel now does this for us, should probably remove this
-            var span = $("<span/>").append(message);
+            var span = $('<span/>').append(message);
 
             this.$messagePane.empty()
                 .append(span)
                 .show();
         },
-        hideMessage: function () {
+        hideMessage: function() {
             // kbase panel now does this for us, should probably remove this
             this.$messagePane.hide();
         },
-        getData: function () {
+        getData: function() {
             return {
-                type: "Contig",
+                type: 'Contig',
                 id: this.options.contig,
                 workspace: this.options.workspaceID,
-                title: "Contig Browser"
+                title: 'Contig Browser'
             };
         },
-        renderError: function (error) {
-            errString = "Sorry, an unknown error occurred";
-            if (typeof error === "string")
+        renderError: function(error) {
+            errString = 'Sorry, an unknown error occurred';
+            if (typeof error === 'string')
                 errString = error;
             else if (error.error && error.error.message)
                 errString = error.error.message;
 
 
-            var $errorDiv = $("<div>")
-                .addClass("alert alert-danger")
-                .append("<b>Error:</b>")
-                .append("<br>" + errString);
+            var $errorDiv = $('<div>')
+                .addClass('alert alert-danger')
+                .append('<b>Error:</b>')
+                .append('<br>' + errString);
             this.$elem.empty();
             this.$elem.append($errorDiv);
         },
-        buildObjectIdentity: function (workspaceID, objectId) {
+        buildObjectIdentity: function(workspaceID, objectId) {
             var obj = {};
             if (/^\d+$/.exec(workspaceID))
                 obj['wsid'] = workspaceID;

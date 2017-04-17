@@ -5,26 +5,19 @@
  * Gene "instance" info (e.g. coordinates on a particular strain's genome)
  * is in a different widget.
  */
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
 define([
     'jquery',
     'kb_common/html',
     'kb_service/client/cdmi',
     'kb_service/client/cdmiEntity',
     'kb_service/client/workspace',
-    'kb/widget/legacy/widget'
-], function ($, html, CDMI_API, CDMI_EntityAPI, Workspace) {
+    'kb_widget/legacy/widget'
+], function($, html, CDMI_API, CDMI_EntityAPI, Workspace) {
     'use strict';
     $.KBWidget({
-        name: "KBaseGeneBiochemistry",
-        parent: "kbaseWidget",
-        version: "1.0.0",
+        name: 'KBaseGeneBiochemistry',
+        parent: 'kbaseWidget',
+        version: '1.0.0',
         options: {
             featureID: null,
             embedInCard: false,
@@ -32,7 +25,7 @@ define([
             workspaceID: null,
             genomeInfo: null
         },
-        init: function (options) {
+        init: function(options) {
             this._super(options);
 
             if (this.options.featureID === null) {
@@ -51,56 +44,56 @@ define([
 
             return this;
         },
-        render: function () {
-            this.$messagePane = $("<div/>")
-                .addClass("kbwidget-message-pane kbwidget-hide-message");
+        render: function() {
+            this.$messagePane = $('<div/>')
+                .addClass('kbwidget-message-pane kbwidget-hide-message');
             this.$elem.append(this.$messagePane);
 
-            this.$infoPanel = $("<div>").css("overflow", "auto");
-            this.$infoTable = $("<table>")
-                .addClass("table table-striped table-bordered");
+            this.$infoPanel = $('<div>').css('overflow', 'auto');
+            this.$infoTable = $('<table>')
+                .addClass('table table-striped table-bordered');
 
             this.$elem.append(this.$infoPanel.append(this.$infoTable));
         },
-        renderCentralStore: function () {
+        renderCentralStore: function() {
             var self = this;
             this.$infoPanel.hide();
             this.showMessage(html.loading());
 
             this.cdmiClient.fids_to_roles([this.options.featureID],
-                function (roles) {
+                function(roles) {
                     roles = roles[self.options.featureID];
-                    var rolesStr = "None found";
+                    var rolesStr = 'None found';
                     if (roles) {
-                        rolesStr = roles.join("<br>");
+                        rolesStr = roles.join('<br>');
                     }
-                    self.$infoTable.append(self.makeRow("Roles", rolesStr));
+                    self.$infoTable.append(self.makeRow('Roles', rolesStr));
 
                     self.cdmiClient.fids_to_subsystems([self.options.featureID],
-                        function (subsystems) {
+                        function(subsystems) {
                             subsystems = subsystems[self.options.featureID];
-                            var subsysStr = "None found";
+                            var subsysStr = 'None found';
                             if (subsystems) {
-                                subsysStr = subsystems.join("<br/>");
+                                subsysStr = subsystems.join('<br/>');
                             }
-                            self.$infoTable.append(self.makeRow("Subsystems", subsysStr));
+                            self.$infoTable.append(self.makeRow('Subsystems', subsysStr));
 
                             self.hideMessage();
                             self.$infoPanel.show();
                         },
                         self.renderError
-                        );
+                    );
                 },
                 this.renderError
-                );
+            );
         },
-        makeRow: function (name, value) {
-            var $row = $("<tr>")
-                .append($("<th>").append(name))
-                .append($("<td>").append(value));
+        makeRow: function(name, value) {
+            var $row = $('<tr>')
+                .append($('<th>').append(name))
+                .append($('<td>').append(value));
             return $row;
         },
-        renderWorkspace: function () {
+        renderWorkspace: function() {
             var self = this;
             this.showMessage(html.loading());
             this.$infoPanel.hide();
@@ -113,15 +106,15 @@ define([
                     token: this.runtime.service('session').getAuthToken()
                 });
                 workspace.get_objects([obj])
-                    .then(function (genome) {
+                    .then(function(genome) {
                         self.ready(genome[0]);
                     })
-                    .catch(function (err) {
+                    .catch(function(err) {
                         self.renderError(err);
                     });
             }
         },
-        ready: function (genome) {
+        ready: function(genome) {
             var self = this;
             if (genome.data.features) {
                 var feature = null;
@@ -135,9 +128,9 @@ define([
                 // Function
                 var func = feature['function'];
                 if (!func) {
-                    func = "Unknown";
+                    func = 'Unknown';
                 }
-                this.$infoTable.append(this.makeRow("Function", func));
+                this.$infoTable.append(this.makeRow('Function', func));
 
                 // Subsystems, single string
                 //var subsysSumStr = "No subsystem summary found.";
@@ -147,28 +140,28 @@ define([
                 //this.$infoTable.append(this.makeRow("Subsystems Summary", subsysSumStr));
 
                 // Subsystem, detailed
-                var subsysDataStr = "No subsystem data found.";
+                var subsysDataStr = 'No subsystem data found.';
                 if (feature.subsystem_data) {
-                    subsysDataStr = "";
+                    subsysDataStr = '';
                     for (var i = 0; i < feature.subsystem_data.length; i++) {
                         var subsys = feature.subsystem_data[i];
                         // typedef tuple<string subsystem, string variant, string role> subsystem_data;
-                        subsysDataStr += "<p>" + "Subsystem: " + subsys[0] + "<br>" + "Variant: " + subsys[1] + "<br>" + "Role: " + subsys[2];
+                        subsysDataStr += '<p>' + 'Subsystem: ' + subsys[0] + '<br>' + 'Variant: ' + subsys[1] + '<br>' + 'Role: ' + subsys[2];
                     }
                 }
-                this.$infoTable.append(this.makeRow("Subsystems", subsysDataStr));
+                this.$infoTable.append(this.makeRow('Subsystems', subsysDataStr));
 
                 // Annotation
-                var annotationsStr = "No annotation comments found.";
+                var annotationsStr = 'No annotation comments found.';
                 if (feature.annotations) {
-                    annotationsStr = "";
+                    annotationsStr = '';
                     for (var i = 0; i < feature.annotations.length; i++) {
                         var annot = feature.annotations[i];
                         // typedef tuple<string comment, string annotator, int annotation_time> annotation;
-                        annotationsStr += annot[0] + " (" + annot[1] + ", timestamp:" + annot[2] + ")" + "<br>";
+                        annotationsStr += annot[0] + ' (' + annot[1] + ', timestamp:' + annot[2] + ')' + '<br>';
                     }
                 }
-                this.$infoTable.append(this.makeRow("Annotation Comments", annotationsStr));
+                this.$infoTable.append(this.makeRow('Annotation Comments', annotationsStr));
 
                 // Protein families list.
                 //var proteinFamilies = "None found";
@@ -182,15 +175,17 @@ define([
                 //this.$infoTable.append(this.makeRow("Protein Families", proteinFamilies));
 
             } else {
-                this.renderError({error: "No genetic features found in the genome with object id: " +
-                        this.options.workspaceID + "/" +
-                        this.options.genomeID});
+                this.renderError({
+                    error: 'No genetic features found in the genome with object id: ' +
+                        this.options.workspaceID + '/' +
+                        this.options.genomeID
+                });
             }
 
             this.hideMessage();
             this.$infoPanel.show();
         },
-        buildObjectIdentity: function (workspaceID, objectID) {
+        buildObjectIdentity: function(workspaceID, objectID) {
             var obj = {};
             if (/^\d+$/.exec(workspaceID)) {
                 obj['wsid'] = workspaceID;
@@ -206,39 +201,39 @@ define([
             }
             return obj;
         },
-        getData: function () {
+        getData: function() {
             return {
-                type: "Feature",
+                type: 'Feature',
                 id: this.options.featureID,
                 workspace: this.options.workspaceID,
-                title: "Biochemical Function"
+                title: 'Biochemical Function'
             };
         },
-        showMessage: function (message) {
-            var span = $("<span/>").append(message);
+        showMessage: function(message) {
+            var span = $('<span/>').append(message);
 
             this.$messagePane.empty()
                 .append(span)
                 .removeClass('hide');
         },
-        hideMessage: function () {
+        hideMessage: function() {
             this.$messagePane.addClass('hide');
         },
-        makeErrorString: function (error) {
-            if (typeof error === "string") {
+        makeErrorString: function(error) {
+            if (typeof error === 'string') {
                 return error;
             } else if (error.error && error.error.message) {
                 return error.error.message;
             } else {
-                return "Sorry, an unknown error occurred";
+                return 'Sorry, an unknown error occurred';
             }
         },
-        renderError: function (error) {
+        renderError: function(error) {
             var errString = this.makeErrorString(error),
-                $errorDiv = $("<div>")
-                .addClass("alert alert-danger")
-                .append("<b>Error:</b>")
-                .append("<br>" + errString);
+                $errorDiv = $('<div>')
+                .addClass('alert alert-danger')
+                .append('<b>Error:</b>')
+                .append('<br>' + errString);
             this.$elem.empty();
             this.$elem.append($errorDiv);
         }

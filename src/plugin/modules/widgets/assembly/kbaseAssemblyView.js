@@ -1,10 +1,3 @@
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
 /**
  * Output widget for visualization of assembly reports
  * @author Chris Bun <chrisbun@gmail.com>
@@ -14,13 +7,13 @@ define([
     'jquery',
     'kb_common/html',
     'kb_service/client/workspace',
-    'kb/widget/legacy/authenticatedWidget'
-], function ($, html, Workspace) {
+    'kb_widget/legacy/authenticatedWidget'
+], function($, html, Workspace) {
     'use strict';
     $.KBWidget({
-        name: "kbaseAssemblyView",
-        parent: "kbaseAuthenticatedWidget",
-        version: "1.0.0",
+        name: 'kbaseAssemblyView',
+        parent: 'kbaseAuthenticatedWidget',
+        version: '1.0.0',
         ws_id: null,
         ws_name: null,
         token: null,
@@ -32,7 +25,7 @@ define([
             job_id: null
         },
         timer: null,
-        init: function (options) {
+        init: function(options) {
             this._super(options);
             this.wsUrl = this.runtime.getConfig('services.workspace.url');
             this.ws_name = options.ws_name;
@@ -45,19 +38,19 @@ define([
             }
             return this;
         },
-        render: function () {
+        render: function() {
             var self = this;
 
             var container = this.$elem;
             if (self.token === null) {
                 container.empty();
-                container.append("<div>[Error] You're not logged in</div>");
+                container.append('<div>[Error] You\'re not logged in</div>');
                 return;
             }
 
-            var kbws = new Workspace(self.wsUrl, {'token': self.token});
+            var kbws = new Workspace(self.wsUrl, { 'token': self.token });
 
-            var ready = function () {
+            var ready = function() {
                 container.empty();
                 container.append(html.loading('loading data...'));
                 var objname;
@@ -69,14 +62,14 @@ define([
                 //     }
                 // }
 
-                kbws.get_objects([{ref: self.ws_name + '/' + objname}], function (data) {
+                kbws.get_objects([{ ref: self.ws_name + '/' + objname }], function(data) {
                     container.empty();
                     var report_div = '<div class="" style="margin-top:15px">';
                     var report = data[0].data.report;
                     report_div += '<pre><code>' + report + '</code></pre><br>'; // code block behaves differently in LP and Narrative, needed to add <pre> block --mike
                     container.append(report_div);
 
-                }, function (data) {
+                }, function(data) {
                     container.empty();
                     container.append('<p>[Error] ' + data.error.message + '</p>');
                 });
@@ -84,20 +77,20 @@ define([
             ready();
             return this;
         },
-        getData: function () {
+        getData: function() {
             return {
-                type: "NarrativeTempCard",
-                id: this.ws_name + "." + this.ws_id,
+                type: 'NarrativeTempCard',
+                id: this.ws_name + '.' + this.ws_id,
                 workspace: this.ws_name,
-                title: "Temp Widget"
+                title: 'Temp Widget'
             };
         },
-        loggedInCallback: function (event, auth) {
+        loggedInCallback: function(event, auth) {
             this.token = auth.token;
             this.render();
             return this;
         },
-        loggedOutCallback: function (event, auth) {
+        loggedOutCallback: function(event, auth) {
             this.token = null;
             this.render();
             return this;

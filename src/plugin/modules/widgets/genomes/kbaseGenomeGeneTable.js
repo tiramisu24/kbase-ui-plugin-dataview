@@ -1,23 +1,16 @@
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
 define([
     'jquery',
     'kb_common/html',
     'kb_service/client/workspace',
 
     'datatables_bootstrap',
-    'kb/widget/legacy/authenticatedWidget'
-], function ($, html, Workspace) {
+    'kb_widget/legacy/authenticatedWidget'
+], function($, html, Workspace) {
     'use strict';
     $.KBWidget({
-        name: "KBaseGenomeGeneTable",
-        parent: "kbaseAuthenticatedWidget",
-        version: "1.0.0",
+        name: 'KBaseGenomeGeneTable',
+        parent: 'kbaseAuthenticatedWidget',
+        version: '1.0.0',
         genome_id: null,
         ws_name: null,
         kbCache: null,
@@ -28,7 +21,7 @@ define([
             ver: null,
             genomeInfo: null
         },
-        init: function (options) {
+        init: function(options) {
             this._super(options);
 
             this.ws_name = this.options.ws_name;
@@ -36,7 +29,7 @@ define([
             this.render();
             return this;
         },
-        render: function () {
+        render: function() {
             var self = this;
             var pref = this.uuid();
 
@@ -44,14 +37,14 @@ define([
 
             container.append(html.loading('loading genes data...'));
 
-            var genomeRef = String(this.options.ws_name) + "/" + String(this.options.genome_id);
+            var genomeRef = String(this.options.ws_name) + '/' + String(this.options.genome_id);
 
-            var showData = function (gnm, cfg) {
+            var showData = function(gnm, cfg) {
                 function showGenes() {
                     container.empty();
                     ////////////////////////////// Genes Tab //////////////////////////////
                     container.append($('<div />')
-                        .css("overflow", "auto")
+                        .css('overflow', 'auto')
                         .append('<table cellpadding="0" cellspacing="0" border="0" id="' + pref + 'genes-table" ' +
                             'class="table table-bordered table-striped" style="width: 100%; margin-left: 0px; margin-right: 0px;"/>'));
                     var genesData = [];
@@ -62,7 +55,7 @@ define([
                         for (var pos in gnm.contig_ids) {
                             var contigId = gnm.contig_ids[pos];
                             var contigLen = gnm.contig_lengths[pos];
-                            contigMap[contigId] = {name: contigId, length: contigLen, genes: []};
+                            contigMap[contigId] = { name: contigId, length: contigLen, genes: [] };
                         }
                     }
 
@@ -103,7 +96,7 @@ define([
                         geneMap[geneId] = gene;
                         var contig = contigMap[contigName];
                         if (contigName !== null && !contig) {
-                            contig = {name: contigName, length: 0, genes: []};
+                            contig = { name: contigName, length: 0, genes: [] };
                             contigMap[contigName] = contig;
                         }
                         if (contig) {
@@ -117,23 +110,26 @@ define([
                         }
                     }
                     var genesSettings = {
-                        "sPaginationType": "full_numbers",
-                        "iDisplayLength": 10,
-                        "aaSorting": [[1, 'asc'], [2, 'asc']], // [[0,'asc']],
-                        "sDom": 't<fip>',
-                        "aoColumns": [
-                            {sTitle: "Gene ID", mData: "id"},
-                            {sTitle: "Contig", mData: "contig"},
-                            {sTitle: "Start", mData: "start", sWidth: "7%"},
-                            {sTitle: "Strand", mData: "dir", sWidth: "7%"},
-                            {sTitle: "Length", mData: "len", sWidth: "7%"},
-                            {sTitle: "Type", mData: "type", sWidth: "10%"},
-                            {sTitle: "Function", mData: "func", sWidth: "45%"}
+                        'sPaginationType': 'full_numbers',
+                        'iDisplayLength': 10,
+                        'aaSorting': [
+                            [1, 'asc'],
+                            [2, 'asc']
+                        ], // [[0,'asc']],
+                        'sDom': 't<fip>',
+                        'aoColumns': [
+                            { sTitle: 'Gene ID', mData: 'id' },
+                            { sTitle: 'Contig', mData: 'contig' },
+                            { sTitle: 'Start', mData: 'start', sWidth: '7%' },
+                            { sTitle: 'Strand', mData: 'dir', sWidth: '7%' },
+                            { sTitle: 'Length', mData: 'len', sWidth: '7%' },
+                            { sTitle: 'Type', mData: 'type', sWidth: '10%' },
+                            { sTitle: 'Function', mData: 'func', sWidth: '45%' }
                         ],
-                        "aaData": genesData,
-                        "oLanguage": {
-                            "sSearch": "&nbsp&nbspSearch genes:",
-                            "sEmptyTable": "No genes found."
+                        'aaData': genesData,
+                        'oLanguage': {
+                            'sSearch': '&nbsp&nbspSearch genes:',
+                            'sEmptyTable': 'No genes found.'
                         }
                     };
                     $('#' + pref + 'genes-table').dataTable(genesSettings);
@@ -141,12 +137,12 @@ define([
 
                 if (gnm.features.length > 35000) {
                     container.empty();
-                    var btnId = "btn_show_genes" + pref;
-                    container.append("There are many features in this genome, so displaying the full, " +
-                        "sortable gene list may cause your web browser to run out of memory and become " +
-                        "temporarily unresponsive.  Click below to attempt to show the gene list anyway.<br>" +
-                        "<button id='" + btnId + "' class='btn btn-primary'>Show Gene List</button>");
-                    $('#' + btnId).click(function (e) {
+                    var btnId = 'btn_show_genes' + pref;
+                    container.append('There are many features in this genome, so displaying the full, ' +
+                        'sortable gene list may cause your web browser to run out of memory and become ' +
+                        'temporarily unresponsive.  Click below to attempt to show the gene list anyway.<br>' +
+                        '<button id=\'' + btnId + '\' class=\'btn btn-primary\'>Show Gene List</button>');
+                    $('#' + btnId).click(function(e) {
                         showGenes();
                     });
                 } else {
@@ -156,16 +152,16 @@ define([
             if (self.options.genomeInfo) {
                 showData(self.options.genomeInfo.data);
             } else {
-                var objId = {ref: genomeRef};
+                var objId = { ref: genomeRef };
 
                 var workspace = new Workspace(self.runtime.getConfig('services.workspace.url', {
                     token: self.runtime.service('session').getAuthToken()
                 }));
                 workspace.get_objects([objId])
-                    .then(function (data) {
+                    .then(function(data) {
                         showData(data[0]);
                     })
-                    .catch(function (err) {
+                    .catch(function(err) {
                         container.empty();
                         container.append('<p>[Error] ' + err.error.message + '</p>');
                     });
@@ -173,18 +169,19 @@ define([
             }
             return this;
         },
-        getData: function () {
+        getData: function() {
             return {
-                type: "KBaseGenomeGeneTable",
-                id: this.options.ws_name + "." + this.options.genome_id,
+                type: 'KBaseGenomeGeneTable',
+                id: this.options.ws_name + '.' + this.options.genome_id,
                 workspace: this.options.ws_name,
-                title: "Gene list"
+                title: 'Gene list'
             };
         },
-        uuid: function () {
+        uuid: function() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,
-                function (c) {
-                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                function(c) {
+                    var r = Math.random() * 16 | 0,
+                        v = c == 'x' ? r : (r & 0x3 | 0x8);
                     return v.toString(16);
                 });
         }
