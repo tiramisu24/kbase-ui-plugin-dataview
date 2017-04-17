@@ -1,7 +1,7 @@
 define([
     'kb_common/html',
     'kb_widget/widgetSet',
-    './utils'
+    'plugins/dataview/modules/utils'
 ], function(html, WidgetSet, utils) {
     'use strict';
 

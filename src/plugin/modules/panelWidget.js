@@ -2,7 +2,7 @@ define([
     'bluebird',
     'kb_common/html',
     'kb_widget/widgetSet',
-    './utils'
+    'plugins/dataview/modules/utils'
 ], function(
     Promise,
     html,
