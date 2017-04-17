@@ -1,10 +1,3 @@
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
 /**
  * Shows general gene info.
  * Such as its name, synonyms, annotation, publications, etc.
@@ -18,13 +11,13 @@ define([
     'kb_service/client/cdmi',
     'kb_service/client/cdmiEntity',
     'kb_service/client/workspace',
-    'kb/widget/legacy/widget'
-], function ($, html, CDMI_API, CDMI_EntityAPI, Workspace) {
+    'kb_widget/legacy/widget'
+], function($, html, CDMI_API, CDMI_EntityAPI, Workspace) {
     'use strict';
     $.KBWidget({
-        name: "KBaseGeneSequence",
-        parent: "kbaseWidget",
-        version: "1.0.0",
+        name: 'KBaseGeneSequence',
+        parent: 'kbaseWidget',
+        version: '1.0.0',
         options: {
             featureID: null,
             embedInCard: false,
@@ -34,7 +27,7 @@ define([
             seq_cell_height: 208,
             genomeInfo: null
         },
-        init: function (options) {
+        init: function(options) {
             this._super(options);
 
             if (this.options.featureID === null) {
@@ -53,25 +46,25 @@ define([
 
             return this;
         },
-        render: function () {
-            this.$messagePane = $("<div/>")
-                .addClass("kbwidget-message-pane hide");
+        render: function() {
+            this.$messagePane = $('<div/>')
+                .addClass('kbwidget-message-pane hide');
             this.$elem.append(this.$messagePane);
 
-            this.$infoPanel = $("<div>").css("overflow", "auto");
-            this.$infoTable = $("<table>")
-                .addClass("table table-striped table-bordered");
+            this.$infoPanel = $('<div>').css('overflow', 'auto');
+            this.$infoTable = $('<table>')
+                .addClass('table table-striped table-bordered');
 
             this.$elem.append(this.$infoPanel.append(this.$infoTable));
         },
-        makeRow: function (name, value, color) {
-            var $row = $("<tr>")
-                .append($("<th>").append(name))
-                .append($("<td>").append($("<div style='max-height:" + this.options.seq_cell_height + "px; overflow:scroll; font-family:monospace; background-color:" + color + "; border:1px solid transparent'>").append(value)));
+        makeRow: function(name, value, color) {
+            var $row = $('<tr>')
+                .append($('<th>').append(name))
+                .append($('<td>').append($('<div style=\'max-height:' + this.options.seq_cell_height + 'px; overflow:scroll; font-family:monospace; background-color:' + color + '; border:1px solid transparent\'>').append(value)));
             //.append("<td style='max-height: 100px; overflow:scroll; font-family: monospace'>").append($("<div style='max-height:100px; overflow:scroll; font-family: monospace'>").append(value));
             return $row;
         },
-        renderWorkspace: function () {
+        renderWorkspace: function() {
             var self = this;
             this.showMessage(html.loading());
             this.$infoPanel.hide();
@@ -85,15 +78,15 @@ define([
                     token: this.runtime.service('session').getAuthToken()
                 });
                 workspace.get_objects([obj])
-                    .then(function (genome) {
+                    .then(function(genome) {
                         self.ready(genome[0]);
                     })
-                    .catch(function (err) {
+                    .catch(function(err) {
                         self.renderError(err);
                     });
             }
         },
-        ready: function (genome) {
+        ready: function(genome) {
             var self = this;
             if (genome.data.features) {
                 var feature = null;
@@ -106,16 +99,17 @@ define([
 
                 // Gene sequence
                 //
-                var dnaSequenceStr = "No gene sequence found.";
+                var dnaSequenceStr = 'No gene sequence found.';
                 if (feature.dna_sequence) { // get dna_sequence from object
                     dnaSequenceStr = feature.dna_sequence;
                     // wrap seq
                     var seq_width = 50;
                     if (dnaSequenceStr.length > seq_width) {
-                        var dnaDispStr = "";
+                        var dnaDispStr = '';
                         var start_pos = 0;
                         var end_pos = 0;
-                        for (var i = 0; (i + 1) * seq_width < dnaSequenceStr.length; i++) {
+                        for (var i = 0;
+                            (i + 1) * seq_width < dnaSequenceStr.length; i++) {
                             start_pos = i * seq_width;
                             end_pos = (i + 1) * seq_width;
                             dnaDispStr += dnaSequenceStr.substring(start_pos, end_pos) + '<br>';
@@ -130,65 +124,66 @@ define([
 
                     //this.$infoTable.append(this.makeRow("Gene", dnaSequenceStr));
                     this.$infoTable.append(
-                        this.makeRow("Gene", dnaSequenceStr, 'white')
+                        this.makeRow('Gene', dnaSequenceStr, 'white')
                         //.each(function(){$(this).css('font-family','monospace')})
-                        );
+                    );
 
-                } else {   // HACK!!! use central store (temporary solution?)
+                } else { // HACK!!! use central store (temporary solution?)
                     var self = this;
-                    self.cdmiClient.fids_to_dna_sequences
-                        (
-                            [self.options.featureID],
-                            function (dna_sequences) {
-                                if (dna_sequences[self.options.featureID]) {
-                                    dnaSequenceStr = dna_sequences[self.options.featureID];
+                    self.cdmiClient.fids_to_dna_sequences(
+                        [self.options.featureID],
+                        function(dna_sequences) {
+                            if (dna_sequences[self.options.featureID]) {
+                                dnaSequenceStr = dna_sequences[self.options.featureID];
+                            }
+                            // wrap seq
+                            var seq_width = 50;
+                            if (dnaSequenceStr.length > seq_width) {
+                                var dnaDispStr = '';
+                                var start_pos = 0;
+                                var end_pos = 0;
+                                for (var i = 0;
+                                    (i + 1) * seq_width < dnaSequenceStr.length; i++) {
+                                    start_pos = i * seq_width;
+                                    end_pos = (i + 1) * seq_width;
+                                    dnaDispStr += dnaSequenceStr.substring(start_pos, end_pos) + '<br>';
                                 }
-                                // wrap seq
-                                var seq_width = 50;
-                                if (dnaSequenceStr.length > seq_width) {
-                                    var dnaDispStr = "";
-                                    var start_pos = 0;
-                                    var end_pos = 0;
-                                    for (var i = 0; (i + 1) * seq_width < dnaSequenceStr.length; i++) {
-                                        start_pos = i * seq_width;
-                                        end_pos = (i + 1) * seq_width;
-                                        dnaDispStr += dnaSequenceStr.substring(start_pos, end_pos) + '<br>';
-                                    }
-                                    start_pos += seq_width;
-                                    end_pos = dnaSequenceStr.length;
-                                    if (start_pos < dnaSequenceStr.length) {
-                                        dnaDispStr += dnaSequenceStr.substring(start_pos, end_pos) + '<br>';
-                                    }
-                                    dnaSequenceStr = dnaDispStr;
+                                start_pos += seq_width;
+                                end_pos = dnaSequenceStr.length;
+                                if (start_pos < dnaSequenceStr.length) {
+                                    dnaDispStr += dnaSequenceStr.substring(start_pos, end_pos) + '<br>';
                                 }
+                                dnaSequenceStr = dnaDispStr;
+                            }
 
-                                //self.$infoTable.append(self.makeRow("Gene", dnaSequenceStr));
-                                self.$infoTable.append(
-                                    self.makeRow("Gene", dnaSequenceStr, 'white')
-                                    //.each(function(){$(this).css('font-family','monospace')})
-                                    );
-
-                                //self.hideMessage();
-                                //self.$infoPanel.show();
-                            },
-                            self.renderError
+                            //self.$infoTable.append(self.makeRow("Gene", dnaSequenceStr));
+                            self.$infoTable.append(
+                                self.makeRow('Gene', dnaSequenceStr, 'white')
+                                //.each(function(){$(this).css('font-family','monospace')})
                             );
+
+                            //self.hideMessage();
+                            //self.$infoPanel.show();
+                        },
+                        self.renderError
+                    );
                 }
                 // end gene sequence
 
 
                 // Protein sequence (for peg) (do first for bottom-up table build?)
                 //
-                var proteinTranslationStr = "No protein sequence found.";
+                var proteinTranslationStr = 'No protein sequence found.';
                 if (feature.protein_translation) {
                     proteinTranslationStr = feature.protein_translation;
                     // wrap seq
                     var seq_width = 50;
                     if (proteinTranslationStr.length > seq_width) {
-                        var protDispStr = "";
+                        var protDispStr = '';
                         var start_pos = 0;
                         var end_pos = 0;
-                        for (var i = 0; (i + 1) * seq_width < proteinTranslationStr.length; i++) {
+                        for (var i = 0;
+                            (i + 1) * seq_width < proteinTranslationStr.length; i++) {
                             start_pos = i * seq_width;
                             end_pos = (i + 1) * seq_width;
                             protDispStr += proteinTranslationStr.substring(start_pos, end_pos) + '<br>';
@@ -202,24 +197,26 @@ define([
                     }
                 }
                 this.$infoTable.append(
-                    this.makeRow("Protein", proteinTranslationStr, '#f9f9f9')
+                    this.makeRow('Protein', proteinTranslationStr, '#f9f9f9')
                     //.each(function(){$(this).css('font-family','monospace')})
-                    );
+                );
 
                 // SOMETHING SIMILAR, BUT NOT RIGHT this.$infoTable.append(this.makeRow("Protein", proteinTranslationStr).find("td")[1].style="font-family:Courier");
 
                 // end protein sequence
 
             } else {
-                this.renderError({error: "No genetic features found in the genome with object id: " +
-                        this.options.workspaceID + "/" +
-                        this.options.genomeID});
+                this.renderError({
+                    error: 'No genetic features found in the genome with object id: ' +
+                        this.options.workspaceID + '/' +
+                        this.options.genomeID
+                });
             }
 
             this.hideMessage();
             this.$infoPanel.show();
         },
-        buildObjectIdentity: function (workspaceID, objectID) {
+        buildObjectIdentity: function(workspaceID, objectID) {
             var obj = {};
             if (/^\d+$/.exec(workspaceID))
                 obj['wsid'] = workspaceID;
@@ -233,36 +230,36 @@ define([
                 obj['name'] = objectID;
             return obj;
         },
-        getData: function () {
+        getData: function() {
             return {
-                type: "Feature",
+                type: 'Feature',
                 id: this.options.featureID,
                 workspace: this.options.workspaceID,
-                title: "Gene Sequence"
+                title: 'Gene Sequence'
             };
         },
-        showMessage: function (message) {
-            var span = $("<span/>").append(message);
+        showMessage: function(message) {
+            var span = $('<span/>').append(message);
 
             this.$messagePane.empty()
                 .append(span)
                 .removeClass('hide');
         },
-        hideMessage: function () {
+        hideMessage: function() {
             this.$messagePane.addClass('hide');
         },
-        renderError: function (error) {
-            errString = "Sorry, an unknown error occurred";
-            if (typeof error === "string")
+        renderError: function(error) {
+            errString = 'Sorry, an unknown error occurred';
+            if (typeof error === 'string')
                 errString = error;
             else if (error.error && error.error.message)
                 errString = error.error.message;
 
 
-            var $errorDiv = $("<div>")
-                .addClass("alert alert-danger")
-                .append("<b>Error:</b>")
-                .append("<br>" + errString);
+            var $errorDiv = $('<div>')
+                .addClass('alert alert-danger')
+                .append('<b>Error:</b>')
+                .append('<br>' + errString);
             this.$elem.empty();
             this.$elem.append($errorDiv);
         }

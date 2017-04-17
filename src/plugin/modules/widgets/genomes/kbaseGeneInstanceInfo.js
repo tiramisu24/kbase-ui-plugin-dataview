@@ -1,10 +1,3 @@
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
 /**
  * Shows general gene info.
  * Such as its name, synonyms, annotation, publications, etc.
@@ -18,13 +11,13 @@ define([
     'kb_service/client/cdmi',
     'kb_service/client/cdmiEntity',
     'kb_service/client/workspace',
-    'kb/widget/legacy/widget'
-], function ($, html, CDMI_API, CDMI_EntityAPI, Workspace) {
+    'kb_widget/legacy/widget'
+], function($, html, CDMI_API, CDMI_EntityAPI, Workspace) {
     'use strict';
     $.KBWidget({
-        name: "KBaseGeneInstanceInfo",
-        parent: "kbaseWidget",
-        version: "1.0.0",
+        name: 'KBaseGeneInstanceInfo',
+        parent: 'kbaseWidget',
+        version: '1.0.0',
         options: {
             featureID: null,
             workspaceID: null,
@@ -33,7 +26,7 @@ define([
             width: 350,
             genomeInfo: null
         },
-        init: function (options) {
+        init: function(options) {
             this._super(options);
 
             if (!this.options.featureID) {
@@ -56,7 +49,7 @@ define([
 
             return this;
         },
-        render: function (options) {
+        render: function(options) {
             /*
              * Need to get:
              * Feature name
@@ -69,36 +62,36 @@ define([
              * subsystems
              */
 
-            var makeButton = function (btnName) {
+            var makeButton = function(btnName) {
                 var id = btnName;
                 btnName = btnName.replace(/\w\S*/g,
-                    function (txt) {
+                    function(txt) {
                         return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
                     });
 
-                return $("<button>")
-                    .attr("id", id)
-                    .attr("type", "button")
-                    .addClass("btn btn-primary")
+                return $('<button>')
+                    .attr('id', id)
+                    .attr('type', 'button')
+                    .addClass('btn btn-primary')
                     .append(btnName);
 
             };
 
-            this.$messagePane = $("<div/>")
-                .addClass("kbwidget-message-pane kbwidget-hide-message");
+            this.$messagePane = $('<div/>')
+                .addClass('kbwidget-message-pane kbwidget-hide-message');
             this.$elem.append(this.$messagePane);
 
-            this.$infoPanel = $("<div>").css("overflow", "auto");
-            this.$infoTable = $("<table>")
-                .addClass("table table-striped table-bordered");
-            this.$buttonPanel = $("<div>")
-                .attr("align", "center")
-                .addClass("btn-group")
+            this.$infoPanel = $('<div>').css('overflow', 'auto');
+            this.$infoTable = $('<table>')
+                .addClass('table table-striped table-bordered');
+            this.$buttonPanel = $('<div>')
+                .attr('align', 'center')
+                .addClass('btn-group')
                 //.append(makeButton("domains"))
                 //.append(makeButton("operons"))
-                .append(makeButton("sequence"))
-                .append(makeButton("biochemistry"))
-                .append(makeButton("structure"));
+                .append(makeButton('sequence'))
+                .append(makeButton('biochemistry'))
+                .append(makeButton('structure'));
 
 
             this.$infoPanel.append(this.$infoTable);
@@ -108,7 +101,7 @@ define([
 
             this.$elem.append(this.$infoPanel);
         },
-        renderCentralStore: function () {
+        renderCentralStore: function() {
 
             this.$infoPanel.hide();
             this.showMessage(html.loading());
@@ -120,51 +113,51 @@ define([
             // Fids to feature data job
 
             this.cdmiClient.fids_to_feature_data([self.options.featureID])
-                .then(function (featureData) {
+                .then(function(featureData) {
                     data.featureData = featureData[self.options.featureID];
                     return this.cdmiClient.fids_to_genomes([self.options.featureID]);
                 })
-                .then(function (genome) {
+                .then(function(genome) {
                     data.genome = genome[self.options.featureID];
-                    return  this.cdmiClient.fids_to_dna_sequences([this.options.featureID]);
+                    return this.cdmiClient.fids_to_dna_sequences([this.options.featureID]);
                 })
-                .then(function (dnaSeq) {
+                .then(function(dnaSeq) {
                     data.dnaSeq = dnaSeq[self.options.featureID];
                     self.$infoTable.empty();
-                    self.$infoTable.append(self.makeRow("Function", data.featureData.feature_function));
-                    self.$infoTable.append(self.makeRow("Genome", $("<div/>")
+                    self.$infoTable.append(self.makeRow('Function', data.featureData.feature_function));
+                    self.$infoTable.append(self.makeRow('Genome', $('<div/>')
                         .append(data.featureData.genome_name)
-                        .append("<br/>")
+                        .append('<br/>')
                         .append(self.makeGenomeButton(data.genome))));
-                    var len = data.featureData.feature_length + " bp";
+                    var len = data.featureData.feature_length + ' bp';
                     if (data.featureData.protein_translation) {
-                        len += ", " + data.featureData.protein_translation.length + " aa";
+                        len += ', ' + data.featureData.protein_translation.length + ' aa';
                     }
-                    self.$infoTable.append(self.makeRow("Length", len));
-                    self.$infoTable.append(self.makeRow("Location", $("<div/>")
+                    self.$infoTable.append(self.makeRow('Length', len));
+                    self.$infoTable.append(self.makeRow('Location', $('<div/>')
                         .append(self.parseLocation(data.featureData.feature_location))));
-                    self.$infoTable.append(self.makeRow("Aliases", data.featureData.feature_aliases.join(", ")));
-                    self.$buttonPanel.find("button#domains").click(function (event) {
-                        self.trigger("showDomains", {event: event, featureID: self.options.featureID});
+                    self.$infoTable.append(self.makeRow('Aliases', data.featureData.feature_aliases.join(', ')));
+                    self.$buttonPanel.find('button#domains').click(function(event) {
+                        self.trigger('showDomains', { event: event, featureID: self.options.featureID });
                     });
 
-                    self.$buttonPanel.find("button#sequence").click(function (event) {
-                        self.trigger("showSequence", {event: event, featureID: self.options.featureID});
+                    self.$buttonPanel.find('button#sequence').click(function(event) {
+                        self.trigger('showSequence', { event: event, featureID: self.options.featureID });
                     });
-                    self.$buttonPanel.find("button#biochemistry").click(function (event) {
-                        self.trigger("showBiochemistry", {event: event, featureID: self.options.featureID});
+                    self.$buttonPanel.find('button#biochemistry').click(function(event) {
+                        self.trigger('showBiochemistry', { event: event, featureID: self.options.featureID });
                     });
-                    self.$buttonPanel.find("button#structure").click(function (event) {
-                        self.trigger("showStructureMatches", {event: event, featureID: self.options.featureID});
+                    self.$buttonPanel.find('button#structure').click(function(event) {
+                        self.trigger('showStructureMatches', { event: event, featureID: self.options.featureID });
                     });
                     self.hideMessage();
                     self.$infoPanel.show();
                 })
-                .catch(function (err) {
+                .catch(function(err) {
                     self.renderError(err);
                 });
         },
-        renderWorkspace: function () {
+        renderWorkspace: function() {
             var self = this;
             this.$infoPanel.hide();
             this.showMessage(html.loading());
@@ -176,17 +169,17 @@ define([
                     prom = this.workspace.get_objects([obj]);
 
                 // var prom = this.options.kbCache.req('ws', 'get_objects', [obj]);
-                $.when(prom).fail($.proxy(function (error) {
+                $.when(prom).fail($.proxy(function(error) {
                     this.renderError(error);
                     console.log(error);
                 }, this));
-                $.when(prom).done($.proxy(function (genome) {
+                $.when(prom).done($.proxy(function(genome) {
                     genome = genome[0];
                     self.ready(genome);
                 }, this));
             }
         },
-        ready: function (genome) {
+        ready: function(genome) {
             var self = this,
                 feature = null;
             if (genome.data.features) {
@@ -210,43 +203,43 @@ define([
                     // Figure out the function.
                     var func = feature['function'];
                     if (!func) {
-                        func = "Unknown";
+                        func = 'Unknown';
                     }
-                    this.$infoTable.append(this.makeRow("Function", func));
+                    this.$infoTable.append(this.makeRow('Function', func));
 
                     // Show the genome and a button for it.
-                    this.$infoTable.append(this.makeRow("Genome", $("<div/>")
+                    this.$infoTable.append(this.makeRow('Genome', $('<div/>')
                         .append(genome.data.scientific_name)
-                        .append("<br>")
+                        .append('<br>')
                         .append(this.makeGenomeButton(this.options.genomeID, this.options.workspaceID))));
                     // Figure out the feature length
-                    var len = "Unknown";
+                    var len = 'Unknown';
                     if (feature.dna_sequence_length) {
-                        len = feature.dna_sequence_length + " bp";
+                        len = feature.dna_sequence_length + ' bp';
                     } else if (feature.dna_sequence) {
-                        len = feature.dna_sequence.length + " bp";
+                        len = feature.dna_sequence.length + ' bp';
                     } else if (feature.location && feature.location.length > 0) {
                         len = 0;
                         for (var i = 0; i < feature.location.length; i++) {
                             len += feature.location[i][3];
                         }
-                        len += " bp";
+                        len += ' bp';
                     }
                     if (feature.protein_translation) {
-                        len += ", " + feature.protein_translation.length + " aa";
+                        len += ', ' + feature.protein_translation.length + ' aa';
                     }
-                    this.$infoTable.append(this.makeRow("Length", len));
+                    this.$infoTable.append(this.makeRow('Length', len));
 
-                    this.$infoTable.append(this.makeRow("Location", $("<div/>")
+                    this.$infoTable.append(this.makeRow('Location', $('<div/>')
                         .append(this.parseLocation(feature.location))));
                     //.append(this.parseLocation(feature.location))
                     //.append(this.makeContigButton(feature.location))));
 
                     // Aliases
-                    var aliasesStr = "No known aliases";
+                    var aliasesStr = 'No known aliases';
                     if (feature.aliases)
-                        aliasesStr = feature.aliases.join(", ");
-                    self.$infoTable.append(self.makeRow("Aliases", aliasesStr));
+                        aliasesStr = feature.aliases.join(', ');
+                    self.$infoTable.append(self.makeRow('Aliases', aliasesStr));
                     // end Aliases
 
 
@@ -257,57 +250,57 @@ define([
                     //}
 
                     // Protein families list.
-                    var proteinFamilies = "";
+                    var proteinFamilies = '';
                     if (feature.protein_families) {
                         if (feature.protein_families.length > 0) {
-                            proteinFamilies = "";
+                            proteinFamilies = '';
                             for (var i = 0; i < feature.protein_families.length; i++) {
                                 var fam = feature.protein_families[i];
-                                proteinFamilies += fam.id + ": " + fam.subject_description + "<br>";
+                                proteinFamilies += fam.id + ': ' + fam.subject_description + '<br>';
                             }
                         }
                     }
                     if (proteinFamilies) {
-                        this.$infoTable.append(this.makeRow("Protein Families", proteinFamilies));
+                        this.$infoTable.append(this.makeRow('Protein Families', proteinFamilies));
                     }
 
                     // first add handlers that say we do not have domains or operons for this gene
-                    this.$buttonPanel.find("button#domains").click(function (event) {
-                        window.alert("No domain assignments available for this gene.  You will be able to compute domain assignments in the Narrative in the future.");
+                    this.$buttonPanel.find('button#domains').click(function(event) {
+                        window.alert('No domain assignments available for this gene.  You will be able to compute domain assignments in the Narrative in the future.');
                     });
-                    this.$buttonPanel.find("button#operons").click(function (event) {
-                        window.alert("No operon assignments available for this gene.  You will be able to compute operon assignments in the Narrative in the future.");
+                    this.$buttonPanel.find('button#operons').click(function(event) {
+                        window.alert('No operon assignments available for this gene.  You will be able to compute operon assignments in the Narrative in the future.');
                     });
-                    this.$buttonPanel.find("button#structure").click(function (event) {
-                        window.alert("No structure assignments available for this gene.  You will be able to compute structure assignments in the Narrative in the future.");
+                    this.$buttonPanel.find('button#structure').click(function(event) {
+                        window.alert('No structure assignments available for this gene.  You will be able to compute structure assignments in the Narrative in the future.');
                     });
 
                     //determine if a feature id and its protein MD5 translation is found in the CDS- if it is,
                     //return true.  We use this as a hack to see if we have gene info for this feature for WS objects.
                     this.cdmiClient.fids_to_proteins([self.options.featureID],
-                        function (prot) {
+                        function(prot) {
                             if (prot[self.options.featureID] === feature['md5']) {
                                 //ok the fid and md5 match, so go to the CDS to get domain info...  what a hack!
-                                self.$buttonPanel.find("button#domains").off("click");
-                                self.$buttonPanel.find("button#domains").click(function (event) {
-                                    self.trigger("showDomains", {event: event, featureID: self.options.featureID});
+                                self.$buttonPanel.find('button#domains').off('click');
+                                self.$buttonPanel.find('button#domains').click(function(event) {
+                                    self.trigger('showDomains', { event: event, featureID: self.options.featureID });
                                 });
-                                self.$buttonPanel.find("button#operons").off("click");
-                                self.$buttonPanel.find("button#operons").click(function (event) {
-                                    self.trigger("showOperons", {event: event, featureID: self.options.featureID});
+                                self.$buttonPanel.find('button#operons').off('click');
+                                self.$buttonPanel.find('button#operons').click(function(event) {
+                                    self.trigger('showOperons', { event: event, featureID: self.options.featureID });
                                 });
-                                self.$buttonPanel.find("button#structure").off("click");
-                                self.$buttonPanel.find("button#structure").click(function (event) {
-                                    self.trigger("showStructureMatches", {event: event, featureID: self.options.featureID});
+                                self.$buttonPanel.find('button#structure').off('click');
+                                self.$buttonPanel.find('button#structure').click(function(event) {
+                                    self.trigger('showStructureMatches', { event: event, featureID: self.options.featureID });
                                 });
                             }
                         } // we don't add error function- if they don't match or this fails, do nothing.
                     );
 
                     // bind button events
-                    this.$buttonPanel.find("button#sequence").click(
-                        $.proxy(function (event) {
-                            this.trigger("showSequence", {
+                    this.$buttonPanel.find('button#sequence').click(
+                        $.proxy(function(event) {
+                            this.trigger('showSequence', {
                                 event: event,
                                 featureID: this.options.featureID,
                                 genomeID: this.options.genomeID,
@@ -315,10 +308,10 @@ define([
                                 kbCache: this.options.kbCache
                             });
                         }, this)
-                        );
-                    this.$buttonPanel.find("button#biochemistry").click(
-                        $.proxy(function (event) {
-                            this.trigger("showBiochemistry", {
+                    );
+                    this.$buttonPanel.find('button#biochemistry').click(
+                        $.proxy(function(event) {
+                            this.trigger('showBiochemistry', {
                                 event: event,
                                 featureID: this.options.featureID,
                                 genomeID: this.options.genomeID,
@@ -326,45 +319,49 @@ define([
                                 kbCache: this.options.kbCache
                             });
                         }, this)
-                        );
+                    );
 
                 } else {
-                    this.renderError({error: "Gene '" + this.options.featureID +
-                            "' not found in the genome with object id: " +
-                            this.options.workspaceID + "/" + this.options.genomeID});
+                    this.renderError({
+                        error: 'Gene \'' + this.options.featureID +
+                            '\' not found in the genome with object id: ' +
+                            this.options.workspaceID + '/' + this.options.genomeID
+                    });
                 }
 
             } else {
-                this.renderError({error: "No genetic features found in the genome with object id: " +
-                        this.options.workspaceID + "/" +
-                        this.options.genomeID});
+                this.renderError({
+                    error: 'No genetic features found in the genome with object id: ' +
+                        this.options.workspaceID + '/' +
+                        this.options.genomeID
+                });
             }
 
             this.hideMessage();
             this.$infoPanel.show();
         },
-        makeRow: function (name, value) {
-            var $row = $("<tr/>")
-                .append($("<th />").append(name))
-                .append($("<td />").append(value));
+        makeRow: function(name, value) {
+            var $row = $('<tr/>')
+                .append($('<th />').append(name))
+                .append($('<td />').append(value));
             return $row;
         },
-        makeContigButton: function (loc) {
+        makeContigButton: function(loc) {
             if (this.options.hideButtons) {
-                return "";
+                return '';
             }
             if (loc === null || loc[0][0] === null)
-                return "";
+                return '';
 
             var contigID = loc[0][0];
 
             var self = this;
-            var $contigBtn = $("<button />")
-                .addClass("btn btn-default")
-                .append("Show Contig")
-                .on("click",
-                    function (event) {
-                        self.trigger("showContig", {
+            var $contigBtn = $('<button />')
+                .addClass('btn btn-default')
+                .append('Show Contig')
+                .on('click',
+                    function(event) {
+                        self.trigger('showContig', {
                             contig: contigID,
                             centerFeature: self.options.featureID,
                             genomeId: self.options.genomeID,
@@ -377,25 +374,25 @@ define([
 
             return $contigBtn;
         },
-        makeGenomeButton: function (genomeID, workspaceID) {
+        makeGenomeButton: function(genomeID, workspaceID) {
             if (!genomeID)
-                return "";
+                return '';
 
             if (!workspaceID)
                 workspaceID = null;
 
-            return $("<div>")
+            return $('<div>')
                 .append('<a href="#/dataview/' + workspaceID + '/' + genomeID + '" target="_blank">' + workspaceID + '/<wbr>' + genomeID + '</a>');
 
 
             var self = this;
-            var $genomeBtn = $("<button />")
-                .addClass("btn btn-default")
-                .append("Show Genome")
-                .on("click",
-                    function (event) {
+            var $genomeBtn = $('<button />')
+                .addClass('btn btn-default')
+                .append('Show Genome')
+                .on('click',
+                    function(event) {
                         console.log(self.options);
-                        self.trigger("showGenome", {
+                        self.trigger('showGenome', {
                             genomeID: genomeID,
                             workspaceID: workspaceID,
                             kbCache: self.options.kbCache,
@@ -410,7 +407,7 @@ define([
          * Returns the GC content of a string as a percentage value.
          * You'll still need to concat it to some number of decimal places.
          */
-        calculateGCContent: function (s) {
+        calculateGCContent: function(s) {
             var gc = 0;
             s = s.toLowerCase();
             for (var i = 0; i < s.length; i++) {
@@ -427,12 +424,12 @@ define([
          *   789 - 1234 (+)
          *   on contig [ kb|g.0.c.1 ]  // clicking opens contig browser centered on feature.
          */
-        parseLocation: function (loc) {
+        parseLocation: function(loc) {
             if (loc.length === 0) {
-                return "Unknown";
+                return 'Unknown';
             }
 
-            var locStr = "";
+            var locStr = '';
             for (var i = 0; i < loc.length; i++) {
                 var start = Number(loc[i][1]);
                 var length = Number(loc[i][3]);
@@ -443,46 +440,46 @@ define([
                 else
                     end = start - length + 1;
 
-                locStr += start + " to " + end + " (" + loc[i][2] + ")<br/>";
-//                locStr += loc[i][1] + " - " + loc[i][3] + " (" + loc[i][2] + ")<br/>";
+                locStr += start + ' to ' + end + ' (' + loc[i][2] + ')<br/>';
+                //                locStr += loc[i][1] + " - " + loc[i][3] + " (" + loc[i][2] + ")<br/>";
             }
             return locStr;
         },
-        showMessage: function (message) {
-            var span = $("<span/>").append(message);
+        showMessage: function(message) {
+            var span = $('<span/>').append(message);
 
             this.$messagePane.empty()
                 .append(span)
                 .removeClass('hide');
         },
-        hideMessage: function () {
+        hideMessage: function() {
             this.$messagePane.addClass('hide');
         },
-        getData: function () {
+        getData: function() {
             return {
-                type: "Feature",
+                type: 'Feature',
                 id: this.options.featureID,
                 workspace: this.options.workspaceID,
                 genome: this.options.genomeID,
-                title: "Gene Instance"
+                title: 'Gene Instance'
             };
         },
-        renderError: function (error) {
-            errString = "Sorry, an unknown error occurred";
-            if (typeof error === "string")
+        renderError: function(error) {
+            errString = 'Sorry, an unknown error occurred';
+            if (typeof error === 'string')
                 errString = error;
             else if (error.error && error.error.message)
                 errString = error.error.message;
 
 
-            var $errorDiv = $("<div>")
-                .addClass("alert alert-danger")
-                .append("<b>Error:</b>")
-                .append("<br>" + errString);
+            var $errorDiv = $('<div>')
+                .addClass('alert alert-danger')
+                .append('<b>Error:</b>')
+                .append('<br>' + errString);
             this.$elem.empty();
             this.$elem.append($errorDiv);
         },
-        buildObjectIdentity: function (workspaceID, objectID) {
+        buildObjectIdentity: function(workspaceID, objectID) {
             var obj = {};
             if (/^\d+$/.exec(workspaceID))
                 obj['wsid'] = workspaceID;

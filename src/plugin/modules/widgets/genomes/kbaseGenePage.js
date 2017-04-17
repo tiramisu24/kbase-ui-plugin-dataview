@@ -1,10 +1,3 @@
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
 /**
  * Output widget for visualization of genome annotation.
  * @author Roman Sutormin <rsutormin@lbl.gov>
@@ -14,22 +7,22 @@ define([
     'jquery',
     'kb_common/html',
     'kb_service/client/workspace',
-    'kb/widget/legacy/widget',
+    'kb_widget/legacy/widget',
     'kb_dataview_genomes_geneInstanceInfo',
     'kb_dataview_genomes_geneBiochemistry',
     'kb_dataview_genomes_geneSequence'
-], function ($, html, Workspace) {
+], function($, html, Workspace) {
     'use strict';
     $.KBWidget({
-        name: "KBaseGenePage",
-        parent: "kbaseWidget",
-        version: "1.0.0",
+        name: 'KBaseGenePage',
+        parent: 'kbaseWidget',
+        version: '1.0.0',
         options: {
             featureID: null,
             genomeID: null,
             workspaceID: null
         },
-        init: function (options) {
+        init: function(options) {
             this._super(options);
             if (this.options.workspaceID === 'CDS') {
                 this.options.workspaceID = 'KBasePublicGenomesV4';
@@ -40,7 +33,7 @@ define([
             this.render();
             return this;
         },
-        render: function () {
+        render: function() {
             var self = this;
             var scope = {
                 ws: this.options.workspaceID,
@@ -64,13 +57,14 @@ define([
             self.makeDecoration(cell3, 'Sequence', panel3);
             ///////////////////////////////////////////////////////////////////////////////
 
-            var objId = scope.ws + "/" + scope.gid;
-            var included = ["/complete", "/contig_ids", "/contig_lengths", "contigset_ref", "/dna_size",
-                "/domain", "/gc_content", "/genetic_code", "/id", "/md5", "num_contigs",
-                "/scientific_name", "/source", "/source_id", "/tax_id", "/taxonomy",
-                "/features/[*]/id"];
+            var objId = scope.ws + '/' + scope.gid;
+            var included = ['/complete', '/contig_ids', '/contig_lengths', 'contigset_ref', '/dna_size',
+                '/domain', '/gc_content', '/genetic_code', '/id', '/md5', 'num_contigs',
+                '/scientific_name', '/source', '/source_id', '/tax_id', '/taxonomy',
+                '/features/[*]/id'
+            ];
 
-            var ready = function (genomeInfo) {
+            var ready = function(genomeInfo) {
                 panel1.empty();
                 try {
                     panel1.KBaseGeneInstanceInfo({
@@ -86,7 +80,7 @@ define([
                     self.showError(panel1, e.message);
                 }
 
-                var searchTerm = "";
+                var searchTerm = '';
                 if (genomeInfo && genomeInfo.data['scientific_name']) {
                     searchTerm = genomeInfo.data['scientific_name'];
                 }
@@ -117,39 +111,39 @@ define([
             self.workspace.get_object_subset([{
                     ref: objId,
                     included: included
-                }], function (data) {
-                var genomeInfo = data[0];
-                var featureIdx = null;
-                for (var pos in genomeInfo.data.features) {
-                    var featureId = genomeInfo.data.features[pos].id;
-                    if (featureId && featureId === scope.fid) {
-                        featureIdx = pos;
-                        break;
+                }], function(data) {
+                    var genomeInfo = data[0];
+                    var featureIdx = null;
+                    for (var pos in genomeInfo.data.features) {
+                        var featureId = genomeInfo.data.features[pos].id;
+                        if (featureId && featureId === scope.fid) {
+                            featureIdx = pos;
+                            break;
+                        }
                     }
-                }
-                if (featureIdx) {
-                    self.workspace.get_object_subset([{ref: objId, included: ["/features/" + featureIdx]}], function (data) {
-                        var fInfo = data[0].data;
-                        genomeInfo.data.features[featureIdx] = fInfo.features[0];
-                        ready(genomeInfo);
-                    },
-                        function (error) {
-                            console.error("Error loading genome subdata");
-                            console.error(error);
-                            panel1.empty();
-                            self.showError(panel1, error);
-                            cell2.empty();
-                            cell3.empty();
-                        });
-                } else {
-                    panel1.empty();
-                    self.showError(panel1, "Feature " + scope.fid + " is not found in genome");
-                    cell2.empty();
-                    cell3.empty();
-                }
-            },
-                function (error) {
-                    console.error("Error loading genome subdata");
+                    if (featureIdx) {
+                        self.workspace.get_object_subset([{ ref: objId, included: ['/features/' + featureIdx] }], function(data) {
+                                var fInfo = data[0].data;
+                                genomeInfo.data.features[featureIdx] = fInfo.features[0];
+                                ready(genomeInfo);
+                            },
+                            function(error) {
+                                console.error('Error loading genome subdata');
+                                console.error(error);
+                                panel1.empty();
+                                self.showError(panel1, error);
+                                cell2.empty();
+                                cell3.empty();
+                            });
+                    } else {
+                        panel1.empty();
+                        self.showError(panel1, 'Feature ' + scope.fid + ' is not found in genome');
+                        cell2.empty();
+                        cell3.empty();
+                    }
+                },
+                function(error) {
+                    console.error('Error loading genome subdata');
                     console.error(error);
                     panel1.empty();
                     self.showError(panel1, error);
@@ -157,10 +151,10 @@ define([
                     cell3.empty();
                 });
         },
-        makePleaseWaitPanel: function () {
+        makePleaseWaitPanel: function() {
             return $('<div>').html(html.loading('loading...'));
         },
-        makeDecoration: function ($panel, title, $widgetDiv) {
+        makeDecoration: function($panel, title, $widgetDiv) {
             var id = this.genUUID();
             $panel.append(
                 $('<div class="panel-group" id="accordion_' + id + '" role="tablist" aria-multiselectable="true">')
@@ -173,28 +167,29 @@ define([
                         '</span>' +
                         '</h4>' +
                         '</div>'
-                        )
+                    )
                     .append($('<div id="collapse_' + id + '" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="heading_' + id + '" area-expanded="true">')
                         .append($('<div class="panel-body">').append($widgetDiv))
-                        )
                     )
-                );
+                )
+            );
         },
-        getData: function () {
+        getData: function() {
             return {
-                type: "Gene Page",
-                id: this.options.genomeID + "/" + this.options.featureID,
+                type: 'Gene Page',
+                id: this.options.genomeID + '/' + this.options.featureID,
                 workspace: this.options.workspaceID,
-                title: "Gene Page"
+                title: 'Gene Page'
             };
         },
-        showError: function (panel, e) {
+        showError: function(panel, e) {
             panel.empty();
-            panel.append("Error: " + JSON.stringify(e));
+            panel.append('Error: ' + JSON.stringify(e));
         },
-        genUUID: function () {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        genUUID: function() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0,
+                    v = c === 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
             });
         }

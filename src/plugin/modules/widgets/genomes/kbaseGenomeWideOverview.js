@@ -1,10 +1,3 @@
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
 /**
  * Shows general gene info.
  * Such as its name, synonyms, annotation, publications, etc.
@@ -14,26 +7,26 @@
  */
 define([
     'jquery',
-    'kb/widget/legacy/widget',
+    'kb_widget/legacy/widget',
     'kb_dataview_genomes_overview',
     'kb_dataview_genomes_wikiDescription'
-], function ($) {
+], function($) {
     'use strict';
     $.KBWidget({
-        name: "KBaseGenomeWideOverview",
-        parent: "kbaseWidget",
-        version: "1.0.0",
+        name: 'KBaseGenomeWideOverview',
+        parent: 'kbaseWidget',
+        version: '1.0.0',
         options: {
             genomeID: null,
             workspaceID: null,
             genomeInfo: null
         },
-        init: function (options) {
+        init: function(options) {
             this._super(options);
             this.render();
             return this;
         },
-        render: function () {
+        render: function() {
             var self = this;
             var row = $('<div class="row">');
             self.$elem.append(row);
@@ -41,7 +34,7 @@ define([
             row.append(overview);
             var wikidescription = $('<div class="col-md-8">');
             row.append(wikidescription);
-            
+
             overview.KBaseGenomeOverview({
                 genomeID: self.options.genomeID,
                 workspaceID: self.options.workspaceID,
@@ -56,12 +49,12 @@ define([
             });
 
         },
-        getData: function () {
+        getData: function() {
             return {
-                type: "Genome Overview",
+                type: 'Genome Overview',
                 id: this.options.genomeID,
                 workspace: this.options.workspaceID,
-                title: "Overview"
+                title: 'Overview'
             };
         }
 

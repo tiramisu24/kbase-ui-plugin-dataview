@@ -1,23 +1,16 @@
-/*global
- define
- */
-/*jslint
- browser: true,
- white: true
- */
 define([
     'jquery',
-    
-    'kb/widget/legacy/widget',
+
+    'kb_widget/legacy/widget',
     'kb_dataview_genomes_multiContigBrowser',
     'kb_dataview_genomes_seedFunctions',
     'kb_dataview_genomes_geneTable'
-], function ($) {
+], function($) {
     'use strict';
     $.KBWidget({
-        name: "KBaseGenomeWideAssemAnnot",
-        parent: "kbaseWidget",
-        version: "1.0.0",
+        name: 'KBaseGenomeWideAssemAnnot',
+        parent: 'kbaseWidget',
+        version: '1.0.0',
         options: {
             genomeID: null,
             workspaceID: null,
@@ -25,12 +18,12 @@ define([
             genomeInfo: null,
             contigSetInfo: null
         },
-        init: function (options) {
+        init: function(options) {
             this._super(options);
             this.render();
             return this;
         },
-        render: function () {
+        render: function() {
             var self = this;
             var row0 = $('<div class="row">');
             self.$elem.append(row0);
@@ -64,12 +57,12 @@ define([
                 runtime: self.runtime
             });
         },
-        getData: function () {
+        getData: function() {
             return {
-                type: "Genome Assembly and Annotation",
+                type: 'Genome Assembly and Annotation',
                 id: this.options.genomeID,
                 workspace: this.options.workspaceID,
-                title: "Assembly and Annotation"
+                title: 'Assembly and Annotation'
             };
         }
 
