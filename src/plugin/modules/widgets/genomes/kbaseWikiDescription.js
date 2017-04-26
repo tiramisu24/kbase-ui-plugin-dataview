@@ -21,11 +21,12 @@
 define([
     'jquery',
     'kb_common/html',
-    'kb_service/client/cdmi',
-    'kb_service/client/cdmiEntity',
     'kb_service/client/workspace',
     'kb_widget/legacy/widget'
-], function($, html, CDMI, CDMI_Entity, Workspace) {
+], function(
+    $,
+    html,
+    Workspace) {
     'use strict';
     $.KBWidget({
         name: 'KBaseWikiDescription',
@@ -51,7 +52,7 @@ define([
         },
         /**
          * @function init
-         * Initialize the widget. This initializes the CDMI client code.
+         * Initialize the widget. 
          * @return {object} the initialized widget
          */
         init: function(options) {
@@ -64,60 +65,14 @@ define([
             this.$messagePane = $('<div>');
             this.$elem.append(this.$messagePane);
 
-            this.cdmiClient = new CDMI(this.runtime.getConfig('services.cdmi.url'));
-
-            this.entityClient = new CDMI_Entity(this.runtime.getConfig('services.cdmi.url'));
-
             this.workspaceClient = new Workspace(this.runtime.getConfig('services.workspace.url', {
                 token: this.runtime.service('session').getAuthToken()
             }));
 
-            if (this.options.workspaceID) {
-                this.renderWorkspace();
-            } else {
-                this.renderCdmi();
-            }
+            this.renderWorkspace();
             return this;
         },
-        /**
-         * @function renderCdmi
-         * This renders the description based on the KBase Central Store version
-         * of the genome.
-         * @public
-         */
-        renderCdmi: function() {
-            var self = this;
-            this.showMessage(html.loading('loading...'));
 
-            /*
-             * A couple nested callbacks here.
-             * 1. Run genomes_to_taxonomies
-             * 2. Deal with the taxonomy structure and send it to render
-             */
-            if (this.options.genomeID === null) {
-                // make an error.
-                this.renderError('Error: no genome identifier given!');
-                return;
-            }
-
-            // Step 1: use the cdmiClient to get the taxonomy.
-            this.cdmiClient.genomes_to_taxonomies([this.options.genomeID],
-                $.proxy(function(taxonomy) {
-                    taxonomy = taxonomy[this.options.genomeID];
-                    if (taxonomy) {
-                        // Step 2: render from that taxonomy, if we have one.
-                        this.renderFromTaxonomy(taxonomy.reverse());
-                    } else {
-                        // If no taxonomy, it's a safe bet that the genome isn't found 
-                        // (it would return a valid empty array otherwise)
-                        this.renderError('Genome \'' + this.options.genomeID + '\' not found in the KBase Central Store.');
-                    }
-                }, this),
-                this.renderError
-            );
-
-            return this;
-        },
         /**
          * @function renderFromTaxonomy
          * This does the work of rendering the widget given a taxonomy array 
@@ -163,7 +118,6 @@ define([
                                     .append(desc.description);
 
                                 var $descHeader = $('<div>');
-                                var descHtml;
                                 if (strainName === desc.redirectFrom) {
                                     $descHeader = $(this.redirectHeader(strainName, desc.redirectFrom, desc.searchTerm));
                                 } else if (strainName !== desc.searchTerm) {
@@ -186,48 +140,7 @@ define([
                                 $taxonDescription.append($descHeader);
                                 $taxonImage.append('Unable to find an image.');
                             }
-                        } else {
-                            descHtml = this.notFoundHeader(strainName);
                         }
-
-                        // var descId = this.uid();
-                        // var imageId = this.uid();
-
-                        /* This is the tabbed view
-                         var $contentDiv = $("<div />")
-                         .addClass("tab-content")
-                         .append($("<div />")
-                         .attr("id", descId)
-                         .addClass("tab-pane fade active in")
-                         .append(descHtml)
-                         )
-                         .append($("<div />")
-                         .attr("id", imageId)
-                         .addClass("tab-pane fade")
-                         .append(imageHtml)
-                         );
-                         
-                         var $descTab = $("<a />")
-                         .attr("href", "#" + descId)
-                         .attr("data-toggle", "tab")
-                         .append("Description");
-                         
-                         var $imageTab = $("<a />")
-                         .attr("href", "#" + imageId)
-                         .attr("data-toggle", "tab")
-                         .append("Image");
-                         
-                         var $tabSet = $("<ul />")
-                         .addClass("nav nav-tabs")
-                         .append($("<li />")
-                         .addClass("active")
-                         .append($descTab)
-                         )
-                         .append($("<li />")
-                         .append($imageTab)
-                         ); */
-
-                        //this.$elem.append($tabSet).append($contentDiv);
 
                         this.hideMessage();
 
@@ -440,7 +353,7 @@ define([
          * @private
          */
         renderError: function(error) {
-            errString = 'Sorry, an unknown error occured. Wikipedia.org may be down or your browser may be blocking an http request to Wikipedia.org.';
+            var errString = 'Sorry, an unknown error occured. Wikipedia.org may be down or your browser may be blocking an http request to Wikipedia.org.';
             if (typeof error === 'string')
                 errString = error;
             else if (error && error.error && error.error.message)
