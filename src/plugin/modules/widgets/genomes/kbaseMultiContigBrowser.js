@@ -45,7 +45,12 @@ define([
 
     'kb_widget/legacy/widget',
     'kb_dataview_genomes_contigBrowserButtons'
-], function($, d3, html, CDMI, Plugin) {
+], function(
+    $,
+    d3,
+    html,
+    CDMI,
+    Plugin) {
     'use strict';
     $.KBWidget({
         name: 'KBaseMultiContigBrowser',
@@ -1173,7 +1178,7 @@ define([
             };
         },
         renderError: function(error) {
-            errString = 'Sorry, an unknown error occurred';
+            var errString = 'Sorry, an unknown error occurred';
             if (typeof error === 'string')
                 errString = error;
             else if (error.error && error.error.message)

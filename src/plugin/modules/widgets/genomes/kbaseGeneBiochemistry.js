@@ -8,11 +8,12 @@
 define([
     'jquery',
     'kb_common/html',
-    'kb_service/client/cdmi',
-    'kb_service/client/cdmiEntity',
     'kb_service/client/workspace',
     'kb_widget/legacy/widget'
-], function($, html, CDMI_API, CDMI_EntityAPI, Workspace) {
+], function(
+    $,
+    html,
+    Workspace) {
     'use strict';
     $.KBWidget({
         name: 'KBaseGeneBiochemistry',
@@ -33,14 +34,9 @@ define([
                 return this;
             }
 
-            this.cdmiClient = new CDMI_API(this.runtime.getConfig('services.cdmi.url'));
-            this.entityClient = new CDMI_EntityAPI(this.runtime.getConfig('services.cdmi.url'));
 
             this.render();
-            if (this.options.workspaceID) {
-                this.renderWorkspace();
-            } else
-                this.renderCentralStore();
+            this.renderWorkspace();
 
             return this;
         },
@@ -55,38 +51,7 @@ define([
 
             this.$elem.append(this.$infoPanel.append(this.$infoTable));
         },
-        renderCentralStore: function() {
-            var self = this;
-            this.$infoPanel.hide();
-            this.showMessage(html.loading());
 
-            this.cdmiClient.fids_to_roles([this.options.featureID],
-                function(roles) {
-                    roles = roles[self.options.featureID];
-                    var rolesStr = 'None found';
-                    if (roles) {
-                        rolesStr = roles.join('<br>');
-                    }
-                    self.$infoTable.append(self.makeRow('Roles', rolesStr));
-
-                    self.cdmiClient.fids_to_subsystems([self.options.featureID],
-                        function(subsystems) {
-                            subsystems = subsystems[self.options.featureID];
-                            var subsysStr = 'None found';
-                            if (subsystems) {
-                                subsysStr = subsystems.join('<br/>');
-                            }
-                            self.$infoTable.append(self.makeRow('Subsystems', subsysStr));
-
-                            self.hideMessage();
-                            self.$infoPanel.show();
-                        },
-                        self.renderError
-                    );
-                },
-                this.renderError
-            );
-        },
         makeRow: function(name, value) {
             var $row = $('<tr>')
                 .append($('<th>').append(name))
@@ -115,7 +80,6 @@ define([
             }
         },
         ready: function(genome) {
-            var self = this;
             if (genome.data.features) {
                 var feature = null;
                 for (var i = 0; i < genome.data.features.length; i++) {

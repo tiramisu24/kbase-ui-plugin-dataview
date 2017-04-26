@@ -5,13 +5,15 @@
 define([
     'jquery',
     'kb_common/html',
-    'kb_service/client/cdmi',
-    'kb_service/client/cdmiEntity',
     'kb_service/client/workspace',
     'kb_service/client/trees',
 
     'kb_widget/legacy/authenticatedWidget'
-], function($, html, CDMI, CDMI_Entity, Workspace, KBaseTrees) {
+], function(
+    $,
+    html,
+    Workspace,
+    KBaseTrees) {
     'use strict';
     $.KBWidget({
         name: 'KBaseGenomeLineage',
@@ -62,8 +64,6 @@ define([
         },
         renderCentralStore: function() {
             var self = this;
-            this.cdmiClient = new CDMI(this.runtime.config('services.cdmi.url'));
-            this.entityClient = new CDMI_Entity(this.runtime.config('services.cdmi.url'));
 
             this.$infoPanel.hide();
             this.showMessage(html.loading('loading...'));

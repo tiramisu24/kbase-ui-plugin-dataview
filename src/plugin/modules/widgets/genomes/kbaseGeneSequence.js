@@ -8,11 +8,12 @@
 define([
     'jquery',
     'kb_common/html',
-    'kb_service/client/cdmi',
-    'kb_service/client/cdmiEntity',
     'kb_service/client/workspace',
     'kb_widget/legacy/widget'
-], function($, html, CDMI_API, CDMI_EntityAPI, Workspace) {
+], function(
+    $,
+    html,
+    Workspace) {
     'use strict';
     $.KBWidget({
         name: 'KBaseGeneSequence',
@@ -34,9 +35,6 @@ define([
                 //throw an error.
                 return this;
             }
-
-            this.cdmiClient = new CDMI_API(this.runtime.getConfig('services.cdmi.url'));
-            this.entityClient = new CDMI_EntityAPI(this.runtime.getConfig('services.cdmi.url'));
 
             this.render();
             if (this.options.workspaceID) {
@@ -121,53 +119,10 @@ define([
                         }
                         dnaSequenceStr = dnaDispStr;
                     }
-
-                    //this.$infoTable.append(this.makeRow("Gene", dnaSequenceStr));
-                    this.$infoTable.append(
-                        this.makeRow('Gene', dnaSequenceStr, 'white')
-                        //.each(function(){$(this).css('font-family','monospace')})
-                    );
-
-                } else { // HACK!!! use central store (temporary solution?)
-                    var self = this;
-                    self.cdmiClient.fids_to_dna_sequences(
-                        [self.options.featureID],
-                        function(dna_sequences) {
-                            if (dna_sequences[self.options.featureID]) {
-                                dnaSequenceStr = dna_sequences[self.options.featureID];
-                            }
-                            // wrap seq
-                            var seq_width = 50;
-                            if (dnaSequenceStr.length > seq_width) {
-                                var dnaDispStr = '';
-                                var start_pos = 0;
-                                var end_pos = 0;
-                                for (var i = 0;
-                                    (i + 1) * seq_width < dnaSequenceStr.length; i++) {
-                                    start_pos = i * seq_width;
-                                    end_pos = (i + 1) * seq_width;
-                                    dnaDispStr += dnaSequenceStr.substring(start_pos, end_pos) + '<br>';
-                                }
-                                start_pos += seq_width;
-                                end_pos = dnaSequenceStr.length;
-                                if (start_pos < dnaSequenceStr.length) {
-                                    dnaDispStr += dnaSequenceStr.substring(start_pos, end_pos) + '<br>';
-                                }
-                                dnaSequenceStr = dnaDispStr;
-                            }
-
-                            //self.$infoTable.append(self.makeRow("Gene", dnaSequenceStr));
-                            self.$infoTable.append(
-                                self.makeRow('Gene', dnaSequenceStr, 'white')
-                                //.each(function(){$(this).css('font-family','monospace')})
-                            );
-
-                            //self.hideMessage();
-                            //self.$infoPanel.show();
-                        },
-                        self.renderError
-                    );
                 }
+                this.$infoTable.append(
+                    this.makeRow('Gene', dnaSequenceStr, 'white')
+                );
                 // end gene sequence
 
 
@@ -249,7 +204,7 @@ define([
             this.$messagePane.addClass('hide');
         },
         renderError: function(error) {
-            errString = 'Sorry, an unknown error occurred';
+            var errString = 'Sorry, an unknown error occurred';
             if (typeof error === 'string')
                 errString = error;
             else if (error.error && error.error.message)

@@ -11,12 +11,20 @@ define([
     'kb_service/client/workspace',
     'kb_sdk_clients/GenomeAnnotationAPI/dev/GenomeAnnotationAPIClient',
     'kb_sdk_clients/AssemblyAPI/dev/AssemblyAPIClient',
+    'kb_sdk_clients/genericClient',
     'kb_widget/legacy/widget',
     'kb_dataview_genomes_wideOverview',
     'kb_dataview_genomes_literature',
     'kb_dataview_genomes_wideTaxonomy',
-    'kb_dataview_genomes_wideAssemblyAnnotation',
-], function($, html, Workspace, GenomeAnnotationAPI, AssemblyAPI) {
+    'kb_dataview_genomes_wideAssemblyAnnotation'
+], function(
+    $,
+    html,
+    Workspace,
+    GenomeAnnotationAPI,
+    AssemblyAPI,
+    GenericClient
+) {
     'use strict';
     $.KBWidget({
         name: 'KBaseGenomePage',
@@ -63,43 +71,58 @@ define([
                     'function'
                 ];
 
+            this.dynClient = new GenericClient({
+                url: this.runtime.getConfig('services.service_wizard.url'),
+                module: 'GenomeAnnotationAPI',
+                auth: {
+                    token: this.runtime.service('session').getAuthToken()
+                }
+            });
+
             this.ga_api = new GenomeAnnotationAPI({
                 url: this.runtime.getConfig('services.service_wizard.url'),
-                auth: { 'token': this.runtime.service('session').getAuthToken() },
+                auth: {
+                    token: this.runtime.service('session').getAuthToken()
+                },
                 version: 'release'
             });
             this.asm_api = new AssemblyAPI({
                 url: this.runtime.getConfig('services.service_wizard.url'),
-                auth: { 'token': this.runtime.service('session').getAuthToken() },
+                auth: {
+                    token: this.runtime.service('session').getAuthToken()
+                },
                 version: 'release'
             });
 
             if (this.options.ver) {
                 objId += '/' + this.options.ver;
             }
-
-            self.ga_api.get_genome_v1({
-                'genomes': [{ 'ref': objId }],
-                'included_fields': genome_fields
-            }).then(function(data) {
+            this.dynClient.callFunc('get_genome_v1', [{
+                genomes: [{ ref: objId }],
+                included_fields: genome_fields
+            }]).spread(function(data) {
+                // self.ga_api.get_genome_v1({
+                //     genomes: [{ ref: objId }],
+                //     included_fields: genome_fields
+                // }).then(function(data) {
                 var assembly_ref = null,
                     gnm = data.genomes[0].data,
                     metadata = data.genomes[0].info[10],
                     add_stats = function(obj, size, gc, num_contigs) {
                         Object.defineProperties(obj, {
-                            'dna_size': {
+                            dna_size: {
                                 __proto__: null,
                                 value: size,
                                 writable: false,
                                 enumerable: true
                             },
-                            'gc_content': {
+                            gc_content: {
                                 __proto__: null,
                                 value: gc,
                                 writable: false,
                                 enumerable: true
                             },
-                            'num_contigs': {
+                            num_contigs: {
                                 __proto__: null,
                                 value: num_contigs,
                                 writable: false,
@@ -108,9 +131,7 @@ define([
                         });
                     },
                     assembly_error = function(data, error) {
-                        console.error('Error loading contigset subdata');
-                        console.error(error);
-                        console.log(data);
+                        console.error('Error loading contigset subdata', data, error);
                     };
 
                 if (gnm.hasOwnProperty('contigset_ref')) {

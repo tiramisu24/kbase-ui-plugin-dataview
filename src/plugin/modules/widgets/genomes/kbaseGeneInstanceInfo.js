@@ -8,11 +8,12 @@
 define([
     'jquery',
     'kb_common/html',
-    'kb_service/client/cdmi',
-    'kb_service/client/cdmiEntity',
     'kb_service/client/workspace',
     'kb_widget/legacy/widget'
-], function($, html, CDMI_API, CDMI_EntityAPI, Workspace) {
+], function(
+    $,
+    html,
+    Workspace) {
     'use strict';
     $.KBWidget({
         name: 'KBaseGeneInstanceInfo',
@@ -34,18 +35,10 @@ define([
                 return this;
             }
 
-            // always setup the cdmi clients, cause for now there is a hack to get domain/operon info if available
-            // from the CDS
-            this.cdmiClient = new CDMI_API(this.runtime.getConfig('services.cdmi.url'));
-            this.entityClient = new CDMI_EntityAPI(this.runtime.getConfig('services.cdmi.url'));
-            this.workspaceClient = new Workspace(this.runtime.getConfig('services.workspace.url'));
+            this.workspaceClient = new Workspace(this.runtime.config('services.workspace.url'));
 
             this.render();
-            if (this.options.workspaceID) {
-                this.renderWorkspace();
-            } else {
-                this.renderCentralStore();
-            }
+            this.renderWorkspace();
 
             return this;
         },
@@ -101,62 +94,7 @@ define([
 
             this.$elem.append(this.$infoPanel);
         },
-        renderCentralStore: function() {
 
-            this.$infoPanel.hide();
-            this.showMessage(html.loading());
-
-            var self = this;
-
-            // Data fetching!
-            var data = {};
-            // Fids to feature data job
-
-            this.cdmiClient.fids_to_feature_data([self.options.featureID])
-                .then(function(featureData) {
-                    data.featureData = featureData[self.options.featureID];
-                    return this.cdmiClient.fids_to_genomes([self.options.featureID]);
-                })
-                .then(function(genome) {
-                    data.genome = genome[self.options.featureID];
-                    return this.cdmiClient.fids_to_dna_sequences([this.options.featureID]);
-                })
-                .then(function(dnaSeq) {
-                    data.dnaSeq = dnaSeq[self.options.featureID];
-                    self.$infoTable.empty();
-                    self.$infoTable.append(self.makeRow('Function', data.featureData.feature_function));
-                    self.$infoTable.append(self.makeRow('Genome', $('<div/>')
-                        .append(data.featureData.genome_name)
-                        .append('<br/>')
-                        .append(self.makeGenomeButton(data.genome))));
-                    var len = data.featureData.feature_length + ' bp';
-                    if (data.featureData.protein_translation) {
-                        len += ', ' + data.featureData.protein_translation.length + ' aa';
-                    }
-                    self.$infoTable.append(self.makeRow('Length', len));
-                    self.$infoTable.append(self.makeRow('Location', $('<div/>')
-                        .append(self.parseLocation(data.featureData.feature_location))));
-                    self.$infoTable.append(self.makeRow('Aliases', data.featureData.feature_aliases.join(', ')));
-                    self.$buttonPanel.find('button#domains').click(function(event) {
-                        self.trigger('showDomains', { event: event, featureID: self.options.featureID });
-                    });
-
-                    self.$buttonPanel.find('button#sequence').click(function(event) {
-                        self.trigger('showSequence', { event: event, featureID: self.options.featureID });
-                    });
-                    self.$buttonPanel.find('button#biochemistry').click(function(event) {
-                        self.trigger('showBiochemistry', { event: event, featureID: self.options.featureID });
-                    });
-                    self.$buttonPanel.find('button#structure').click(function(event) {
-                        self.trigger('showStructureMatches', { event: event, featureID: self.options.featureID });
-                    });
-                    self.hideMessage();
-                    self.$infoPanel.show();
-                })
-                .catch(function(err) {
-                    self.renderError(err);
-                });
-        },
         renderWorkspace: function() {
             var self = this;
             this.$infoPanel.hide();
@@ -171,7 +109,7 @@ define([
                 // var prom = this.options.kbCache.req('ws', 'get_objects', [obj]);
                 $.when(prom).fail($.proxy(function(error) {
                     this.renderError(error);
-                    console.log(error);
+                    console.error(error);
                 }, this));
                 $.when(prom).done($.proxy(function(genome) {
                     genome = genome[0];
@@ -277,25 +215,26 @@ define([
 
                     //determine if a feature id and its protein MD5 translation is found in the CDS- if it is,
                     //return true.  We use this as a hack to see if we have gene info for this feature for WS objects.
-                    this.cdmiClient.fids_to_proteins([self.options.featureID],
-                        function(prot) {
-                            if (prot[self.options.featureID] === feature['md5']) {
-                                //ok the fid and md5 match, so go to the CDS to get domain info...  what a hack!
-                                self.$buttonPanel.find('button#domains').off('click');
-                                self.$buttonPanel.find('button#domains').click(function(event) {
-                                    self.trigger('showDomains', { event: event, featureID: self.options.featureID });
-                                });
-                                self.$buttonPanel.find('button#operons').off('click');
-                                self.$buttonPanel.find('button#operons').click(function(event) {
-                                    self.trigger('showOperons', { event: event, featureID: self.options.featureID });
-                                });
-                                self.$buttonPanel.find('button#structure').off('click');
-                                self.$buttonPanel.find('button#structure').click(function(event) {
-                                    self.trigger('showStructureMatches', { event: event, featureID: self.options.featureID });
-                                });
-                            }
-                        } // we don't add error function- if they don't match or this fails, do nothing.
-                    );
+                    // cdmi service is defunct - eap
+                    // this.cdmiClient.fids_to_proteins([self.options.featureID],
+                    //     function(prot) {
+                    //         if (prot[self.options.featureID] === feature['md5']) {
+                    //             //ok the fid and md5 match, so go to the CDS to get domain info...  what a hack!
+                    //             self.$buttonPanel.find('button#domains').off('click');
+                    //             self.$buttonPanel.find('button#domains').click(function(event) {
+                    //                 self.trigger('showDomains', { event: event, featureID: self.options.featureID });
+                    //             });
+                    //             self.$buttonPanel.find('button#operons').off('click');
+                    //             self.$buttonPanel.find('button#operons').click(function(event) {
+                    //                 self.trigger('showOperons', { event: event, featureID: self.options.featureID });
+                    //             });
+                    //             self.$buttonPanel.find('button#structure').off('click');
+                    //             self.$buttonPanel.find('button#structure').click(function(event) {
+                    //                 self.trigger('showStructureMatches', { event: event, featureID: self.options.featureID });
+                    //             });
+                    //         }
+                    //     } // we don't add error function- if they don't match or this fails, do nothing.
+                    // );
 
                     // bind button events
                     this.$buttonPanel.find('button#sequence').click(
@@ -383,25 +322,6 @@ define([
 
             return $('<div>')
                 .append('<a href="#/dataview/' + workspaceID + '/' + genomeID + '" target="_blank">' + workspaceID + '/<wbr>' + genomeID + '</a>');
-
-
-            var self = this;
-            var $genomeBtn = $('<button />')
-                .addClass('btn btn-default')
-                .append('Show Genome')
-                .on('click',
-                    function(event) {
-                        console.log(self.options);
-                        self.trigger('showGenome', {
-                            genomeID: genomeID,
-                            workspaceID: workspaceID,
-                            kbCache: self.options.kbCache,
-                            event: event
-                        });
-                    }
-                );
-
-            return $genomeBtn;
         },
         /**
          * Returns the GC content of a string as a percentage value.
@@ -465,7 +385,7 @@ define([
             };
         },
         renderError: function(error) {
-            errString = 'Sorry, an unknown error occurred';
+            var errString = 'Sorry, an unknown error occurred';
             if (typeof error === 'string')
                 errString = error;
             else if (error.error && error.error.message)
