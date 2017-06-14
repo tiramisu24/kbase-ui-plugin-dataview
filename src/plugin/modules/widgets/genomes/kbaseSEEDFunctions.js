@@ -13,7 +13,12 @@ define([
     'kb_plugin_dataview',
 
     'kb_widget/legacy/authenticatedWidget'
-], function($, d3, Workspace, Plugin) {
+], function(
+    $,
+    d3,
+    Workspace,
+    Plugin
+) {
     'use strict';
     $.KBWidget({
         name: 'KBaseSEEDFunctions',
@@ -123,7 +128,6 @@ define([
                     }
 
                     for (j = 0; j < ontologyDepth; j += 1) {
-
                         // some node names are an empty string "". I'm going to set these to 
                         // a modified version of their parent node name 
                         data[i][j] = (data[i][j] === '') ? '--- ' + data[i][j - 1] + ' ---' : data[i][j];
@@ -160,7 +164,7 @@ define([
 
                 if (totalGenesWithFunctionalRoles < 100) {
                     //console.log("No Functional Categories assigned, you can added them using the Narrative");
-                    self.$elem.find('#mainview').prepend('<b>No Functional Categories assigned, you can add them using the Narrative.</b>');
+                    self.$mainview.prepend('<b>No Functional Categories assigned, you can add them using the Narrative.</b>');
                 } else {
                     // Set maxCount to scale bars
                     var k;
@@ -176,16 +180,14 @@ define([
             });
         },
         update: function(source) {
-
             var self = this;
 
             var nodes = self.tree.nodes(self.SEEDTree);
 
             var scale = d3.scale.linear().domain([0, this.maxCount]).range([0, 275]);
             var height = Math.max(500, nodes.length * self.barHeight + self.margin.top + self.margin.bottom);
-            var i = self.i;
 
-            d3.selectAll('#mainview').select('svg').transition()
+            d3.selectAll(this.$mainview).select('svg').transition()
                 .duration(self.duration)
                 .attr('height', height);
 
@@ -288,17 +290,14 @@ define([
                 .style('opacity', 1e-6)
                 .remove();
 
-
             // Stash the old positions for transition.
             nodes.forEach(function(d) {
                 d.x0 = d.x;
                 d.y0 = d.y;
             });
-
         },
         // Toggle children on click.
         click: function(d) {
-
             // open window with gene landing page
             // if (d.children === undefined || (d._children === null && d.children === null)) {
             // The size is set to an empty string for navigable leaves
@@ -318,7 +317,6 @@ define([
             this.update(d);
         },
         color: function(d) {
-            //return d._children ? "#3182bd" : d.children ? "#c6dbef" : "#fd8d3c";
             /*
              * leaf color is set here.
              * A parent node collapsed and a non-feature leaf without
@@ -342,8 +340,6 @@ define([
                 return '#c6dbef';
             }
             return '#ffffff';
-
-            // return d._children ? "#c6dbef" : d.children ? "#3399ff" : "#ffffff";
         },
         collapse: function(d) {
             var self = this;
@@ -360,39 +356,13 @@ define([
         },
         render: function() {
             var self = this;
-            if (self.options.genomeInfo) {
-                self.showData(self.options.genomeInfo.data);
-                return;
-            }
-            var obj = { 'ref': this.options.wsNameOrId + '/' + this.options.objNameOrId };
-            var prom;
-
-            if (this.options.kbCache) {
-                prom = this.options.kbCache.req('ws', 'get_objects', [obj]);
-            } else {
-                prom = this.wsClient.get_objects([obj]);
-            }
-            //var prom = this.options.kbCache.req('ws', 'get_objects', [obj]);
-
-            $.when(prom).fail($.proxy(function(error) {
-                //this.renderError(error); Need to define this function when I have time
-                console.error(error);
-            }, this));
-
-            $.when(prom).done($.proxy(function(genome) {
-                self.showData(genome[0].data);
-            }, this));
+            self.showData(self.options.genomeInfo.data);
         },
         showData: function(genomeObj) {
             var margin = this.margin,
                 width = this.width;
 
-            //var self = this;
             var container = this.$elem;
-
-            // spinning wheel
-            //container.prepend("<div><img src=\""+self.options.loadingImage+"\">&nbsp;&nbsp;loading genes data...</div>");
-
 
             var SEEDTree = this.SEEDTree;
             var subsysToGeneMap = this.subsysToGeneMap;
@@ -407,10 +377,10 @@ define([
 
             this.tree = d3.layout.tree().nodeSize([0, this.stepSize]);
 
-            var $mainview = $('<div id="mainview">').css({ 'overflow-x': 'scroll' });
-            container.append($mainview);
+            this.$mainview = $('<div>').css({ 'overflow-x': 'scroll' });
+            container.append(this.$mainview);
 
-            this.svg = d3.select($mainview[0]).append('svg')
+            this.svg = d3.select(this.$mainview[0]).append('svg')
                 .attr('width', width + margin.left + margin.right)
                 .append('g')
                 .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
@@ -451,6 +421,5 @@ define([
             this.wsClient = null;
             return this;
         }
-
     });
 });
