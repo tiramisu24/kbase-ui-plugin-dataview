@@ -40,7 +40,6 @@ define([
     'jquery',
     'd3',
     'kb_common/html',
-    'kb_service/client/cdmi',
     'kb_plugin_dataview',
 
     'kb_widget/legacy/widget',
@@ -49,8 +48,8 @@ define([
     $,
     d3,
     html,
-    CDMI,
-    Plugin) {
+    Plugin
+) {
     'use strict';
     $.KBWidget({
         name: 'KBaseMultiContigBrowser',
@@ -137,21 +136,16 @@ define([
                 .addClass('form-control')
                 .css({ 'width': '60%', 'margin-right': '5px' })
                 .append($('<option>')
-                    .attr('id', this.noContigs)
+                    .attr('value', this.noContigs)
                     .append(this.noContigs));
-            this.$contigButton = $('<button>')
-                .addClass('kb-primary-btn')
-                .append('Show Contig')
-                .click(function(event) {
-                    self.$elem.find('select option:selected').each(function() {
-                        var contigId = $(this).attr('id');
-                        if (contigId !== self.noContigs) {
-                            self.contig = $(this).attr('id');
-                            self.options.contig = $(this).attr('id');
-                            self.render();
-                        }
-                    });
-                });
+            this.$contigSelect.change(function() {
+                var contigId = $(this).val();
+                if (contigId !== self.noContigs) {
+                    self.contig = contigId;
+                    self.options.contig = contigId;
+                    self.render();
+                }
+            });
             this.$selectPanel = $('<div class="col-md-3"/>');
             this.$selectPanel.append($('<div>')
                 .addClass('form-inline')
@@ -172,34 +166,13 @@ define([
             this.$featureInfoPanel = $('<div class="col-md-3"/>').html('<b>Click on a feature to view details</b>');
             $maindiv.append(this.$featureInfoPanel);
 
-            this.cdmiClient = new CDMI(this.runtime.getConfig('services.cdmi.url'));
-
-            // DISABLED v
-            // no protein info client available atm
-            // this.proteinInfoClient = new ProteinInfo(this.proteinInfoURL);
-            // DISABLED ^
-
-            if (self.options.genomeInfo) {
-                self.showData(self.options.genomeInfo.data, $maindiv);
-            } else {
-                var obj = this.buildObjectIdentity(this.options.workspaceID, this.options.genomeID);
-                var prom = this.options.kbCache.req('ws', 'get_objects', [obj]);
-                $.when(prom).done($.proxy(function(genome) {
-                    genome = genome[0].data;
-                    self.showData(genome, $maindiv);
-                }, this));
-                $.when(prom).fail($.proxy(function(error) {
-                    this.renderError(error);
-                }, this));
-            }
+            self.showData(self.options.genomeInfo.data, $maindiv);
 
             if (!this.options.onClickFunction) {
                 this.options.onClickFunction = function(svgobj, d) {
                     self.$featureInfoPanel.empty();
                     var $infoTable = $('<table>').addClass('table table-striped table-bordered');
                     if (d.id) {
-
-
                         $infoTable.append(self.addInfoRow('Feature ID', '<a href="#dataview/' + self.options.workspaceID + '/' + self.options.genomeID + '?sub=Feature&subid=' + d.id + '" target="_blank">' + d.id + '</a>'));
                     }
                     if (d.type) {
@@ -212,7 +185,6 @@ define([
                     self.$featureInfoPanel.append($infoTable);
                 };
             }
-
             return this;
         },
         showData: function(genome, $maindiv) {
@@ -234,13 +206,11 @@ define([
              * LOUD NOISES!
              ************/
             else if (genome.features && genome.features.length > 0) {
-                var contigSet = {};
                 for (var i = 0; i < genome.features.length; i++) {
                     var f = genome.features[i];
                     if (f.location && f.location[0][0])
                         contigsToLengths[f.location[0][0]] = 'Unknown';
                 }
-
             }
 
             self.populateContigSelector(contigsToLengths);
@@ -319,11 +289,11 @@ define([
             this.$contigSelect.empty();
             if (!contigsToLengths || contigsToLengths.length === 0)
                 this.$contigSelect.append($('<option>')
-                    .attr('id', this.noContigs)
+                    .attr('value', this.noContigs)
                     .append(this.noContigs));
             for (var contig in contigsToLengths) {
                 this.$contigSelect.append($('<option>')
-                    .attr('id', contig)
+                    .attr('value', contig)
                     .append(contig + ' - ' + contigsToLengths[contig] + ' bp'));
             }
         },
@@ -400,33 +370,6 @@ define([
 
             return that;
         },
-        /**
-         * Updates the internal representation of a contig to match what should be displayed.
-         */
-        setCdmiContig: function(contigId) {
-            // If we're getting a new contig, then our central feature (if we have one)
-            // isn't on it. So remove that center feature and its associated operon info.
-            if (contigId && this.options.contig !== contigId) {
-                this.options.centerFeature = null;
-                this.operonFeatures = [];
-                this.options.contig = contigId;
-            }
-
-            var self = this;
-
-            this.cdmiClient.contigs_to_lengths([this.options.contig], function(contigLength) {
-                self.contigLength = parseInt(contigLength[self.options.contig]);
-                self.options.start = 0;
-                if (self.options.length > self.contigLength)
-                    self.options.length = self.contigLength;
-            });
-
-            if (this.options.centerFeature) {
-                this.setCenterFeature();
-            } else {
-                this.update();
-            }
-        },
         calcFeatureRange: function(loc) {
             var calcLocRange = function(loc) {
                 var firstBase = Number(loc[1]);
@@ -466,34 +409,50 @@ define([
             var genome = self.genome;
 
             this.contigLength = -1; // LOLOLOL.
-            // figure out contig length here, while cranking out the feature mapping.
-            if (genome.contig_ids && genome.contig_ids.length > 0) {
-                var pos = $.inArray(contigId, genome.contig_ids);
-                if (pos !== -1)
-                    this.contigLength = genome.contig_lengths[pos];
+
+            // Content lengths appear to come in two variants: 
+            // an Array, in which case the contig length is in the same position in which the contigId appears
+            //   in the contig_ids array.
+            // an Object, in which case the contig length is in a key under the contigid
+            // TODO: Duck typing like this or type switching? At this point we don't have
+            // the type info...
+            if (genome.contig_lengths instanceof Array) {
+                this.contigLength = genome.contig_lengths[genome.contig_ids.indexOf(contigId)];
+            } else {
+                this.contigLength = genome.contig_lengths[contigId];
             }
+
+            // if (genome.contig_ids && genome.contig_ids.length > 0) {
+
+            // }
             // indexed by first position.
             // takes into account direction and such.
             this.wsFeatureSet = {};
             for (var i = 0; i < genome.features.length; i++) {
                 var f = genome.features[i];
-                if (f.location && f.location.length > 0) { // assume it has at least one valid 4-tuple
-                    if (f.location[0][0] === contigId) {
-                        var range = this.calcFeatureRange(f.location);
-                        // store the range in the feature!
-                        // this HURTS MY SOUL to do, but we need to make workspace features look like CDMI features.
-                        f.feature_id = f.id;
-                        f.feature_type = f.type;
-                        f.feature_location = f.location;
-                        f.range = range;
-                        f.feature_function = f.function;
-                        f.subsystem_data = f.subsystem_data;
-                        this.wsFeatureSet[f.id] = f;
+                if (!f.location) {
+                    continue;
+                }
+                if (f.location.length === 0) {
+                    continue;
+                }
+                // assume it has at least one valid 4-tuple
+                if (f.location[0][0] !== contigId) {
+                    continue;
+                }
+                var range = this.calcFeatureRange(f.location);
+                // store the range in the feature!
+                // this HURTS MY SOUL to do, but we need to make workspace features look like CDMI features.
+                f.feature_id = f.id;
+                f.feature_type = f.type;
+                f.feature_location = f.location;
+                f.range = range;
+                f.feature_function = f.function;
+                f.subsystem_data = f.subsystem_data;
+                this.wsFeatureSet[f.id] = f;
 
-                        if (range[1] > this.contigLength) {
-                            this.contigLength = range[1];
-                        }
-                    }
+                if (range[1] > this.contigLength) {
+                    this.contigLength = range[1];
                 }
             }
 
@@ -507,40 +466,7 @@ define([
                 this.update();
             }
         },
-        // DISABLED v
-        /*
-         does not appear to be used
-         no client for protein info service
-         setCenterFeature: function (centerFeature) {
-         // if we're getting a new center feature, make sure to update the operon features, too.
-         if (centerFeature)
-         this.options.centerFeature = centerFeature;
-         
-         if (this.options.workspaceID && this.options.genomeID) {
-         this.update(true);
-         } else {
-         this.proteinInfoClient.fids_to_operons([this.options.centerFeature],
-         // on success
-         $.proxy(function (operonGenes) {
-         this.operonFeatures = operonGenes[this.options.centerFeature];
-         this.update(true);
-         }, this),
-         // on error
-         $.proxy(function (error) {
-         this.throwError(error);
-         }, this)
-         );
-         }
-         },
-         */
-        // DISABLED ^     
 
-        setGenome: function(genomeID) {
-            this.options.genomeID = genomeID;
-            var genomeList = this.cdmiClient.genomes_to_contigs([genomeID], function(genomeList) {
-                setContig(this.genomeList[genomeID][0]);
-            });
-        },
         setRange: function(start, length) {
             // set range and re-render
             this.options.start = start;
@@ -604,31 +530,6 @@ define([
         },
         update: function(useCenter) {
             var self = this;
-            var renderFromCenter = function(feature) {
-                if (feature) {
-                    feature = feature[self.options.centerFeature];
-                    self.options.start = Math.max(0, Math.floor(parseInt(feature.feature_location[0][1]) + (parseInt(feature.feature_location[0][3]) / 2) - (self.options.length / 2)));
-                } else {
-                    window.alert('Error: fid \'' + self.options.centerFeature + '\' not found! Continuing with original range...');
-                }
-                self.cdmiClient.region_to_fids([self.options.contig, self.options.start, '+', self.options.length], getFeatureData);
-            };
-
-            var getFeatureData = function(fids) {
-                self.cdmiClient.fids_to_feature_data(fids, getOperonData);
-            };
-
-            var getOperonData = function(features) {
-                if (self.options.centerFeature) {
-                    for (var j in features) {
-                        for (var i in self.operonFeatures) {
-                            if (features[j].feature_id === self.operonFeatures[i])
-                                features[j].isInOperon = 1;
-                        }
-                    }
-                }
-                self.renderFromRange(features);
-            };
 
             if (self.options.workspaceID && self.options.genomeID) {
                 var region = [self.options.start, self.options.start + self.options.length - 1];
@@ -649,16 +550,6 @@ define([
                     }
                 }
                 this.renderFromRange(featureList);
-            } else {
-                if (self.options.centerFeature && useCenter) {
-                    self.cdmiClient.fids_to_feature_data([self.options.centerFeature],
-                        renderFromCenter
-                    );
-                } else {
-                    self.cdmiClient.region_to_fids([self.options.contig, self.options.start, '+', self.options.length],
-                        getFeatureData
-                    );
-                }
             }
 
         },
@@ -771,13 +662,8 @@ define([
                 return self.featurePath(d);
             });
 
-
-
-
             self.xScale = self.xScale
                 .domain([self.options.start, self.options.start + self.options.length]);
-
-
 
             self.xAxis = self.xAxis
                 .scale(self.xScale);
@@ -913,8 +799,9 @@ define([
         colorByAnnot: function(feature, namespace, level, annot_num) {
             if (namespace === 'SEED') {
                 //if (! feature.subsystem_data)
-                if (!feature.feature_function)
+                if (!feature.feature_function) {
                     return '#CCC';
+                }
                 //typedef tuple<string subsystem, string variant, string role> subsystem_data;
                 //var seed_role_pos = 2;
                 //return this.seedColorLookup (feature.subsystem_data[annot_num][seed_role_pos], level);
@@ -1022,18 +909,6 @@ define([
                 self.wait_for_seed_load();
             });
 
-            // DEBUG
-            /*
-             for (var k in seedTermSeen[0]) {
-             console.log ("seedTermSeen 0: " + k);
-             }
-             for (j = 0; j < PARENT_DEPTH; j++) {
-             for (i=0; i < seedTermsUniq[j].length; i++) {
-             console.log ("seedTermsUniq " + j + " " + seedTermsUniq[j][i]);
-             }
-             }
-             */
-
             return true;
         },
         /*
@@ -1089,26 +964,11 @@ define([
             // unhighlight others - only highlight one at a time.
             // if ours is highlighted, recenter on it.
 
-
             this.recenter(feature);
             return; // skip the rest for now.
-
-            // if (d3.select(element).attr("id") === feature.feature_id &&
-            //  d3.select(element).classed("highlight")) {
-            //  this.recenter(feature);
-            // }
-            // else {
-            //  d3.select(".highlight")
-            //    .classed("highlight", false)
-            //    .style("fill", function(d) { return calcFillColor(d); } );
-
-            //  d3.select(element)
-            //    .classed("highlight", true)
-            //    .style("fill", "yellow");
-            // }
         },
         recenter: function(feature) {
-            centerFeature = feature.feature_id;
+            // var centerFeature = feature.feature_id;
             if (this.options.onClickUrl)
                 this.options.onClickUrl(feature.feature_id);
             else
@@ -1134,8 +994,9 @@ define([
         zoomOut: function() {
             this.options.length = Math.min(this.contigLength, this.options.length * 2);
             this.options.start = Math.max(0, this.options.start - Math.ceil(this.options.length / 4));
-            if (this.options.start + this.options.length > this.contigLength)
+            if (this.options.start + this.options.length > this.contigLength) {
                 this.options.start = this.contigLength - this.options.length;
+            }
             this.update();
         },
         moveRightStep: function() {
@@ -1152,10 +1013,11 @@ define([
             this.update();
         },
         loading: function(doneLoading) {
-            if (doneLoading)
+            if (doneLoading) {
                 this.hideMessage();
-            else
+            } else {
                 this.showMessage(html.loading());
+            }
         },
         showMessage: function(message) {
             // kbase panel now does this for us, should probably remove this
@@ -1207,5 +1069,4 @@ define([
             return obj;
         }
     });
-
 });
