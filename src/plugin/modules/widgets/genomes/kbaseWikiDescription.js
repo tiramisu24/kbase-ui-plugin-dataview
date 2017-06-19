@@ -23,10 +23,11 @@ define([
     'kb_common/html',
     'kb_service/client/workspace',
     'kb_widget/legacy/widget'
-], function(
-    $,
-    html,
-    Workspace) {
+], function (
+        $,
+        html,
+        Workspace
+    ) {
     'use strict';
     $.KBWidget({
         name: 'KBaseWikiDescription',
@@ -55,7 +56,7 @@ define([
          * Initialize the widget. 
          * @return {object} the initialized widget
          */
-        init: function(options) {
+        init: function (options) {
             this._super(options);
 
             if (this.options.featureID === null) {
@@ -88,17 +89,17 @@ define([
          * list that gets passed here.
          * @public
          */
-        renderFromTaxonomy: function(taxonomy) {
+        renderFromTaxonomy: function (taxonomy) {
             var searchTerms = taxonomy;
             var strainName = taxonomy[0];
             this.wikipediaLookup(searchTerms, $.proxy(
-                    function(desc) {
-                        var $taxonDescription = $('<div>');
-                        var $taxonImage = $('<div>');
+                function (desc) {
+                    var $taxonDescription = $('<div>');
+                    var $taxonImage = $('<div>');
 
-                        // If we've found something, desc.description will exist and be non-null
-                        if (desc.hasOwnProperty('description') && desc.description !== null) {
-                            /* the viz is set up like this:
+                    // If we've found something, desc.description will exist and be non-null
+                    if (desc.hasOwnProperty('description') && desc.description !== null) {
+                        /* the viz is set up like this:
                              * 1. Description Tab
                              *
                              * ['not found' header, if applicable]
@@ -113,48 +114,48 @@ define([
                              * ['not found' header, if applicable, with link to Wikipedia]
                              * Image
                              */
-                            if (desc.searchTerm) {
-                                var $descDiv = $('<div style="text-align:justify; max-height: ' + this.options.maxTextHeight + 'px; overflow-y:auto; padding-right:5px">')
-                                    .append(desc.description);
+                        if (desc.searchTerm) {
+                            var $descDiv = $('<div style="text-align:justify; max-height: ' + this.options.maxTextHeight + 'px; overflow-y:auto; padding-right:5px">')
+                                .append(desc.description);
 
-                                var $descHeader = $('<div>');
-                                if (strainName === desc.redirectFrom) {
-                                    $descHeader = $(this.redirectHeader(strainName, desc.redirectFrom, desc.searchTerm));
-                                } else if (strainName !== desc.searchTerm) {
-                                    $descHeader = $(this.notFoundHeader(strainName, desc.searchTerm, desc.redirectFrom));
-                                }
-
-                                var $descFooter = $('<p>[<a href="' + desc.wikiUri + '" target="_new">more at Wikipedia</a>]</p>');
-
-                                var imageHtml = 'Unable to find an image. If you have one, you might consider <a href="' + desc.wikiUri + '" target="_new">adding it to Wikipedia</a>.';
-                                if (desc.imageUri !== null) {
-                                    imageHtml = '<img src="' + desc.imageUri + '"';
-                                    if (this.options.width)
-                                        imageHtml += 'style="width:' + this.options.width + 'px;"';
-                                    imageHtml += '/>';
-                                }
-                                $taxonDescription.append($descHeader).append($descDiv).append($descFooter);
-                                $taxonImage.append(imageHtml);
-                            } else {
+                            var $descHeader = $('<div>');
+                            if (strainName === desc.redirectFrom) {
+                                $descHeader = $(this.redirectHeader(strainName, desc.redirectFrom, desc.searchTerm));
+                            } else if (strainName !== desc.searchTerm) {
                                 $descHeader = $(this.notFoundHeader(strainName, desc.searchTerm, desc.redirectFrom));
-                                $taxonDescription.append($descHeader);
-                                $taxonImage.append('Unable to find an image.');
                             }
+
+                            var $descFooter = $('<p>[<a href="' + desc.wikiUri + '" target="_new">more at Wikipedia</a>]</p>');
+
+                            var imageHtml = 'Unable to find an image. If you have one, you might consider <a href="' + desc.wikiUri + '" target="_new">adding it to Wikipedia</a>.';
+                            if (desc.imageUri !== null) {
+                                imageHtml = '<img src="' + desc.imageUri + '"';
+                                if (this.options.width)
+                                    imageHtml += 'style="width:' + this.options.width + 'px;"';
+                                imageHtml += '/>';
+                            }
+                            $taxonDescription.append($descHeader).append($descDiv).append($descFooter);
+                            $taxonImage.append(imageHtml);
+                        } else {
+                            $descHeader = $(this.notFoundHeader(strainName, desc.searchTerm, desc.redirectFrom));
+                            $taxonDescription.append($descHeader);
+                            $taxonImage.append('Unable to find an image.');
                         }
+                    }
 
-                        this.hideMessage();
+                    this.hideMessage();
 
-                        this.$elem.append($('<div id="mainview">')
-                            .css('overflow', 'auto')
-                            .append($('<table cellpadding=4, cellspacing=2, border=0 style="width:100%">')
-                                .append($('<tr>')
-                                    .append($('<td style="vertical-align:top">')
-                                        .append($taxonDescription))
-                                    .append($('<td style="vertical-align:top">')
-                                        .append($taxonImage))))
-                            .append($('<br>')));
-                    }, this),
-                $.proxy(this.renderError, this)
+                    this.$elem.append($('<div id="mainview">')
+                        .css('overflow', 'auto')
+                        .append($('<table cellpadding=4, cellspacing=2, border=0 style="width:100%">')
+                            .append($('<tr>')
+                                .append($('<td style="vertical-align:top">')
+                                    .append($taxonDescription))
+                                .append($('<td style="vertical-align:top">')
+                                    .append($taxonImage))))
+                        .append($('<br>')));
+                }, this),
+            $.proxy(this.renderError, this)
             );
         },
         /**
@@ -163,7 +164,7 @@ define([
          * passes it along to renderTaxonomy
          * @public
          */
-        renderWorkspace: function() {
+        renderWorkspace: function () {
             var self = this;
             this.searchedOnce = false;
             this.showMessage(html.loading('loading...'));
@@ -199,22 +200,22 @@ define([
                 onDataLoad(self.options.genomeInfo.data);
             } else {
                 self.workspaceClient.get_object_subset([obj],
-                    function(data) {
+                    function (data) {
                         if (data[0]) {
                             onDataLoad(data[0]['data']);
                         }
                     },
-                    function(error) {
+                    function (error) {
                         var obj = self.buildObjectIdentity(self.options.workspaceID, self.options.genomeID);
                         obj.included = ['/scientific_name'];
-                        self.workspaceClient.get_object_subset([obj], function(data) {
-                                if (data[0]) {
-                                    onDataLoad(data[0]['data']);
-                                }
-                            },
-                            function(error) {
-                                self.renderError(error);
-                            });
+                        self.workspaceClient.get_object_subset([obj], function (data) {
+                            if (data[0]) {
+                                onDataLoad(data[0]['data']);
+                            }
+                        },
+                        function (error) {
+                            self.renderError(error);
+                        });
                     });
             }
         },
@@ -231,7 +232,7 @@ define([
          * @property {string} objId.name - the name of the object (if a string given)
          * @private
          */
-        buildObjectIdentity: function(workspaceID, objectID) {
+        buildObjectIdentity: function (workspaceID, objectID) {
             var obj = {};
             if (/^\d+$/.exec(workspaceID))
                 obj['wsid'] = workspaceID;
@@ -251,7 +252,7 @@ define([
          * @returns {string} a randomized id string
          * @public
          */
-        uid: function() {
+        uid: function () {
             var id = '';
             for (var i = 0; i < 32; i++)
                 id += Math.floor(Math.random() * 16).toString(16).toUpperCase();
@@ -269,7 +270,7 @@ define([
          * @return {string} an HTML string with the parameters rendered nicely.
          * @private
          */
-        notFoundHeader: function(strainName, term, redirectFrom) {
+        notFoundHeader: function (strainName, term, redirectFrom) {
             var underscoredName = strainName.replace(/\s+/g, '_');
             var str = '<p><b>"<i>' +
                 strainName +
@@ -298,7 +299,7 @@ define([
          * @return {string} an HTML string with the parameters rendered nicely.
          * @private
          */
-        redirectHeader: function(strainName, redirectFrom, term) {
+        redirectHeader: function (strainName, redirectFrom, term) {
             var underscoredName = redirectFrom.replace(/\s+/g, '_');
             var str = '<p><b>' +
                 'Showing description for <i>' + term + '</i></b>' +
@@ -313,7 +314,7 @@ define([
          * @param {string} message - the message to show (can be HTML)
          * @private
          */
-        showMessage: function(message) {
+        showMessage: function (message) {
             var span = $('<span>').append(message);
 
             this.$messagePane.append(span);
@@ -324,7 +325,7 @@ define([
          * Hides a previously shown message in the widget
          * @private
          */
-        hideMessage: function() {
+        hideMessage: function () {
             this.$messagePane.addClass('kbwidget-hide-message');
             this.$messagePane.empty();
         },
@@ -336,7 +337,7 @@ define([
          * This is mostly deprecated now.
          * @public
          */
-        getData: function() {
+        getData: function () {
             return {
                 type: 'Description',
                 id: this.options.genomeID,
@@ -352,7 +353,7 @@ define([
          * @param error.error.message - if this exists, then this is the error string.
          * @private
          */
-        renderError: function(error) {
+        renderError: function (error) {
             var errString = 'Sorry, an unknown error occured. Wikipedia.org may be down or your browser may be blocking an http request to Wikipedia.org.';
             if (typeof error === 'string')
                 errString = error;
@@ -396,7 +397,7 @@ define([
          * @param {function} errorCallback - callback to invoke when an error occurs during execution.
          * @private
          */
-        wikipediaLookup: function(termList, successCallback, errorCallback) {
+        wikipediaLookup: function (termList, successCallback, errorCallback) {
             if (!termList || Object.prototype.toString.call(termList) !== '[object Array]' || termList.length === 0) {
                 if (errorCallback && !this.searchedOnce) {
                     errorCallback('No search term given');
@@ -410,90 +411,90 @@ define([
             var imageLookupUrl = '//en.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages&pithumbsize=' + this.options.width + '&callback=?&titles=';
 
             $.ajax({
-                    type: 'GET',
-                    url: requestUrl,
-                    contentType: 'application/json; charset=utf-8',
-                    async: true,
-                    dataType: 'json'
-                })
-                .then($.proxy(function(data, status) {
-                        if (data.error) {
-                            // do the next one in the list.
-                            this.wikipediaLookup(termList, successCallback, errorCallback);
-                        } else if (data.parse) {
-                            // If we have valid text in the output, parse it how we want it.
-                            if (data.parse.text) {
-                                var hit = { 'searchTerm': searchTerm };
+                type: 'GET',
+                url: requestUrl,
+                contentType: 'application/json; charset=utf-8',
+                async: true,
+                dataType: 'json'
+            })
+                .then($.proxy(function (data, status) {
+                    if (data.error) {
+                        // do the next one in the list.
+                        this.wikipediaLookup(termList, successCallback, errorCallback);
+                    } else if (data.parse) {
+                        // If we have valid text in the output, parse it how we want it.
+                        if (data.parse.text) {
+                            var hit = { 'searchTerm': searchTerm };
 
-                                // Our abstract is the whole text part.
-                                var $abstract = $('<div>').html(data.parse.text['*']);
+                            // Our abstract is the whole text part.
+                            var $abstract = $('<div>').html(data.parse.text['*']);
 
-                                // Remove active links to avoid confusion
-                                $abstract.find('a').each(function() {
-                                    $(this).replaceWith($(this).html());
-                                });
-                                // Remove Wiki page references
-                                $abstract.find('sup.reference').remove();
-                                $abstract.find('.mw-ext-cite-error').remove();
+                            // Remove active links to avoid confusion
+                            $abstract.find('a').each(function () {
+                                $(this).replaceWith($(this).html());
+                            });
+                            // Remove Wiki page references
+                            $abstract.find('sup.reference').remove();
+                            $abstract.find('.mw-ext-cite-error').remove();
 
-                                // The 'description' property of our hit is the parsed abstract field
-                                hit['description'] = '';
+                            // The 'description' property of our hit is the parsed abstract field
+                            hit['description'] = '';
 
-                                // This is a trick to just get all of the 'p' fields, and concatenate the
-                                // jQuery nodes together as a single HTML text blob.
-                                $abstract.children('p').each(function(idx, val) {
-                                    hit['description'] += '<p>' + $(val).html() + '</p>';
-                                });
+                            // This is a trick to just get all of the 'p' fields, and concatenate the
+                            // jQuery nodes together as a single HTML text blob.
+                            $abstract.children('p').each(function (idx, val) {
+                                hit['description'] += '<p>' + $(val).html() + '</p>';
+                            });
 
-                                // The title is the actual Wikipedia page link, so put that here.
-                                hit['wikiUri'] = '//www.wikipedia.org/wiki/' + data.parse.title;
+                            // The title is the actual Wikipedia page link, so put that here.
+                            hit['wikiUri'] = '//www.wikipedia.org/wiki/' + data.parse.title;
 
-                                // If we have a redirect, record it.
-                                if (data.parse.redirects && data.parse.redirects.length > 0) {
-                                    hit['redirectFrom'] = data.parse.redirects[0].from;
-                                }
-
-                                // Do image lookup based on the title
-                                $.ajax({
-                                        type: 'GET',
-                                        url: imageLookupUrl + data.parse.title,
-                                        contentType: 'application/json; charset=utf-8',
-                                        async: true,
-                                        dataType: 'json'
-                                    })
-                                    .then(function(imageData, imageStatus) {
-                                            // If this is truthy, then we have a successful API call.
-                                            if (imageStatus) {
-                                                hit['imageUri'] = null;
-                                                // Really, all we want is in imageData.query.pages.<pageNum>.thumbnail.source
-                                                // Since we're only looking up a single title here, there's a single pageNum
-                                                // property, but we don't know what it is! So we look in the Object.keys()[0]
-                                                if (imageData.query && imageData.query.pages &&
-                                                    Object.keys(imageData.query.pages).length > 0) {
-                                                    // joys of Javascript!
-                                                    var page = Object.keys(imageData.query.pages)[0];
-                                                    if (imageData.query.pages[page].thumbnail)
-                                                        hit['imageUri'] = imageData.query.pages[page].thumbnail.source;
-                                                }
-                                            }
-                                            // Finally, pass the finished result to successCallback
-                                            if (successCallback) {
-                                                successCallback(hit);
-                                            }
-                                        },
-                                        function(error) {
-                                            if (errorCallback) {
-                                                errorCallback(error);
-                                            }
-                                        });
+                            // If we have a redirect, record it.
+                            if (data.parse.redirects && data.parse.redirects.length > 0) {
+                                hit['redirectFrom'] = data.parse.redirects[0].from;
                             }
+
+                            // Do image lookup based on the title
+                            $.ajax({
+                                type: 'GET',
+                                url: imageLookupUrl + data.parse.title,
+                                contentType: 'application/json; charset=utf-8',
+                                async: true,
+                                dataType: 'json'
+                            })
+                                .then(function (imageData, imageStatus) {
+                                    // If this is truthy, then we have a successful API call.
+                                    if (imageStatus) {
+                                        hit['imageUri'] = null;
+                                        // Really, all we want is in imageData.query.pages.<pageNum>.thumbnail.source
+                                        // Since we're only looking up a single title here, there's a single pageNum
+                                        // property, but we don't know what it is! So we look in the Object.keys()[0]
+                                        if (imageData.query && imageData.query.pages &&
+                                                    Object.keys(imageData.query.pages).length > 0) {
+                                            // joys of Javascript!
+                                            var page = Object.keys(imageData.query.pages)[0];
+                                            if (imageData.query.pages[page].thumbnail)
+                                                hit['imageUri'] = imageData.query.pages[page].thumbnail.source;
+                                        }
+                                    }
+                                    // Finally, pass the finished result to successCallback
+                                    if (successCallback) {
+                                        successCallback(hit);
+                                    }
+                                },
+                                function (error) {
+                                    if (errorCallback) {
+                                        errorCallback(error);
+                                    }
+                                });
                         }
-                    }, this),
-                    function(error) {
-                        if (errorCallback) {
-                            errorCallback(error);
-                        }
-                    });
+                    }
+                }, this),
+                function (error) {
+                    if (errorCallback) {
+                        errorCallback(error);
+                    }
+                });
         },
         /**
          * @function dbpediaLookup
@@ -512,7 +513,7 @@ define([
          * successCallback, or it triggers errorCallback.
          * @public
          */
-        dbpediaLookup: function(termList, successCallback, errorCallback, redirectFrom) {
+        dbpediaLookup: function (termList, successCallback, errorCallback, redirectFrom) {
             if (!termList || Object.prototype.toString.call(termList) !== '[object Array]' || termList.length === 0) {
                 if (errorCallback) {
                     errorCallback('No search term given');
@@ -531,55 +532,55 @@ define([
             var redirectKey = 'http://dbpedia.org/ontology/wikiPageRedirects';
 
             var requestUrl = 'http://dbpedia.org/data/' + usTerm + '.json';
-            $.get(requestUrl).then($.proxy(function(data, status) {
-                    var processedHit = {
-                        'searchTerm': searchTerm
-                    };
+            $.get(requestUrl).then($.proxy(function (data, status) {
+                var processedHit = {
+                    'searchTerm': searchTerm
+                };
 
-                    if (data[resourceKey]) {
-                        var resource = data[resourceKey];
-                        if (!resource[wikiLinkKey] || !resource[abstractKey]) {
-                            if (resource[redirectKey]) {
-                                var tokens = resource[redirectKey][0]['value'].split('/');
-                                this.dbpediaLookup([tokens[tokens.length - 1]], successCallback, errorCallback, searchTerm);
-                            } else {
-                                if (termList.length > 0)
-                                    this.dbpediaLookup(termList, successCallback, errorCallback);
-                                else
-                                    successCallback(processedHit);
-                            }
+                if (data[resourceKey]) {
+                    var resource = data[resourceKey];
+                    if (!resource[wikiLinkKey] || !resource[abstractKey]) {
+                        if (resource[redirectKey]) {
+                            var tokens = resource[redirectKey][0]['value'].split('/');
+                            this.dbpediaLookup([tokens[tokens.length - 1]], successCallback, errorCallback, searchTerm);
                         } else {
-                            if (resource[wikiLinkKey]) {
-                                processedHit['wikiUri'] = resource[wikiLinkKey][0]['value'];
-                            }
-                            if (resource[abstractKey]) {
-                                var abstracts = resource[abstractKey];
-                                for (var i = 0; i < abstracts.length; i++) {
-                                    if (abstracts[i]['lang'] === languageKey)
-                                        processedHit['description'] = abstracts[i]['value'];
-                                }
-                            }
-                            if (resource[imageKey]) {
-                                processedHit['imageUri'] = resource[imageKey][0]['value'];
-                            }
-                            if (redirectFrom) {
-                                processedHit['redirectFrom'] = redirectFrom;
-                            }
-                            successCallback(processedHit);
+                            if (termList.length > 0)
+                                this.dbpediaLookup(termList, successCallback, errorCallback);
+                            else
+                                successCallback(processedHit);
                         }
                     } else {
-                        if (termList.length > 0) {
-                            this.dbpediaLookup(termList, successCallback, errorCallback);
-                        } else {
-                            successCallback(processedHit);
+                        if (resource[wikiLinkKey]) {
+                            processedHit['wikiUri'] = resource[wikiLinkKey][0]['value'];
                         }
+                        if (resource[abstractKey]) {
+                            var abstracts = resource[abstractKey];
+                            for (var i = 0; i < abstracts.length; i++) {
+                                if (abstracts[i]['lang'] === languageKey)
+                                    processedHit['description'] = abstracts[i]['value'];
+                            }
+                        }
+                        if (resource[imageKey]) {
+                            processedHit['imageUri'] = resource[imageKey][0]['value'];
+                        }
+                        if (redirectFrom) {
+                            processedHit['redirectFrom'] = redirectFrom;
+                        }
+                        successCallback(processedHit);
                     }
-                    return processedHit;
-                }, this),
-                function(error) {
-                    if (errorCallback)
-                        errorCallback(error);
-                });
+                } else {
+                    if (termList.length > 0) {
+                        this.dbpediaLookup(termList, successCallback, errorCallback);
+                    } else {
+                        successCallback(processedHit);
+                    }
+                }
+                return processedHit;
+            }, this),
+            function (error) {
+                if (errorCallback)
+                    errorCallback(error);
+            });
         }
     });
 });

@@ -3,15 +3,15 @@
  */
 (function( $, undefined ) {
     $.KBWidget({
-        name: "KBaseGeneDomains",
-        parent: "kbaseWidget",
-        version: "1.0.1",
+        name: 'KBaseGeneDomains',
+        parent: 'kbaseWidget',
+        version: '1.0.1',
 
         options: {
             featureID: null,
             embedInCard: false,
             auth: null,
-            loadingImage: "assets/img/loading.gif",
+            loadingImage: 'assets/img/loading.gif',
             genomeID: null,
             workspaceID: null,
             kbCache: null,
@@ -30,9 +30,9 @@
         render: function() {
             var self = this;
 
-            self.$elem.append($('<div id="mainview">').css("overflow","auto"));
+            self.$elem.append($('<div id="mainview">').css('overflow','auto'));
             var $maindiv = self.$elem.find('#mainview');
-            $maindiv.append('<table cellpadding="0" cellspacing="0" border="0" id="ref-table" \
+            $maindiv.append('<table id="ref-table" \
                             class="table table-bordered table-striped" style="width: 100%; margin-left: 0px; margin-right: 0px;"/>');
 
             // Launch the first step in processing the data for the table
@@ -58,7 +58,7 @@
                         var objId = objectRefs[i][0];
                         var objVer = objectRefs[i][4];
 
-                        var objRef = wsId + "/" + objId;
+                        var objRef = wsId + '/' + objId;
                         domainAnnotationObjectRefs[objRef] = objectRefs[i];
                     }                    
                 }
@@ -103,7 +103,7 @@
                     for(var fci in feature_to_contig_and_index){
 
                         contigAndIndexElements.push({
-                            'annObjectRef' : wsId + "/" + objId,
+                            'annObjectRef' : wsId + '/' + objId,
                             'contigId' : feature_to_contig_and_index[fci][0],
                             'geneIndex' : feature_to_contig_and_index[fci][1]
                         });
@@ -157,9 +157,9 @@
                                     var eValue = domainsArray[k][2];
 
 
-                                    var domainSignature = domainId + "_" + domainStart + "_" + domainEnd;
+                                    var domainSignature = domainId + '_' + domainStart + '_' + domainEnd;
                                     if(uniqueDomains[domainSignature] == undefined){
-                                        uniqueDomains[domainSignature] = "";
+                                        uniqueDomains[domainSignature] = '';
                                     } else {
                                         // Because we might have several SAME domain annotations that came from 
                                         // different DomainAnnotation objects linked to a given genome
@@ -174,7 +174,7 @@
                                         'wsId': wsId,
                                         'objId': objId,
                                         'objVer' : objVer,
-                                        'objRef': wsId + '/' + objId + "/" + objVer,
+                                        'objRef': wsId + '/' + objId + '/' + objVer,
                                         'contigId' : contigId,
                                         'geneId' : geneId,
                                         'geneStart' : geneStart,
@@ -208,7 +208,7 @@
 
             var domainIds = {};
             for(var i = 0; i < annotatedDomainsArray.length; i++){
-                domainIds[annotatedDomainsArray[i].domainId] = "";
+                domainIds[annotatedDomainsArray[i].domainId] = '';
             }
 
             // Build subObjectIdentities that will be later used as parameters to get contig ids and gene indexes 
@@ -238,7 +238,7 @@
                         domainDescriptions[domainId] = _domainDescriptions[domainId];
                         shortDomainDescriptions[domainId] = _domainDescriptions[domainId];
 			if (shortDomainDescriptions[domainId].length > self.options.maxDescriptionLength) {
-			    shortDomainDescriptions[domainId] = shortDomainDescriptions[domainId].substring(0,self.options.maxDescriptionLength) + "&#8230;";
+			    shortDomainDescriptions[domainId] = shortDomainDescriptions[domainId].substring(0,self.options.maxDescriptionLength) + '&#8230;';
 			}
                     }
                 }
@@ -270,18 +270,18 @@
 
             var tblSettings = {
                 //"sPaginationType": "full_numbers",
-                "iDisplayLength": 10,
-                "sDom": sDom,
-                "aoColumns": [
-                    {sTitle: "Domain", mData: "domainId"},
-                    {sTitle: "Description", mData: "domainDescription", sWidth:"30%"},
-                    {sTitle: "Location", mData: "image"},
-                    {sTitle: "Start", mData: "domainStart"},
-                    {sTitle: "End", mData: "domainEnd"},
-                    {sTitle: "eValue", mData: "eValue"},
-                    {sTitle: "DomainAnnotation object", mData: "objRef"}
+                'iDisplayLength': 10,
+                'sDom': sDom,
+                'aoColumns': [
+                    {sTitle: 'Domain', mData: 'domainId'},
+                    {sTitle: 'Description', mData: 'domainDescription', sWidth:'30%'},
+                    {sTitle: 'Location', mData: 'image'},
+                    {sTitle: 'Start', mData: 'domainStart'},
+                    {sTitle: 'End', mData: 'domainEnd'},
+                    {sTitle: 'eValue', mData: 'eValue'},
+                    {sTitle: 'DomainAnnotation object', mData: 'objRef'}
                 ],
-                "aaData": annotatedDomainsArray
+                'aaData': annotatedDomainsArray
             };
             var domainTable = self.$elem.find('#ref-table').dataTable(tblSettings);
 	    var showLong = [];
@@ -316,37 +316,37 @@
 
         getData: function() {
             return {
-                type: "Feature",
+                type: 'Feature',
                 id: this.options.featureID,
                 workspace: this.options.workspaceID,
-                title: "Gene Domains"
+                title: 'Gene Domains'
             };
         },
 
         showMessage: function(message) {
-            var span = $("<span/>").append(message);
+            var span = $('<span/>').append(message);
 
             this.$messagePane.empty()
                              .append(span)
-                             .removeClass("kbwidget-hide-message");
+                             .removeClass('kbwidget-hide-message');
         },
 
         hideMessage: function() {
-            this.$messagePane.addClass("kbwidget-hide-message");
+            this.$messagePane.addClass('kbwidget-hide-message');
         },
 
         renderError: function(error) {
-            errString = "Sorry, an unknown error occurred";
-            if (typeof error === "string")
+            errString = 'Sorry, an unknown error occurred';
+            if (typeof error === 'string')
                 errString = error;
             else if (error.error && error.error.message)
                 errString = error.error.message;
 
             
-            var $errorDiv = $("<div>")
-                            .addClass("alert alert-danger")
-                            .append("<b>Error:</b>")
-                            .append("<br>" + errString);
+            var $errorDiv = $('<div>')
+                            .addClass('alert alert-danger')
+                            .append('<b>Error:</b>')
+                            .append('<br>' + errString);
             this.$elem.empty();
             this.$elem.append($errorDiv);
         },
