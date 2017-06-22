@@ -9,7 +9,12 @@ define([
     'kb_service/client/workspace',
     'd3',
     'kb_widget/legacy/authenticatedWidget'
-], function($, html, Workspace, d3) {
+], function (
+        $,
+        html,
+        Workspace,
+        d3
+    ) {
     'use strict';
     $.KBWidget({
         name: 'GenomeComparisonWidget',
@@ -43,15 +48,15 @@ define([
         genome2wsName: null,
         genome2objName: null,
         tooltip: null,
-        init: function(options) {
+        init: function (options) {
             this._super(options);
-            this.cmpImgUrl = this.runtime.getConfig('services.genome_comparison.url').replace('jsonrpc', 'image');
+            this.cmpImgUrl = this.runtime.config('services.genome_comparison.url').replace('jsonrpc', 'image');
             this.ws_name = options.ws_name;
             this.ws_id = options.ws_id;
             this.pref = this.uuid();
             return this;
         },
-        render: function() {
+        render: function () {
             var self = this;
 
             self.tooltip = d3.select('body').append('div').classed('genome-comparison-tooltip', true);
@@ -64,31 +69,31 @@ define([
                 return;
             }
 
-            var kbws = new Workspace(this.runtime.getConfig('services.workspace.url'), {
+            var kbws = new Workspace(this.runtime.config('services.workspace.url'), {
                 token: this.authToken()
             });
 
-            var dataIsReady = function() {
+            var dataIsReady = function () {
                 var cmp_ref = self.cmp_ref;
                 if (!cmp_ref) {
                     cmp_ref = self.ws_name + '/' + self.ws_id;
                 }
-                kbws.get_objects([{ ref: cmp_ref }], function(data) {
+                kbws.get_objects([{ ref: cmp_ref }], function (data) {
                     self.cmp = data[0].data;
                     var info = data[0].info;
                     self.cmp_ref = info[6] + '/' + info[0] + '/' + info[4];
                     cmpIsLoaded();
-                }, function(data) {
+                }, function (data) {
                     var tdElem = $('#' + self.pref + 'job');
                     tdElem.html('Error accessing comparison object: ' + data.error.message);
                 });
             };
-            var cmpIsLoaded = function() {
+            var cmpIsLoaded = function () {
                 container.empty();
                 container.append(html.loading('loading comparison data...'));
                 kbws.get_object_subset([{ ref: self.cmp.genome1ref, included: ['scientific_name'] },
                     { ref: self.cmp.genome2ref, included: ['scientific_name'] }
-                ], function(data) {
+                ], function (data) {
                     self.genome1wsName = data[0].info[7];
                     self.genome1objName = data[0].info[1];
                     var genome1id = data[0].data.scientific_name;
@@ -100,7 +105,7 @@ define([
                         .addClass('table table-bordered')
                         .css({ 'margin-left': 'auto', 'margin-right': 'auto' });
                     container.append(table);
-                    var createTableRow = function(name, value) {
+                    var createTableRow = function (name, value) {
                         return '<tr><td>' + name + '</td><td>' + value + '</td></tr>';
                     };
                     var count1hits = 0;
@@ -156,7 +161,7 @@ define([
                         '<td width="300"' + sd + '><table id="' + self.pref + 'genes"' + st + '><tr' + st + '><td' + st + '>' + self.selectHitsMessage + '</td></tr></table></td></tr></table></td></tr>');
                     self.refreshImage();
                     self.refreshGenes();
-                    var zoom = function(mult) {
+                    var zoom = function (mult) {
                         var xSize = Math.min(self.size, self.cmp.proteome1names.length * self.scale / 100);
                         var ySize = Math.min(self.size, self.cmp.proteome2names.length * self.scale / 100);
                         var centerI = self.imgI + xSize * 50 / self.scale;
@@ -170,43 +175,43 @@ define([
                         self.imgJ = centerJ - self.size * 50 / self.scale;
                         self.refreshImage();
                     };
-                    $('#' + self.pref + 'btn-zi').click(function() {
+                    $('#' + self.pref + 'btn-zi').click(function () {
                         zoom(1.5);
                     });
-                    $('#' + self.pref + 'btn-zo').click(function() {
+                    $('#' + self.pref + 'btn-zo').click(function () {
                         zoom(1.0 / 1.5);
                     });
-                    var move = function(yUp, xRt) {
+                    var move = function (yUp, xRt) {
                         self.imgJ += yUp * self.size * self.stepPercent / self.scale;
                         self.imgI += xRt * self.size * self.stepPercent / self.scale;
                         self.refreshImage();
                     };
-                    $('#' + self.pref + 'btn-mul').click(function() {
+                    $('#' + self.pref + 'btn-mul').click(function () {
                         move(1, -1);
                     });
-                    $('#' + self.pref + 'btn-mu').click(function() {
+                    $('#' + self.pref + 'btn-mu').click(function () {
                         move(1, 0);
                     });
-                    $('#' + self.pref + 'btn-mur').click(function() {
+                    $('#' + self.pref + 'btn-mur').click(function () {
                         move(1, 1);
                     });
-                    $('#' + self.pref + 'btn-ml').click(function() {
+                    $('#' + self.pref + 'btn-ml').click(function () {
                         move(0, -1);
                     });
-                    $('#' + self.pref + 'btn-mr').click(function() {
+                    $('#' + self.pref + 'btn-mr').click(function () {
                         move(0, 1);
                     });
-                    $('#' + self.pref + 'btn-mdl').click(function() {
+                    $('#' + self.pref + 'btn-mdl').click(function () {
                         move(-1, -1);
                     });
-                    $('#' + self.pref + 'btn-md').click(function() {
+                    $('#' + self.pref + 'btn-md').click(function () {
                         move(-1, 0);
                     });
-                    $('#' + self.pref + 'btn-mdr').click(function() {
+                    $('#' + self.pref + 'btn-mdr').click(function () {
                         move(-1, 1);
                     });
 
-                    var hitSearch = function(e) {
+                    var hitSearch = function (e) {
                         var scrX = e.pageX;
                         var scrY = e.pageY;
                         if ((!scrX) && (!scrY) && e.clientX && e.clientY) {
@@ -248,13 +253,13 @@ define([
                     };
 
                     $('#' + self.pref + 'img').hover(
-                        function() {
+                        function () {
                             self.tip().style('visibility', 'visible');
                         },
-                        function() {
+                        function () {
                             self.tip().style('visibility', 'hidden');
                         }
-                    ).mousemove(function(e) {
+                    ).mousemove(function (e) {
                         var hit = hitSearch(e);
                         var tip = self.tip();
                         if (Number(hit.bestDist) >= 0) {
@@ -272,7 +277,7 @@ define([
                         }
                         tip.style('visibility', 'hidden');
                         tip.text('');
-                    }).click(function(e) {
+                    }).click(function (e) {
                         var hit = hitSearch(e);
                         if (Number(hit.bestDist) >= 0) {
                             self.geneI = Number(hit.bestI);
@@ -283,7 +288,7 @@ define([
                         }
                         self.refreshGenes();
                     });
-                }, function(data) {
+                }, function (data) {
                     var tdElem = $('#' + self.pref + 'job');
                     tdElem.html('Error accessing genome objects: ' + data.error.message);
                 });
@@ -291,10 +296,10 @@ define([
             dataIsReady();
             return this;
         },
-        tip: function() {
+        tip: function () {
             return this.tooltip;
         },
-        refreshDetailedRect: function() {
+        refreshDetailedRect: function () {
             var self = this;
             var rect = $('#' + self.pref + 'rect').append(rect);
             if (self.geneI < 0 || self.geneJ < 0) {
@@ -322,7 +327,7 @@ define([
             });
             rect.show();
         },
-        refreshImage: function() {
+        refreshImage: function () {
             var self = this;
             var maxI = self.imgI + self.size * 100 / self.scale;
             if (maxI > self.cmp.proteome1names.length)
@@ -346,7 +351,7 @@ define([
             $('#' + self.pref + 'img').attr('src', img);
             self.refreshDetailedRect();
         },
-        refreshGenes: function() {
+        refreshGenes: function () {
             var self = this;
             var tbl = $('#' + self.pref + 'genes');
             tbl.empty();
@@ -420,13 +425,13 @@ define([
             var svgH = self.geneRows * self.geneRowH;
             svgTd.append('<svg width="30" height="' + svgH + '">' + svgLines + '</svg>');
             svgTd.hover(
-                function() {
+                function () {
                     self.tip().style('visibility', 'visible');
                 },
-                function() {
+                function () {
                     self.tip().style('visibility', 'hidden');
                 }
-            ).mousemove(function(e) {
+            ).mousemove(function (e) {
                 var scrX = e.pageX;
                 var scrY = e.pageY;
                 if ((!scrX) && (!scrY) && e.clientX && e.clientY) {
@@ -466,53 +471,53 @@ define([
                 tip.style('visibility', 'hidden');
                 tip.html('');
             });
-            $('#' + self.pref + 'btn-dirI').click(function() {
+            $('#' + self.pref + 'btn-dirI').click(function () {
                 self.dirI *= -1;
                 self.refreshGenes();
             });
-            $('#' + self.pref + 'btn-i-up').click(function() {
+            $('#' + self.pref + 'btn-i-up').click(function () {
                 self.geneI -= self.dirI;
                 self.refreshGenes();
             });
-            $('#' + self.pref + 'btn-both-up').click(function() {
+            $('#' + self.pref + 'btn-both-up').click(function () {
                 self.geneI -= self.dirI;
                 self.geneJ -= self.dirJ;
                 self.refreshGenes();
             });
-            $('#' + self.pref + 'btn-j-up').click(function() {
+            $('#' + self.pref + 'btn-j-up').click(function () {
                 self.geneJ -= self.dirJ;
                 self.refreshGenes();
             });
-            $('#' + self.pref + 'btn-dirJ').click(function() {
+            $('#' + self.pref + 'btn-dirJ').click(function () {
                 self.dirJ *= -1;
                 self.refreshGenes();
             });
-            $('#' + self.pref + 'btn-i-dn').click(function() {
+            $('#' + self.pref + 'btn-i-dn').click(function () {
                 self.geneI += self.dirI;
                 self.refreshGenes();
             });
-            $('#' + self.pref + 'btn-both-dn').click(function() {
+            $('#' + self.pref + 'btn-both-dn').click(function () {
                 self.geneI += self.dirI;
                 self.geneJ += self.dirJ;
                 self.refreshGenes();
             });
-            $('#' + self.pref + 'btn-j-dn').click(function() {
+            $('#' + self.pref + 'btn-j-dn').click(function () {
                 self.geneJ += self.dirJ;
                 self.refreshGenes();
             });
             self.refreshDetailedRect();
         },
-        loggedInCallback: function(event, auth) {
+        loggedInCallback: function (event, auth) {
             //this.token = auth.token;
             this.render();
             return this;
         },
-        loggedOutCallback: function(event, auth) {
+        loggedOutCallback: function (event, auth) {
             //this.token = null;
             this.render();
             return this;
         },
-        getState: function() {
+        getState: function () {
             var self = this;
             if (self.scale === null)
                 self.scale = self.size * 100 / Math.max(self.cmp.proteome1names.length, self.cmp.proteome2names.length);
@@ -528,7 +533,7 @@ define([
             };
             return state;
         },
-        loadState: function(state) {
+        loadState: function (state) {
             if (!state)
                 return;
             var self = this;
@@ -549,9 +554,9 @@ define([
                 self.refreshGenes();
             }
         },
-        uuid: function() {
+        uuid: function () {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,
-                function(c) {
+                function (c) {
                     var r = Math.random() * 16 | 0,
                         v = c === 'x' ? r : (r & 0x3 | 0x8);
                     return v.toString(16);

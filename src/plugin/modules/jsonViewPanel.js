@@ -2,7 +2,7 @@ define([
     'kb_common/html',
     'kb_widget/widgetSet',
     'plugins/dataview/modules/utils'
-], function(html, WidgetSet, utils) {
+], function (html, WidgetSet, utils) {
     'use strict';
 
     function factory(config) {
@@ -16,7 +16,12 @@ define([
 
         function renderLayout() {
             var div = t('div');
-            return div({ class: 'container-fluid' }, [
+            return div({
+                class: 'container-fluid',
+                style: {
+                    width: '100%'
+                }
+            }, [
                 div({ class: 'row' }, [
                     div({ class: 'col-md-8' }, [
                         div({ id: widgetSet.addWidget('kb_dataview_jsonView') })
@@ -44,7 +49,7 @@ define([
 
         function start(params) {
             return utils.getObject(runtime, params)
-                .then(function(object) {
+                .then(function (object) {
                     return widgetSet.start({ object: object });
                 });
         }
@@ -63,7 +68,7 @@ define([
     }
 
     return {
-        make: function(config) {
+        make: function (config) {
             return factory(config);
         }
     };

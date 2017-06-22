@@ -235,6 +235,7 @@ define([
                     dom: '<"top"lf>rt<"bottom"ip><"clear">',
                     aaData: self.obj[tab.key],
                     aoColumns: tableColumns,
+                    bAutoWidth: false,
                     language: {
                         search: '_INPUT_',
                         searchPlaceholder: 'Search ' + tab.name
@@ -564,7 +565,6 @@ define([
                             url: a[7] + '/' + a[1],
                             ref: a[6] + '/' + a[0] + '/' + a[4]
                         };
-                        return null;
                     });
             }
 

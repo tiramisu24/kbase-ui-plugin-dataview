@@ -100,7 +100,7 @@ define([
                         }
 
                         ////////////////////////////// Contigs Tab //////////////////////////////
-                        $('#' + pref + 'contigs').append('<table cellpadding="0" cellspacing="0" border="0" id="' + pref + 'contigs-table" ' +
+                        $('#' + pref + 'contigs').append('<table id="' + pref + 'contigs-table" ' +
                             'class="table table-bordered table-striped" style="width: 100%; margin-left: 0px; margin-right: 0px;"/>');
 
 

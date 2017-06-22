@@ -17,7 +17,7 @@ define([
     'kb_dataview_genomes_literature',
     'kb_dataview_genomes_wideTaxonomy',
     'kb_dataview_genomes_wideAssemblyAnnotation'
-], function(
+], function (
     $,
     html,
     Workspace,
@@ -35,13 +35,13 @@ define([
             workspaceID: null,
             ver: null
         },
-        init: function(options) {
+        init: function (options) {
             this._super(options);
             this.init_view();
             this.fetchGenome();
             return this;
         },
-        fetchGenome: function() {
+        fetchGenome: function () {
             var self = this,
                 scope = {
                     ws: this.options.workspaceID,
@@ -100,7 +100,7 @@ define([
             this.dynClient.callFunc('get_genome_v1', [{
                 genomes: [{ ref: objId }],
                 included_fields: genome_fields
-            }]).spread(function(data) {
+            }]).spread(function (data) {
                 // self.ga_api.get_genome_v1({
                 //     genomes: [{ ref: objId }],
                 //     included_fields: genome_fields
@@ -108,7 +108,7 @@ define([
                 var assembly_ref = null,
                     gnm = data.genomes[0].data,
                     metadata = data.genomes[0].info[10],
-                    add_stats = function(obj, size, gc, num_contigs) {
+                    add_stats = function (obj, size, gc, num_contigs) {
                         Object.defineProperties(obj, {
                             dna_size: {
                                 __proto__: null,
@@ -130,7 +130,7 @@ define([
                             }
                         });
                     },
-                    assembly_error = function(data, error) {
+                    assembly_error = function (data, error) {
                         console.error('Error loading contigset subdata', data, error);
                     };
 
@@ -151,14 +151,14 @@ define([
                             metadata['Number contigs']);
                         self.render(data.genomes[0]);
                     } else {
-                        self.asm_api.get_stats(assembly_ref).then(function(stats) {
+                        self.asm_api.get_stats(assembly_ref).then(function (stats) {
                             add_stats(gnm,
                                 stats.dna_size,
                                 stats.gc_content,
                                 stats.num_contigs);
                             self.render(data.genomes[0]);
                             return null;
-                        }).catch(function(error) {
+                        }).catch(function (error) {
                             assembly_error(gnm, error);
                         });
                     }
@@ -169,7 +169,7 @@ define([
                         'genomes': [{ 'ref': objId }],
                         'included_fields': genome_fields,
                         'included_feature_fields': feature_fields
-                    }).then(function(data) {
+                    }).then(function (data) {
                         gnm = data.genomes[0].data;
                         metadata = data.genomes[0].info[10];
 
@@ -180,14 +180,14 @@ define([
                                 metadata['Number contigs']);
                             self.render(data.genomes[0]);
                         } else if (!gnm.hasOwnProperty('dna_size')) {
-                            self.asm_api.get_stats(assembly_ref).then(function(stats) {
+                            self.asm_api.get_stats(assembly_ref).then(function (stats) {
                                 add_stats(gnm,
                                     stats.dna_size,
                                     stats.gc_content,
                                     stats.num_contigs);
                                 self.render(data.genomes[0]);
                                 return null;
-                            }).catch(function(error) {
+                            }).catch(function (error) {
                                 assembly_error(gnm, error);
                             });
                         } else {
@@ -195,13 +195,13 @@ define([
                         }
 
                         return null;
-                    }).catch(function(error) {
+                    }).catch(function (error) {
                         console.error(error);
                     });
                 }
 
                 return null;
-            }).catch(function(error) {
+            }).catch(function (error) {
                 console.error('Error loading genome subdata');
                 console.error(error);
                 self.showError(self.view.panels[0].inner_div, error);
@@ -210,7 +210,7 @@ define([
                 self.view.panels[3].inner_div.empty();
             });
         },
-        fetchAssembly: function(genomeInfo, callback) {
+        fetchAssembly: function (genomeInfo, callback) {
             var self = this,
                 assembly_ref = null,
                 gnm = genomeInfo.data;
@@ -221,7 +221,7 @@ define([
                 assembly_ref = gnm.assembly_ref;
             }
 
-            self.asm_api.get_contig_ids(assembly_ref).then(function(contig_ids) {
+            self.asm_api.get_contig_ids(assembly_ref).then(function (contig_ids) {
                 Object.defineProperties(gnm, {
                     'contig_ids': {
                         __proto__: null,
@@ -230,7 +230,7 @@ define([
                         enumerable: true
                     }
                 });
-                return self.asm_api.get_contig_lengths(assembly_ref, contig_ids).then(function(contig_lengths) {
+                return self.asm_api.get_contig_lengths(assembly_ref, contig_ids).then(function (contig_lengths) {
                     Object.defineProperties(gnm, {
                         'contig_lengths': {
                             __proto__: null,
@@ -242,58 +242,61 @@ define([
 
                     callback(genomeInfo);
                     return null;
-                }).catch(function(error) {
+                }).catch(function (error) {
                     self.showError(self.view.panels[3].inner_div, error);
                 });
-            }).catch(function(error) {
+            }).catch(function (error) {
                 self.showError(self.view.panels[3].inner_div, error);
             });
         },
-        init_view: function() {
+        init_view: function () {
             var cell_html = '<div>';
+            var body = '<div data-element="body">';
 
             this.view = {
                 panels: [{
-                        label: 'Overview',
-                        outer_div: $(cell_html),
-                        inner_div: this.makePleaseWaitPanel()
-                    },
-                    {
-                        order: 2,
-                        label: 'Publications',
-                        outer_div: $(cell_html),
-                        inner_div: this.makePleaseWaitPanel()
-                    },
-                    {
-                        order: 3,
-                        label: 'Taxonomy',
-                        outer_div: $(cell_html),
-                        inner_div: this.makePleaseWaitPanel()
-                    },
-                    {
-                        order: 4,
-                        label: 'Assembly and Annotation',
-                        outer_div: $(cell_html),
-                        inner_div: this.makePleaseWaitPanel()
-                    }
-                ]
+                    label: 'Overview',
+                    name: 'overview',
+                    outer_div: $(cell_html),
+                    inner_div: $(body)
+                }, {
+                    order: 2,
+                    label: 'Publications',
+                    name: 'publications',
+                    outer_div: $(cell_html),
+                    inner_div: $(body)
+                }, {
+                    order: 3,
+                    label: 'Taxonomy',
+                    name: 'taxonomy',
+                    outer_div: $(cell_html),
+                    inner_div: $(body)
+                }, {
+                    order: 4,
+                    label: 'Assembly and Annotation',
+                    name: 'assembly-annotation',
+                    outer_div: $(cell_html),
+                    inner_div: $(body)
+                }]
             };
-
-            for (var i = 0; i < this.view.panels.length; i++) {
-                this.makeWidgetPanel(this.view.panels[i].outer_div,
-                    this.view.panels[i].label,
-                    this.view.panels[i].inner_div);
-                this.$elem.append(this.view.panels[i].outer_div);
-            }
+            var that = this;
+            this.view.panels.forEach(function (panel) {
+                that.makeWidgetPanel(panel.outer_div,
+                    panel.label,
+                    panel.name,
+                    panel.inner_div);
+                that.$elem.append(panel.outer_div);
+                panel.inner_div.html(html.loading('Loading...'));
+            });
         },
-        render: function(genomeInfo) {
+        render: function (genomeInfo) {
             var self = this,
                 scope = {
                     ws: this.options.workspaceID,
                     id: this.options.genomeID,
                     ver: this.options.ver
                 },
-                panelError = function(p, e) {
+                panelError = function (p, e) {
                     console.error(e);
                     self.showError(p, e.message);
                 },
@@ -358,7 +361,7 @@ define([
                 self.view.panels[3].inner_div.append('Browsing Eukaryotic Genome Features is not supported at this time.');
             } else {
                 var gnm = genomeInfo.data,
-                    assembly_callback = function(genomeInfo) {
+                    assembly_callback = function (genomeInfo) {
                         self.view.panels[3].inner_div.empty();
                         try {
                             self.view.panels[3].inner_div.KBaseGenomeWideAssemAnnot({
@@ -380,18 +383,16 @@ define([
                 }
             }
         },
-        makePleaseWaitPanel: function() {
-            return $('<div>').html(html.loading('loading...'));
-        },
-        makeWidgetPanel: function($panel, title, $widgetDiv) {
+        // TODO: This is 
+        makeWidgetPanel: function ($panel, title, name, $widgetDiv) {
             var id = this.genUUID();
             $panel.append(
-                $('<div class="panel-group" id="accordion_' + id + '" role="tablist" aria-multiselectable="true">')
+                $('<div class="panel-group" id="accordion_' + id + '" role="tablist" aria-multiselectable="true" data-panel="' + name + '">')
                 .append($('<div class="panel panel-default kb-widget">')
                     .append('' +
                         '<div class="panel-heading" role="tab" id="heading_' + id + '">' +
                         '<h4 class="panel-title">' +
-                        '<span data-toggle="collapse" data-parent="#accordion_' + id + '" data-target="#collapse_' + id + '" aria-expanded="false" aria-controls="collapse_' + id + '" style="cursor:pointer;">' +
+                        '<span data-toggle="collapse" data-parent="#accordion_' + id + '" data-target="#collapse_' + id + '" aria-expanded="false" aria-controls="collapse_' + id + '" style="cursor:pointer;" data-element="title">' +
                         ' ' + title +
                         '</span>' +
                         '</h4>' +
@@ -403,7 +404,7 @@ define([
                 )
             );
         },
-        getData: function() {
+        getData: function () {
             return {
                 type: 'Genome Page',
                 id: this.options.genomeID,
@@ -411,12 +412,12 @@ define([
                 title: 'Genome Page'
             };
         },
-        showError: function(panel, e) {
+        showError: function (panel, e) {
             panel.empty();
             panel.append('Error: ' + JSON.stringify(e));
         },
-        genUUID: function() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        genUUID: function () {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
                 var r = Math.random() * 16 | 0,
                     v = c === 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
