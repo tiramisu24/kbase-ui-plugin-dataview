@@ -127,7 +127,7 @@ define([
             var self = this;
 
             this.$infoTable.empty()
-                .append(this.addInfoRow('Name', genome.scientific_name))
+                .append('<tr><th>' + 'Name' + '</th><td data-field="scientific-name">' + genome.scientific_name + '</td></tr>')
                 .append('<tr><th>Taxonomic Lineage</th><td id="tax_td_' + this.pref + '"/></tr>');
 
             self.hideMessage();
