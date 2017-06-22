@@ -339,7 +339,7 @@ define([
                 return tr([
                     th('In Narrative'),
                     td({ dataElement: 'narrative' }, a({
-                        href: '/narrative/ws.' + state.get('workspace.id') + '.' + state.get('object.id'),
+                        href: '/narrative/ws.' + state.get('workspace.id') + '.obj.' + state.get('workspace.metadata.narrative'),
                         target: '_blank'
                     }, state.get('workspace.metadata.narrative_nice_name')))
                 ]);
