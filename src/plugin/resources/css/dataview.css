@@ -1,5 +1,4 @@
 @charset "UTF-8";
-@import url("//fonts.googleapis.com/css?family=Roboto");
 @import url("sankeystyle.css");
 
 /* --- KBase method list styles --*/
@@ -847,24 +846,6 @@ button.kb-method-run:hover {
 }
 
 
-/* Nudge the data icon a bit to the left or right */
-
-.kb-data-icon-rnudge {
-    margin-left: 3px;
-}
-
-.kb-data-icon-lnudge {
-    margin-right: 3px;
-}
-
-.kb-data-icon-unudge {
-    margin-bottom: 0.5em;
-}
-
-.kb-data-icon-dnudge {
-    margin-top: 0.5em;
-}
-
 .kb-data-list-info {}
 
 .kb-data-list-name {
@@ -1127,41 +1108,6 @@ button.kb-method-run:hover {
 .kb-dataview-header-tbl th,
 .kb-dataview-header-tbl td {
     padding: 5px;
-}
-
-
-/* NOTE: i really don't want to adjust font sizes, but for now these icons are only in one place on
- * the landing page and need to look right. By default, they are too small, and bumping them up to
- * larger makes them look different in firefox vs chrome; so yet another temporary hack -- mike*/
-
-.icon-compare:before {
-    content: "a";
-    font-size: 24pt;
-}
-
-.icon-genome:before {
-    content: "b";
-    font-size: 24pt;
-}
-
-.icon-metabolism:before {
-    content: "c";
-    font-size: 24pt;
-}
-
-.icon-metagenome:before {
-    content: "d";
-    font-size: 24pt;
-}
-
-.icon-reads:before {
-    content: "e";
-    font-size: 24pt;
-}
-
-.icon-tree:before {
-    content: "f";
-    font-size: 24pt;
 }
 
 .genome-comparison-tooltip {
