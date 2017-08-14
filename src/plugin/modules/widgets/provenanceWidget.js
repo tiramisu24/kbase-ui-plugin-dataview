@@ -746,16 +746,20 @@ define([
                                               //resolvedObjectref is the prov id
                                               uniqueRefObjectIdentities.push({ref: resolvedObjectRef});
                                           }
-                                          //make the link
-                                          getObjectInfo(objRef);
-
                                       });
                                   }
                               });
-
-
                       }
-                  });
+                      return uniqueRefObjectIdentities;
+                  }).then(function(uniqueRefObjectIdentities){
+                          return workspace.get_object_info_new({
+                             objects: uniqueRefObjectIdentities,
+                             includeMetadata: 1,
+                             ignoreErrors: 1
+                          })
+                   }).then(function (objInfoList) {
+                     debugger
+                   });
             }
             function getObjectProvenance(objIdentities) {
               //returns links to objects
@@ -964,7 +968,6 @@ define([
             function finishUpAndRender() {
                 addVersionEdges();
                 renderSankeyStyleGraph();
-                // renderTestGraph();
                 addNodeColorKey();
                 $container.find('#loading-mssg').hide();
             }
