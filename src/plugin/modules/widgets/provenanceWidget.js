@@ -659,64 +659,66 @@ define([
                 console.error("Error in building object graph!");
                 console.error(err);
             }
+            function addNodeLink(refData,objIdentities) {
 
+              //refData is the objects that reference current object
+                for (var i = 0; i < refData.length; i++) {
+                    var limit = 50;
+                    for (var k = 0; k < refData[i].length; k++) {
+                        /**
+                        if (k >= limit) {
+                            //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
+                            var nodeId = graph['nodes'].length,
+                                nameStr = refData[i].length - limit + " more ...";
+                            graph['nodes'].push({
+                                node: nodeId,
+                                name: nameStr,
+                                info: [-1, nameStr, "Multiple Types", 0, 0, "N/A", 0, "N/A", 0, 0, {}],
+                                nodeType: "ref",
+                                objId: "-1",
+                                isFake: true
+                            });
+                            objRefToNodeIdx[objId] = nodeId;
+
+                            // add the link now too
+                            if (objRefToNodeIdx[objIdentities[i]['ref']] !== null) {  // only add the link if it is visible
+                                graph['links'].push({
+                                    source: objRefToNodeIdx[objIdentities[i]['ref']],
+                                    target: nodeId,
+                                    value: 1
+                                });
+                            }
+                            break;
+                        }
+                        **/
+                        var refInfo = refData[i][k];
+                        //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
+                        var t = refInfo[2].split("-")[0];
+                        var objId = refInfo[6] + "/" + refInfo[0] + "/" + refInfo[4];
+                        var nodeId = graph['nodes'].length;
+                        //pushes reference nodes into list
+                        let node = {
+                            node: nodeId,
+                            name: getNodeLabel(refInfo),
+                            info: refInfo,
+                            nodeType: "ref",
+                            objId: objId
+                        };
+                        graph.nodes.push(node);
+                        referenceGraph.nodes.push(node);
+                        objRefToNodeIdx[objId] = nodeId;
+                        debugger;
+                        // add the link now too
+                        if (objRefToNodeIdx[objIdentities[i].ref] !== null) {  // only add the link if it is visible
+                            graph.links.push(makeLink(objRefToNodeIdx[objIdentities[i].ref], nodeId, 1));
+                        }
+                    }
+                }
+            }
             function getReferencingObjects(objIdentities) {
                 return workspace.list_referencing_objects(objIdentities)
-                    .then(function (refData) {
-
-                      //refData is the objects that reference current object
-                        for (var i = 0; i < refData.length; i++) {
-                            var limit = 50;
-                            for (var k = 0; k < refData[i].length; k++) {
-                                /**
-                                if (k >= limit) {
-                                    //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
-                                    var nodeId = graph['nodes'].length,
-                                        nameStr = refData[i].length - limit + " more ...";
-                                    graph['nodes'].push({
-                                        node: nodeId,
-                                        name: nameStr,
-                                        info: [-1, nameStr, "Multiple Types", 0, 0, "N/A", 0, "N/A", 0, 0, {}],
-                                        nodeType: "ref",
-                                        objId: "-1",
-                                        isFake: true
-                                    });
-                                    objRefToNodeIdx[objId] = nodeId;
-
-                                    // add the link now too
-                                    if (objRefToNodeIdx[objIdentities[i]['ref']] !== null) {  // only add the link if it is visible
-                                        graph['links'].push({
-                                            source: objRefToNodeIdx[objIdentities[i]['ref']],
-                                            target: nodeId,
-                                            value: 1
-                                        });
-                                    }
-                                    break;
-                                }
-                                **/
-                                var refInfo = refData[i][k];
-                                //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
-                                var t = refInfo[2].split("-")[0];
-                                var objId = refInfo[6] + "/" + refInfo[0] + "/" + refInfo[4];
-                                var nodeId = graph['nodes'].length;
-                                //pushes reference nodes into list
-                                let node = {
-                                    node: nodeId,
-                                    name: getNodeLabel(refInfo),
-                                    info: refInfo,
-                                    nodeType: "ref",
-                                    objId: objId
-                                };
-                                graph.nodes.push(node);
-                                referenceGraph.nodes.push(node);
-                                objRefToNodeIdx[objId] = nodeId;
-
-                                // add the link now too
-                                if (objRefToNodeIdx[objIdentities[i].ref] !== null) {  // only add the link if it is visible
-                                    graph.links.push(makeLink(objRefToNodeIdx[objIdentities[i].ref], nodeId, 1));
-                                }
-                            }
-                        }
+                    .then(function(refData){
+                      addNodeLink(refData,objIdentities);
                     });
             }
 
