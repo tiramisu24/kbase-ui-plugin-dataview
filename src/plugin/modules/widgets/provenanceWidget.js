@@ -11,7 +11,6 @@ define([
 ],
     function (Promise, $, d3, html, dom, Workspace) {
         'use strict';
-        const test = "test";
 
         function widget(config) {
             var mount, container, $container, runtime = config.runtime,
@@ -60,7 +59,6 @@ define([
                 provenanceGraph = {
                     nodes: [],
                     links: [],
-                    test: "t"
                 },
                 div = html.tag('div'),
                 br = html.tag('br'),
@@ -612,7 +610,6 @@ define([
                     latestVersion = 0,
                     latestObjId = "";
 
-                debugger;
                 objRefToNodeIdx = {};
 
                 data.forEach(function (objectInfo) {
@@ -664,7 +661,6 @@ define([
             }
 
             function getReferencingObjects(objIdentities) {
-              debugger
                 return workspace.list_referencing_objects(objIdentities)
                     .then(function (refData) {
 
@@ -703,9 +699,8 @@ define([
                                 var t = refInfo[2].split("-")[0];
                                 var objId = refInfo[6] + "/" + refInfo[0] + "/" + refInfo[4];
                                 var nodeId = graph['nodes'].length;
-
                                 //pushes reference nodes into list
-                                node = {
+                                let node = {
                                     node: nodeId,
                                     name: getNodeLabel(refInfo),
                                     info: refInfo,
@@ -732,14 +727,41 @@ define([
                     value: value
                 };
             }
-            function getCurObjects(data){
-              
+
+            function test(objIdentities){
+              //TODO: unique provenance items
+              return workspace.get_object_provenance(objIdentities)
+                  .then(function (provData) {
+                    var uniqueRefs = {},
+                        uniqueRefObjectIdentities = [];
+                      for (var i = 0; i < provData.length; i++) {
+                              let objectProvenance = provData[i];
+                              objectProvenance.provenance.forEach(function (provenance) {
+                                  var objRef = getObjectRef(objectProvenance.info);
+
+                                  if (provenance.resolved_ws_objects) {
+                                      provenance.resolved_ws_objects.forEach(function (resolvedObjectRef) {
+                                           if (!(resolvedObjectRef in uniqueRefs)) {
+                                              uniqueRefs[resolvedObjectRef] = 'included';
+                                              //resolvedObjectref is the prov id
+                                              uniqueRefObjectIdentities.push({ref: resolvedObjectRef});
+                                          }
+                                          //make the link
+                                          getObjectInfo(objRef);
+
+                                      });
+                                  }
+                              });
+
+
+                      }
+                  });
             }
             function getObjectProvenance(objIdentities) {
               //returns links to objects
                 return workspace.get_object_provenance(objIdentities)
                     .then(function (objdata) {
-                      debugger;
+
                         var uniqueRefs = {},
                             uniqueRefObjectIdentities = [],
                             links = [];
@@ -747,22 +769,25 @@ define([
                             var objRef = getObjectRef(objectProvenance.info);
 
                             // extract the references contained within the object
-                            objectProvenance.refs.forEach(function (ref) {
-                                if (!(ref in uniqueRefs)) {
-                                    uniqueRefs[ref] = 'included';
-                                    uniqueRefObjectIdentities.push({ref: ref});
-                                }
-                                links.push(makeLink(ref, objRef, 1));
-                            });
+                            // objectProvenance.refs.forEach(function (ref) {
+                            //     if (!(ref in uniqueRefs)) {
+                            //         uniqueRefs[ref] = 'included';
+                            //         uniqueRefObjectIdentities.push({ref: ref});
+                            //     }
+                            //     links.push(makeLink(ref, objRef, 1));
+                            // });
 
                             // extract the references from the provenance
                             objectProvenance.provenance.forEach(function (provenance) {
+
                                 if (provenance.resolved_ws_objects) {
                                     provenance.resolved_ws_objects.forEach(function (resolvedObjectRef) {
                                          if (!(resolvedObjectRef in uniqueRefs)) {
-                                            uniqueRefs[resolvedObjectRef] = 'included'; // TODO switch to prov??
+                                            uniqueRefs[resolvedObjectRef] = 'included';
+                                            //resolvedObjectref is the prov id
                                             uniqueRefObjectIdentities.push({ref: resolvedObjectRef});
                                         }
+                                        //make the link
                                         links.push(makeLink(resolvedObjectRef, objRef, 1));
                                     });
                                 }
@@ -796,6 +821,7 @@ define([
             }
 
             function getObjectInfo(refData) {
+                debugger
                 return workspace.get_object_info_new({
                     objects: refData['uniqueRefObjectIdentities'],
                     includeMetadata: 1,
@@ -803,13 +829,14 @@ define([
                 })
                     .then(function (objInfoList) {
                         //shows the provenence objects??
-                        var objInfoStash = {};
-                        for (var i = 0; i < objInfoList.length; i++) {
-                            if (objInfoList[i]) {
-                                objInfoStash[objInfoList[i][6] + "/" + objInfoList[i][0] + "/" + objInfoList[i][4]] = objInfoList[i];
-                            }
-                        }
+                        // var objInfoStash = {};
+                        // for (var i = 0; i < objInfoList.length; i++) {
+                        //     if (objInfoList[i]) {
+                        //         objInfoStash[objInfoList[i][6] + "/" + objInfoList[i][0] + "/" + objInfoList[i][4]] = objInfoList[i];
+                        //     }
+                        // }
                         // add the nodes
+                        /**
                         var uniqueRefs = refData.uniqueRefs;
                         for (var ref in uniqueRefs) {
                             var refInfo = objInfoStash[ref];
@@ -835,14 +862,42 @@ define([
                                 console.warn('In provenance widget reference '  + ref + ' is not accessible');
                             }
                         }
+                        **/
+
+                        if (refInfo) {
+                            //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
+                            var t = refInfo[2].split("-")[0];
+                            var objId = refInfo[6] + "/" + refInfo[0] + "/" + refInfo[4];
+                            var nodeId = graph.nodes.length;
+                            let node = {
+                                node: nodeId,
+                                name: getNodeLabel(refInfo),
+                                info: refInfo,
+                                nodeType: uniqueRefs[ref],
+                                objId: objId
+                            };
+                            graph.nodes.push(node);
+                            provenanceGraph.nodes.push(node);
+                            objRefToNodeIdx[objId] = nodeId;
+                        } else {
+                            // there is a reference, but we no longer have access; could do something better
+                            // here, but instead we just skip
+                            // At least warn... there be bugs if this happens...
+                            console.warn('In provenance widget reference '  + ref + ' is not accessible');
+
+                        }
                         // add the link info
+                        debugger;
                         refData.links.forEach(function (link) {
                             if ( isUndefNull(objRefToNodeIdx[link.source]) || isUndefNull(objRefToNodeIdx[link.target]) ) {
                                 console.warn('skipping link', link);
                             } else {
                                 graph.links.push(makeLink(objRefToNodeIdx[link.source], objRefToNodeIdx[link.target], link.value));
+                                provenanceGraph.links.push(makeLink(objRefToNodeIdx[link.source], objRefToNodeIdx[link.target], link.value));
                             }
                         });
+                        // graph.links.push(makeLink(resolvedObjectRef, objRef, 1));
+                        // provenanceGraph.links.push(makeLink(resolvedObjectRef, objRef, 1));
                     })
                     .catch(function (err) {
                         // we couldn't get info for some reason, could be if objects are deleted or not visible
@@ -873,17 +928,10 @@ define([
                 // init the graph
                 $container.find('#loading-mssg').show();
                 $container.find('#objgraphview').hide();
-                // graph = {nodes: [], links: []};
-                provenanceGraph = {
-                    nodes: [],
-                    links: [],
-                    test: "t"
-                };
 
 
                 workspace.get_object_history(objref)
                     .then(function (data) {
-                        // return getCurObjects("l");
                         return processObjectHistory(data);
                         //returns the objIdentities
                     })
@@ -891,7 +939,6 @@ define([
                         // we have the history of the object of interest,
                         // now we can fetch all referencing object, and
                         // get prov info for each of these objects
-                        getCurObjects(objIdentities);
                         return Promise.all([
                             getReferencingObjects(objIdentities),
                             getObjectProvenance(objIdentities)
@@ -913,47 +960,12 @@ define([
                     });
 
             }
-            function test(objref) {
-                // init the graph
-                $container.find('#loading-mssg').show();
-                $container.find('#objgraphview').hide();
 
-                workspace.get_object_history(objref)
-                    .then(function (data) {
-                        return getCurObjects(data);
-                        // return processObjectHistory(data);
-                        //returns the objIdentities
-                    })
-                    .then(function (objIdentities) {
-                        // we have the history of the object of interest,
-                        // now we can fetch all referencing object, and
-                        // get prov info for each of these objects
-                        return Promise.all([
-                            getReferencingObjects(objIdentities),
-                            getObjectProvenance(objIdentities)
-                        ]);
-
-                    })
-                    .spread(function (ignore, refData) {
-                        if (refData && 'uniqueRefObjectIdentities' in refData) {
-                            if (refData.uniqueRefObjectIdentities.length > 0) {
-                                return getObjectInfo(refData);
-                            }
-                        }
-                    })
-                    .finally(function () {
-                        finishUpAndRender();
-                    })
-                    .catch(function (err) {
-                        showError(err);
-                    });
-
-            }
             function finishUpAndRender() {
-                // addVersionEdges();
-                // renderSankeyStyleGraph();
+                addVersionEdges();
+                renderSankeyStyleGraph();
                 // renderTestGraph();
-                // addNodeColorKey();
+                addNodeColorKey();
                 $container.find('#loading-mssg').hide();
             }
             function addVersionEdges() {
@@ -989,7 +1001,7 @@ define([
                 workspaceId = params.workspaceId;
                 objectId = params.objectId;
                 // buildDataAndRender(getObjectIdentity(params.workspaceId, params.objectId));
-                test(getObjectIdentity(params.workspaceId, params.objectId));
+                buildDataAndRender(getObjectIdentity(params.workspaceId, params.objectId));
             }
             function stop() {
 
