@@ -11,6 +11,7 @@ define([
 ],
     function (Promise, $, d3, html, dom, Workspace) {
         'use strict';
+        const test = "test";
 
         function widget(config) {
             var mount, container, $container, runtime = config.runtime,
@@ -48,18 +49,20 @@ define([
                 },
                 monthLookup = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
                 graph = {
+                    nodes:[],
+                    links:[]
+                },
+
+                referenceGraph = {
+                    nodes:[],
+                    links:[]
+                },
+                provenanceGraph = {
                     nodes: [],
-                    links: []
+                    links: [],
+                    test: "t"
                 },
-                provenanceGraph ={
-                    nodes:[],
-                    links:[]
-                },
-                referenceGraph ={
-                    nodes:[],
-                    links:[]
-                },
-            div = html.tag('div'),
+                div = html.tag('div'),
                 br = html.tag('br'),
                 table = html.tag('table'),
                 tr = html.tag('tr'),
@@ -67,7 +70,6 @@ define([
                 svg = html.tag('svg'),
                 rect = html.tag('rect'),
                 b = html.tag('b');
-
 
             // config settings?
             config.width = 1200;
@@ -119,14 +121,6 @@ define([
                 // keep it simple, just give a date
                 return monthLookup[date.getMonth()] + " " + date.getDate() + ", " + date.getFullYear();
             }
-
-            //should be a struct with fields of type name, values are type info.  type info has 'info', 'refs'
-            //'prov'
-            //objData: {},
-            // maps ws REF to graph node id
-            //objRefToNodeIdx: null,
-            // the actual graph data
-            //graph: null,
 
             function addNodeColorKey() {
                 if (needColorKey) {
@@ -276,15 +270,18 @@ define([
 
                 if (graph.links.length === 0) {
                     // in order to render, we need at least two nodes
-                    graph.nodes.push({
+                    let node = {
                         node: 1,
                         name: "No references found",
                         info: [-1, "No references found", "No Type", 0, 0, "N/A", 0, "N/A", 0, 0, {}],
                         nodeType: "none",
                         objId: "-1",
                         isFake: true
-                    });
+                    }
+                    graph.nodes.push(node);
+                    provenanceGraph.nodes.push(node);
                     objRefToNodeIdx["-1"] = 1;
+                    provenanceGraph.links.push(makeLink(0, 1, 1));
                     graph.links.push(makeLink(0, 1, 1));
                 }
 
@@ -615,25 +612,25 @@ define([
                     latestVersion = 0,
                     latestObjId = "";
 
-                // These are global.
+                debugger;
                 objRefToNodeIdx = {};
-                graph = {
-                    nodes: [],
-                    links: []
-                };
 
                 data.forEach(function (objectInfo) {
                     //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
                     var t = objectInfo[2].split("-")[0],
                         objId = objectInfo[6] + "/" + objectInfo[0] + "/" + objectInfo[4],
                         nodeId = graph.nodes.length;
-                    graph.nodes.push({
+                      //pushes current nodes into graph
+                    let node = {
                         node: nodeId,
                         name: getNodeLabel(objectInfo),
                         info: objectInfo,
                         nodeType: "core",
                         objId: objId
-                    });
+                    }
+                    graph.nodes.push(node);
+                    provenanceGraph.nodes.push(node);
+                    referenceGraph.nodes.push(node);
                     if (objectInfo[4] > latestVersion) {
                         latestVersion = objectInfo[4];
                         latestObjId = objId;
@@ -643,6 +640,8 @@ define([
                 });
                 if (latestObjId.length > 0) {
                     graph.nodes[objRefToNodeIdx[latestObjId].nodeType] = 'selected';
+                    provenanceGraph.nodes[objRefToNodeIdx[latestObjId].nodeType] = 'selected';
+                    referenceGraph.nodes[objRefToNodeIdx[latestObjId].nodeType] = 'selected';
                 }
                 return objIdentities;
             }
@@ -665,12 +664,15 @@ define([
             }
 
             function getReferencingObjects(objIdentities) {
+              debugger
                 return workspace.list_referencing_objects(objIdentities)
                     .then(function (refData) {
+
                       //refData is the objects that reference current object
                         for (var i = 0; i < refData.length; i++) {
                             var limit = 50;
                             for (var k = 0; k < refData[i].length; k++) {
+                                /**
                                 if (k >= limit) {
                                     //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
                                     var nodeId = graph['nodes'].length,
@@ -695,7 +697,7 @@ define([
                                     }
                                     break;
                                 }
-                                debugger;
+                                **/
                                 var refInfo = refData[i][k];
                                 //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
                                 var t = refInfo[2].split("-")[0];
@@ -703,13 +705,15 @@ define([
                                 var nodeId = graph['nodes'].length;
 
                                 //pushes reference nodes into list
-                                graph['nodes'].push({
+                                node = {
                                     node: nodeId,
                                     name: getNodeLabel(refInfo),
                                     info: refInfo,
                                     nodeType: "ref",
                                     objId: objId
-                                });
+                                };
+                                graph.nodes.push(node);
+                                referenceGraph.nodes.push(node);
                                 objRefToNodeIdx[objId] = nodeId;
 
                                 // add the link now too
@@ -728,13 +732,14 @@ define([
                     value: value
                 };
             }
-            function getCurObjects(objIdentities){
-
+            function getCurObjects(data){
+              
             }
             function getObjectProvenance(objIdentities) {
               //returns links to objects
                 return workspace.get_object_provenance(objIdentities)
                     .then(function (objdata) {
+                      debugger;
                         var uniqueRefs = {},
                             uniqueRefObjectIdentities = [],
                             links = [];
@@ -813,13 +818,15 @@ define([
                                 var t = refInfo[2].split("-")[0];
                                 var objId = refInfo[6] + "/" + refInfo[0] + "/" + refInfo[4];
                                 var nodeId = graph.nodes.length;
-                                graph.nodes.push({
+                                let node = {
                                     node: nodeId,
                                     name: getNodeLabel(refInfo),
                                     info: refInfo,
                                     nodeType: uniqueRefs[ref],
                                     objId: objId
-                                });
+                                };
+                                graph.nodes.push(node);
+                                provenanceGraph.nodes.push(node);
                                 objRefToNodeIdx[objId] = nodeId;
                             } else {
                                 // there is a reference, but we no longer have access; could do something better
@@ -866,10 +873,17 @@ define([
                 // init the graph
                 $container.find('#loading-mssg').show();
                 $container.find('#objgraphview').hide();
-                graph = {nodes: [], links: []};
+                // graph = {nodes: [], links: []};
+                provenanceGraph = {
+                    nodes: [],
+                    links: [],
+                    test: "t"
+                };
+
 
                 workspace.get_object_history(objref)
                     .then(function (data) {
+                        // return getCurObjects("l");
                         return processObjectHistory(data);
                         //returns the objIdentities
                     })
@@ -877,9 +891,44 @@ define([
                         // we have the history of the object of interest,
                         // now we can fetch all referencing object, and
                         // get prov info for each of these objects
-                        debugger;
+                        getCurObjects(objIdentities);
                         return Promise.all([
-                            getCurObjects(objIdentities),
+                            getReferencingObjects(objIdentities),
+                            getObjectProvenance(objIdentities)
+                        ]);
+
+                    })
+                    .spread(function (ignore, refData) {
+                        if (refData && 'uniqueRefObjectIdentities' in refData) {
+                            if (refData.uniqueRefObjectIdentities.length > 0) {
+                                return getObjectInfo(refData);
+                            }
+                        }
+                    })
+                    .finally(function () {
+                        finishUpAndRender();
+                    })
+                    .catch(function (err) {
+                        showError(err);
+                    });
+
+            }
+            function test(objref) {
+                // init the graph
+                $container.find('#loading-mssg').show();
+                $container.find('#objgraphview').hide();
+
+                workspace.get_object_history(objref)
+                    .then(function (data) {
+                        return getCurObjects(data);
+                        // return processObjectHistory(data);
+                        //returns the objIdentities
+                    })
+                    .then(function (objIdentities) {
+                        // we have the history of the object of interest,
+                        // now we can fetch all referencing object, and
+                        // get prov info for each of these objects
+                        return Promise.all([
                             getReferencingObjects(objIdentities),
                             getObjectProvenance(objIdentities)
                         ]);
@@ -901,10 +950,10 @@ define([
 
             }
             function finishUpAndRender() {
-                addVersionEdges();
-                renderSankeyStyleGraph();
+                // addVersionEdges();
+                // renderSankeyStyleGraph();
                 // renderTestGraph();
-                addNodeColorKey();
+                // addNodeColorKey();
                 $container.find('#loading-mssg').hide();
             }
             function addVersionEdges() {
@@ -939,7 +988,8 @@ define([
                 needColorKey = true; // so that the key renders
                 workspaceId = params.workspaceId;
                 objectId = params.objectId;
-                buildDataAndRender(getObjectIdentity(params.workspaceId, params.objectId));
+                // buildDataAndRender(getObjectIdentity(params.workspaceId, params.objectId));
+                test(getObjectIdentity(params.workspaceId, params.objectId));
             }
             function stop() {
 
