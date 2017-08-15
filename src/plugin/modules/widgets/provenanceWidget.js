@@ -250,16 +250,6 @@ define([
                 }
             }
 
-            function renderTestGraph(){
-              var margin = {top: 10, right: 10, bottom: 10, left: 10},
-                  width = config.width - 50 - margin.left - margin.right,
-                  height = graph.nodes.length * 38 - margin.top - margin.bottom,
-                  color = d3.scale.category20(),
-                  svg, path, link, node;
-              if (height < 450) {
-                  $container.find("#objgraphview").height(height + 40);
-              }
-            }
             function renderSankeyStyleGraph() {
                 var margin = {top: 10, right: 10, bottom: 10, left: 10},
                     width = config.width - 50 - margin.left - margin.right,
@@ -725,9 +715,6 @@ define([
                     .then(function(refData){
                       const isRef = true;
                       //since only one item in list, will flatten array one level
-                      // debugger;
-                      // console.log(graph);
-                      // console.log(referenceGraph);
                       addNodeLink(refData[0],objectIdentity, isRef);
                     });
             }
@@ -740,7 +727,7 @@ define([
                 };
             }
 
-            function test(objectIdentity){
+            function getObjectProvenance(objectIdentity){
               //TODO: unique provenance items
               //had to wrap identity in array as it somehow wanted a list
               return workspace.get_object_provenance([objectIdentity])
@@ -776,61 +763,6 @@ define([
 
                    });
             }
-            function getObjectProvenance(objIdentities) {
-              //returns links to objects
-                return workspace.get_object_provenance(objIdentities)
-                    .then(function (objdata) {
-
-                        var uniqueRefs = {},
-                            uniqueRefObjectIdentities = [],
-                            links = [];
-                        objdata.forEach(function (objectProvenance) {
-                            var objRef = getObjectRef(objectProvenance.info);
-
-                            // extract the references contained within the object
-                            // objectProvenance.refs.forEach(function (ref) {
-                            //     if (!(ref in uniqueRefs)) {
-                            //         uniqueRefs[ref] = 'included';
-                            //         uniqueRefObjectIdentities.push({ref: ref});
-                            //     }
-                            //     links.push(makeLink(ref, objRef, 1));
-                            // });
-
-                            // extract the references from the provenance
-                            objectProvenance.provenance.forEach(function (provenance) {
-
-                                if (provenance.resolved_ws_objects) {
-                                    provenance.resolved_ws_objects.forEach(function (resolvedObjectRef) {
-                                         if (!(resolvedObjectRef in uniqueRefs)) {
-                                            uniqueRefs[resolvedObjectRef] = 'included';
-                                            //resolvedObjectref is the prov id
-                                            uniqueRefObjectIdentities.push({ref: resolvedObjectRef});
-                                        }
-                                        //make the link
-                                        links.push(makeLink(resolvedObjectRef, objRef, 1));
-                                    });
-                                }
-                            });
-                            // copied from
-                            if (objectProvenance.copied) {
-                                var copyShort = objectProvenance.copied.split('/')[0] + '/' + objectProvenance.copied.split('/')[1];
-                                var thisShort = getObjectRefShort(objectProvenance.info);
-                                if (copyShort !== thisShort) { // only add if it wasn't copied from an older version
-                                    if (!(objectProvenance.copied in uniqueRefs)) {
-                                        uniqueRefs[objectProvenance.copied] = 'copied'; // TODO switch to prov??
-                                        uniqueRefObjectIdentities.push({ref: objectProvenance.copied});
-                                    }
-                                    links.push(makeLink(objectProvenance.copied, objRef, 1));
-                                }
-                            }
-                        });
-                        return {
-                            uniqueRefs: uniqueRefs,
-                            uniqueRefObjectIdentities: uniqueRefObjectIdentities,
-                            links: links
-                        };
-                    });
-            }
 
             function isUndefNull(obj) {
                 if (obj === null || obj === undefined) {
@@ -839,113 +771,11 @@ define([
                 return false;
             }
 
-            function getObjectInfo(refData) {
-                return workspace.get_object_info_new({
-                    objects: refData['uniqueRefObjectIdentities'],
-                    includeMetadata: 1,
-                    ignoreErrors: 1
-                })
-                    .then(function (objInfoList) {
-                        //shows the provenence objects??
-                        // var objInfoStash = {};
-                        // for (var i = 0; i < objInfoList.length; i++) {
-                        //     if (objInfoList[i]) {
-                        //         objInfoStash[objInfoList[i][6] + "/" + objInfoList[i][0] + "/" + objInfoList[i][4]] = objInfoList[i];
-                        //     }
-                        // }
-                        // add the nodes
-                        /**
-                        var uniqueRefs = refData.uniqueRefs;
-                        for (var ref in uniqueRefs) {
-                            var refInfo = objInfoStash[ref];
-                            if (refInfo) {
-                                //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
-                                var t = refInfo[2].split("-")[0];
-                                var objId = refInfo[6] + "/" + refInfo[0] + "/" + refInfo[4];
-                                var nodeId = graph.nodes.length;
-                                let node = {
-                                    node: nodeId,
-                                    name: getNodeLabel(refInfo),
-                                    info: refInfo,
-                                    nodeType: uniqueRefs[ref],
-                                    objId: objId
-                                };
-                                graph.nodes.push(node);
-                                provenanceGraph.nodes.push(node);
-                                objRefToNodeIdx[objId] = nodeId;
-                            } else {
-                                // there is a reference, but we no longer have access; could do something better
-                                // here, but instead we just skip
-                                // At least warn... there be bugs if this happens...
-                                console.warn('In provenance widget reference '  + ref + ' is not accessible');
-                            }
-                        }
-                        **/
-
-                        if (refInfo) {
-                            //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
-                            var t = refInfo[2].split("-")[0];
-                            var objId = refInfo[6] + "/" + refInfo[0] + "/" + refInfo[4];
-                            var nodeId = graph.nodes.length;
-                            let node = {
-                                node: nodeId,
-                                name: getNodeLabel(refInfo),
-                                info: refInfo,
-                                nodeType: uniqueRefs[ref],
-                                objId: objId
-                            };
-                            graph.nodes.push(node);
-                            provenanceGraph.nodes.push(node);
-                            objRefToNodeIdx[objId] = nodeId;
-                        } else {
-                            // there is a reference, but we no longer have access; could do something better
-                            // here, but instead we just skip
-                            // At least warn... there be bugs if this happens...
-                            console.warn('In provenance widget reference '  + ref + ' is not accessible');
-
-                        }
-                        // add the link info
-                        refData.links.forEach(function (link) {
-                            if ( isUndefNull(objRefToNodeIdx[link.source]) || isUndefNull(objRefToNodeIdx[link.target]) ) {
-                                console.warn('skipping link', link);
-                            } else {
-                                graph.links.push(makeLink(objRefToNodeIdx[link.source], objRefToNodeIdx[link.target], link.value));
-                                provenanceGraph.links.push(makeLink(objRefToNodeIdx[link.source], objRefToNodeIdx[link.target], link.value));
-                            }
-                        });
-                        // graph.links.push(makeLink(resolvedObjectRef, objRef, 1));
-                        // provenanceGraph.links.push(makeLink(resolvedObjectRef, objRef, 1));
-                    })
-                    .catch(function (err) {
-                        // we couldn't get info for some reason, could be if objects are deleted or not visible
-                        var uniqueRefs = refData['uniqueRefs'];
-                        for (var ref in uniqueRefs) {
-                            var nodeId = graph['nodes'].length;
-                            var refTokens = ref.split("/");
-                            graph['nodes'].push({
-                                node: nodeId,
-                                name: ref,
-                                info: [refTokens[1], "Data not found, object may be deleted",
-                                    "Unknown", "", refTokens[2], "Unknown", refTokens[0],
-                                    refTokens[0], "Unknown", "Unknown", {}],
-                                nodeType: uniqueRefs[ref],
-                                objId: ref
-                            });
-                            objRefToNodeIdx[ref] = nodeId;
-                        }
-                        // add the link info
-                        var links = refData['links'];
-                        for (var i = 0; i < links.length; i++) {
-                            graph['links'].push(makeLink(objRefToNodeIdx[links[i]['source']], objRefToNodeIdx[links[i]['target']],links[i]['value']));
-                        }
-                    });
-            }
 
             function buildDataAndRender(objref) {
                 // init the graph
                 $container.find('#loading-mssg').show();
                 $container.find('#objgraphview').hide();
-
 
                 workspace.get_object_history(objref)
                     .then(function (data) {
@@ -961,14 +791,12 @@ define([
                         // get prov info for each of these objects
                         return Promise.all([
                             getReferencingObjects(objectIdentity),
-                            test(objectIdentity)
+                            getObjectProvenance(objectIdentity)
                         ]);
 
                     })
 
                     .then(function () {
-                        console.log("referenceGraph", referenceGraph);
-                        console.log("provenanceGraph", provenanceGraph);
                         finishUpAndRender();
                     })
                     .catch(function (err) {
@@ -989,9 +817,9 @@ define([
               var links = [
                   { source: 0, target: 1 }
               ];
-              var nodes = referenceGraph.nodes
-              //
-              var links = referenceGraph.linkes;
+              // var nodes = referenceGraph.nodes
+              // //
+              // var links = referenceGraph.linkes;
 
               var svg = d3.select('body').append('svg')
                   .attr('width', width)
