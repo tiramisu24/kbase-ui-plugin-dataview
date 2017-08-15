@@ -637,7 +637,6 @@ define([
                 //     provenanceGraph.nodes[objRefToNodeIdx[latestObjId].nodeType] = 'selected';
                 //     referenceGraph.nodes[objRefToNodeIdx[latestObjId].nodeType] = 'selected';
                 // }
-                debugger;
                 return objIdentities;
             }
 
@@ -659,7 +658,6 @@ define([
             }
             function addNodeLink(refData,objectIdentity, isRef) {
               //refData is the objects that reference current object
-              debugger;
                 for (var i = 0; i < refData.length; i++) {
                     var limit = 50;
                         /**
@@ -707,18 +705,20 @@ define([
                         objRefToNodeIdx[objId] = nodeId;
                         let refId = objRefToNodeIdx[objectIdentity.ref];
                         if (refId !== null) {  // only add the link if it is visible
+                            // debugger;
+
                             graph.links.push(makeLink(refId, nodeId, 1));
                             if(isRef){
                               referenceGraph.nodes.push(node);
                               referenceGraph.links.push(makeLink(refId, nodeId, 1));
                             }else{
                               debugger;
+
                               provenanceGraph.nodes.push(node);
                               provenanceGraph.links.push(makeLink(refId, nodeId, 1));
                             }
                         }
                 }
-              debugger;
             }
             function getReferencingObjects(objectIdentity) {
                 //workspace requires list for referencing objects
@@ -726,8 +726,9 @@ define([
                     .then(function(refData){
                       const isRef = true;
                       //since only one item in list, will flatten array one level
-                      debugger;
-                      console.log(graph);
+                      // debugger;
+                      // console.log(graph);
+                      // console.log(referenceGraph);
                       addNodeLink(refData[0],objectIdentity, isRef);
                     });
             }
@@ -740,10 +741,10 @@ define([
                 };
             }
 
-            function test(objIdentities){
+            function test(objectIdentity){
               //TODO: unique provenance items
               //need to change this to only 1 version
-              return workspace.get_object_provenance(objIdentities)
+              return workspace.get_object_provenance([objectIdentity])
                   .then(function (provData) {
                     var uniqueRefs = {},
                         uniqueRefObjectIdentities = [];
@@ -769,11 +770,10 @@ define([
                              objects: uniqueRefObjectIdentities,
                              includeMetadata: 1,
                              ignoreErrors: 1
-                          }),objIdentities]);
-                   }).spread(function (refData, objIdentities) {
-                     debugger;
+                          }),objectIdentity]);
+                   }).spread(function (refData, objectIdentity) {
                      const isRef = false;
-                     addNodeLink(refData,objIdentities[objIdentities.length -1], false);
+                     addNodeLink(refData,objectIdentity, false);
                      debugger;
 
                    });
@@ -969,8 +969,11 @@ define([
 
                     })
 
-                    .finally(function () {
-                        finishUpAndRender();
+                    .then(function () {
+                        debugger;
+                        console.log("referenceGraph", referenceGraph);
+                        console.log("provenanceGraph", provenanceGraph);
+                        // finishUpAndRender();
                     })
                     .catch(function (err) {
                         showError(err);
