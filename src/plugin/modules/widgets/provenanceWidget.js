@@ -55,11 +55,13 @@ define([
                 },
                 referenceGraph = {
                     nodes:[],
-                    links:[]
+                    links:[],
+                    referenceNode: []
                 },
                 provenanceGraph = {
                     nodes: [],
                     links: [],
+                    referenceNode: []
                 },
                 div = html.tag('div'),
                 br = html.tag('br'),
@@ -686,7 +688,8 @@ define([
 
                         var t = refInfo[2].split("-")[0];
                         var objId = refInfo[6] + "/" + refInfo[0] + "/" + refInfo[4];
-                        var nodeId = graph['nodes'].length;
+                        // var nodeId = graph['nodes'].length;
+                        var nodeId = isRef ? referenceGraph.nodes.length : provenanceGraph.nodes.length;
                         //pushes reference nodes into list
                         let node = {
                             node: nodeId,
@@ -697,18 +700,20 @@ define([
                         };
                         graph.nodes.push(node);
                         objRefToNodeIdx[objId] = nodeId;
-                        let refId = objRefToNodeIdx[objectIdentity.ref];
-                        if (refId !== null) {  // only add the link if it is visible
+                        let targetId = objRefToNodeIdx[objectIdentity.ref];
+                        if (targetId !== null) {  // only add the link if it is visible
                             // debugger;
 
-                            graph.links.push(makeLink(refId, nodeId, 1));
+                            graph.links.push(makeLink(targetId, nodeId, 1));
                             if(isRef){
                               referenceGraph.nodes.push(node);
-                              referenceGraph.links.push(makeLink(refId, nodeId, 1));
+                              referenceGraph.links.push(makeLink(targetId, nodeId, 1));
+                              // referenceGraph.referenceNode.push(makeLink(targetId, nodeId, 1));
                             }else{
                               // debugger;
                               provenanceGraph.nodes.push(node);
-                              provenanceGraph.links.push(makeLink(refId, nodeId, 1));
+                              provenanceGraph.links.push(makeLink(targetId, nodeId, 1));
+                              // provenanceGraph.referenceNode.push(makeLink(targetId, nodeId, 1));
                             }
                         }
                 }
@@ -809,135 +814,91 @@ define([
 
             }
             function renderTree(){
-              var margin = {top: 20, right: 120, bottom: 20, left: 120},
-                  width = 960 - margin.right - margin.left,
-                  height = 800 - margin.top - margin.bottom;
+              var treeData = [{
+                name: 'parent',
+                children: [
+                  {name: 'child1'},
+                  {name: 'child2'}
+                ]
+              }];
+              var updateData = [{
+                name: 'child1',
+                children: [
+                  {name: 'child3'},
+                  {name: 'child4'}
+                ]
+              }];
 
-              var i = 0,
-                  duration = 750,
-                  root;
+              // ************** Generate the tree diagram  *****************
+              var margin = {top: 20, right: 120, bottom: 20, left: 120},
+               width = 960 - margin.right - margin.left,
+               height = 500 - margin.top - margin.bottom;
+
+              var i = 0;
 
               var tree = d3.layout.tree()
-                  .size([height, width]);
+               .size([height, width]);
 
               var diagonal = d3.svg.diagonal()
-                  .projection(function(d) { return [d.y, d.x]; });
+               .projection(function(d) { return [d.y, d.x]; });
 
               var svg = d3.select("body").append("svg")
-                  .attr("width", width + margin.right + margin.left)
-                  .attr("height", height + margin.top + margin.bottom)
+               .attr("width", width + margin.right + margin.left)
+               .attr("height", height + margin.top + margin.bottom)
                 .append("g")
-                  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+               .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-              d3.json("flare.json", function(error, flare) {
-                if (error) throw error;
+              var root = treeData[0];
 
-                root = flare;
-                root.x0 = height / 2;
-                root.y0 = 0;
+              update(root);
+              update(updateData[0]);
 
-                function collapse(d) {
-                  if (d.children) {
-                    d._children = d.children;
-                    d._children.forEach(collapse);
-                    d.children = null;
-                  }
-                }
-
-                root.children.forEach(collapse);
-                update(root);
-              });
-
-              d3.select(self.frameElement).style("height", "800px");
 
               function update(source) {
-
                 // Compute the new tree layout.
                 var nodes = tree.nodes(root).reverse(),
-                    links = tree.links(nodes);
+                 links = tree.links(nodes);
 
+                debugger;
                 // Normalize for fixed-depth.
                 nodes.forEach(function(d) { d.y = d.depth * 180; });
 
-                // Update the nodes…
+                // Declare the nodesâ€¦
                 var node = svg.selectAll("g.node")
-                    .data(nodes, function(d) { return d.id || (d.id = ++i); });
+                 .data(nodes, function(d) { return d.id || (d.id = ++i); });
 
-                // Enter any new nodes at the parent's previous position.
+
+                // Enter the nodes.
                 var nodeEnter = node.enter().append("g")
-                    .attr("class", "node")
-                    .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
-                    .on("click", click);
+                 .attr("class", "node")
+                 .attr("transform", function(d) {
+                  return "translate(" + d.y + "," + d.x + ")"; });
 
                 nodeEnter.append("circle")
-                    .attr("r", 1e-6)
-                    .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+                 .attr("r", 10)
+                 .style("fill", "pink");
 
                 nodeEnter.append("text")
-                    .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
-                    .attr("dy", ".35em")
-                    .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
-                    .text(function(d) { return d.name; })
-                    .style("fill-opacity", 1e-6);
+                 .attr("x", function(d) {
+                  return d.children || d._children ? -13 : 13; })
+                 .attr("dy", ".35em")
+                 .attr("text-anchor", function(d) {
+                  return d.children || d._children ? "end" : "start"; })
+                 .text(function(d) { return d.name; })
+                 .style("fill-opacity", 1);
 
-                // Transition nodes to their new position.
-                var nodeUpdate = node.transition()
-                    .duration(duration)
-                    .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
-
-                nodeUpdate.select("circle")
-                    .attr("r", 4.5)
-                    .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
-
-                nodeUpdate.select("text")
-                    .style("fill-opacity", 1);
-
-                // Transition exiting nodes to the parent's new position.
-                var nodeExit = node.exit().transition()
-                    .duration(duration)
-                    .attr("transform", function(d) { return "translate(" + source.y + "," + source.x + ")"; })
-                    .remove();
-
-                nodeExit.select("circle")
-                    .attr("r", 1e-6);
-
-                nodeExit.select("text")
-                    .style("fill-opacity", 1e-6);
-
-                // Update the links…
+                // Declare the linksâ€¦
                 var link = svg.selectAll("path.link")
-                    .data(links, function(d) { return d.target.id; });
+                 .data(links, function(d) { return d.target.id; });
 
-                // Enter any new links at the parent's previous position.
+                // Enter the links.
                 link.enter().insert("path", "g")
-                    .attr("class", "link")
-                    .attr("d", function(d) {
-                      var o = {x: source.x0, y: source.y0};
-                      return diagonal({source: o, target: o});
-                    });
+                 .attr("class", "link")
+                 .attr("d", diagonal);
+              debugger;
 
-                // Transition links to their new position.
-                link.transition()
-                    .duration(duration)
-                    .attr("d", diagonal);
-
-                // Transition exiting nodes to the parent's new position.
-                link.exit().transition()
-                    .duration(duration)
-                    .attr("d", function(d) {
-                      var o = {x: source.x, y: source.y};
-                      return diagonal({source: o, target: o});
-                    })
-                    .remove();
-
-                // Stash the old positions for transition.
-                nodes.forEach(function(d) {
-                  d.x0 = d.x;
-                  d.y0 = d.y;
-                });
               }
 
-              // Toggle children on click.
               function click(d) {
                 if (d.children) {
                   d._children = d.children;
@@ -946,130 +907,115 @@ define([
                   d.children = d._children;
                   d._children = null;
                 }
-                update(d);
               }
+
+
+
             }
             function renderTest(){
-              var margin = {top: 10, right: 10, bottom: 10, left: 10},
-                  width = 600,
-                  height = 600;
-              // var margin = {top: 10, right: 10, bottom: 10, left: 10},
-              //     width = config.width - 50 - margin.left - margin.right,
-              //     height = graph.nodes.length * 38 - margin.top - margin.bottom
-              var linkDistance=200;
+                var width = 960,
+                    height = 500,
+                    radius = 6;
+
+                // var nodes = [
+                //     { node:0, name:"test0", info: [], nodeType: "core", objId: 123},
+                //     { node:1, name:"test1", info: [], nodeType: "core", objId: 1234},
+                //     { node:2, name:"test2", info: [], nodeType: "core", objId: 12345},
+                //     { node:3, name:"test3", info: [], nodeType: "core", objId: 12345},
+                //     { node:4, name:"test4", info: [], nodeType: "core", objId: 12345},
+                //     { node:5, name:"test5", info: [], nodeType: "core", objId: 12345},
+                //     { node:6, name:"test6", info: [], nodeType: "core", objId: 12345},
+                //     { node:7, name:"test7", info: [], nodeType: "core", objId: 12345},
+                //     { node:8, name:"test8", info: [], nodeType: "core", objId: 12345},
+                //     { node:9, name:"test9", info: [], nodeType: "core", objId: 12345}
+                //
+                // ];
+                //
+                //
+                var nodes = provenanceGraph.nodes;
+
+                // console.log(provenanceGraph.links);
+                var links = provenanceGraph.links;
+                // var links = [
+                //     { source: 0, target: 1 },
+                //     { source: 0, target: 2 },
+                //
+                // ];
+                // var links = [
+                //     { source: 0, target: 1 },
+                //     { source: 0, target: 2 },
+                //     { source: 2, target: 3 },
+                //     { source: 2, target: 4 },
+                //     { source: 3, target: 5 },
+                //     { source: 3, target: 6 },
+                //     { source: 4, target: 7 },
+                //     { source: 4, target: 8 },
+                //     { source: 8, target: 9 },
+                // ];
+                var fill = d3.scale.category20();
+
+                var force = d3.layout.force()
+                    .charge(-120)
+                    .linkDistance(30)
+                    .size([width, height]);
+
+                var svg = d3.select("body").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
 
 
-              var nodes = [
-                  { node:0, name:"test0", info: [], nodeType: "core", objId: 123},
-                  { node:1, name:"test1", info: [], nodeType: "core", objId: 1234},
-                  { node:2, name:"test2", info: [], nodeType: "core", objId: 12345},
-                  { node:3, name:"test3", info: [], nodeType: "core", objId: 12345},
-                  { node:4, name:"test4", info: [], nodeType: "core", objId: 12345},
-                  { node:5, name:"test5", info: [], nodeType: "core", objId: 12345},
-                  { node:6, name:"test6", info: [], nodeType: "core", objId: 12345},
-                  { node:7, name:"test7", info: [], nodeType: "core", objId: 12345},
-                  { node:8, name:"test8", info: [], nodeType: "core", objId: 12345},
-                  { node:9, name:"test9", info: [], nodeType: "core", objId: 12345}
 
-              ];
-              //
-              //
-              // var nodes = provenanceGraph.nodes;
-              var links = [
-                  { source: 0, target: 1 },
-                  { source: 0, target: 2 },
-                  { source: 2, target: 3 },
-                  { source: 2, target: 4 },
-                  { source: 3, target: 5 },
-                  { source: 3, target: 6 },
-                  { source: 4, target: 7 },
-                  { source: 4, target: 8 },
-                  { source: 8, target: 9 },
-                  { source: 0, target: 9 }
-              ];
-              // var links = [
-              //     { source: 0, target: 1 },
-              //     { source: 1, target: 2 },
-              //     { source: 2, target: 3 },
-              //     { source: 3, target: 4 },
-              //     { source: 4, target: 5 },
-              //     { source: 5, target: 6 },
-              //     { source: 6, target: 7 },
-              //     { source: 7, target: 8 },
-              //     { source: 8, target: 9 },
-              //     { source: 0, target: 2 }
-              // ];
-              //
-              // var links = provenanceGraph.links;
+                  var link = svg.selectAll("line")
+                      .data(links)
+                      .enter().append("line")
+                      .style("stroke", 'black');
 
-              var svg = d3.select('body').append('svg')
-                  .attr('width', width)
-                  .attr('height', height)
-                  .style("border", "1px solid black");   // fill the text with the colour black
-              var force = d3.layout.force()
-                  .size([width, height])
-                  .nodes(nodes)
-                  .links(links)
-                  .charge(-1000);
-;
+                  var node = svg.selectAll("circle")
+                      .data(nodes)
+                    .enter().append("circle")
+                      .attr("r", radius - .75)
+                      .style("fill", function(d) { return fill(d.group); })
+                      .style("stroke", function(d) { return d3.rgb(fill(d.group)).darker(); })
+                      .call(force.drag);
 
-              // force.linkDis  tance(width/75);
+                  var nodelabels = svg.selectAll(".nodelabel")
+                      .data(nodes)
+                      .enter()
+                      .append("text")
+                      .attr({"x":function(d){return d.x;},
+                             "y":function(d){return d.y;},
+                             "class":"nodelabel",
+                             "stroke":"black"})
+                      .text(function(d){return d.name;});
+                      debugger;
 
-              var link = svg.selectAll('.link')
-                  .data(links)
-                  .enter().append('line')
-                  .attr('class', 'link')
-                  .style('stroke', 'black')
-                  .style('stroke-width', '3px');
+                  force
+                      .nodes(nodes)
+                      .links(links)
+                      .on("tick", tick)
+                      .start();
 
-              var node = svg.selectAll('.node')
-                  .data(nodes)
-                  .enter().append('circle')
-                  .attr('class', 'node')
-                  .style('fill', 'pink')
-                  .style('stroke', 'blue')
-                  .style('stroke-width', '2px');
+                  function tick(e) {
+                    var k = 6 * e.alpha;
 
-             var nodelabels = svg.selectAll(".nodelabel")
-                 .data(nodes)
-                 .enter()
-                 .append("text")
-                 .attr({"x":function(d){return d.x;},
-                        "y":function(d){return d.y;},
-                        "class":"nodelabel",
-                        "stroke":"black"})
-                 .text(function(d){return d.name;});
+                    // Push sources up and targets down to form a weak tree.
+                    link
+                        .each(function(d) { d.source.y -= k, d.target.y += k; })
+                        .attr("x1", function(d) { return d.source.x; })
+                        .attr("y1", function(d) { return d.source.y; })
+                        .attr("x2", function(d) { return d.target.x; })
+                        .attr("y2", function(d) { return d.target.y; });
 
-              // node.append("text")
-              //     .text(function(d) { return d.name })
-              //     .attr('dy', '1em');
+                    node
+                        .attr("cx", function(d) { return d.x; })
+                        .attr("cy", function(d) { return d.y; });
 
-              force.on('tick', function() {
-                  node.attr('r', width/75)
-                      .attr('cx', function(d) {
-                        // debugger;
-
-                        return d.x; })
-                      .attr('cy', function(d) { return d.y; });
+                    nodelabels.attr("x", function(d) { return d.x; })
+                        .attr("y", function(d) { return d.y; });
 
 
-                  link.attr('x1', function(d) { return d.source.x; })
-                      .attr('y1', function(d) { return d.source.y; })
-                      .attr('x2', function(d) { return d.target.x; })
-                      .attr('y2', function(d) { return d.target.y; });
-
-                  nodelabels.attr("x", function(d) { return d.x; })
-                      .attr("y", function(d) { return d.y; });
-
-
-              });
-
-              // Okay, everything is set up now so it's time to turn
-              // things over to the force layout. Here we go.
-
-              force.start();
+                  }
             }
-
             function finishUpAndRender() {
                 addVersionEdges();
                 //TODO: provenance.graph.links seems to get mutated
