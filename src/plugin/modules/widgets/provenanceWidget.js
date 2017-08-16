@@ -305,7 +305,6 @@ define([
                     .size([width, height]);
 
                 path = sankey.link();
-                debugger;
 
                 sankey
                     .nodes(provenanceGraph.nodes)
@@ -859,7 +858,6 @@ define([
                 var nodes = tree.nodes(root).reverse(),
                  links = tree.links(nodes);
 
-                debugger;
                 // Normalize for fixed-depth.
                 nodes.forEach(function(d) { d.y = d.depth * 180; });
 
@@ -957,7 +955,11 @@ define([
                 var force = d3.layout.force()
                     .charge(-120)
                     .linkDistance(30)
-                    .size([width, height]);
+                    .size([width, height])
+                    .nodes(nodes)
+                    .links(links)
+                    .on("tick", tick)
+                    .start();;
 
                 var svg = d3.select("body").append("svg")
                     .attr("width", width)
@@ -987,13 +989,8 @@ define([
                              "class":"nodelabel",
                              "stroke":"black"})
                       .text(function(d){return d.name;});
-                      debugger;
 
-                  force
-                      .nodes(nodes)
-                      .links(links)
-                      .on("tick", tick)
-                      .start();
+
 
                   function tick(e) {
                     var k = 6 * e.alpha;
@@ -1015,6 +1012,7 @@ define([
 
 
                   }
+                  
             }
             function finishUpAndRender() {
                 addVersionEdges();
