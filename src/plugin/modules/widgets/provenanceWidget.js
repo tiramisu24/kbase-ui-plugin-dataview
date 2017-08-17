@@ -986,6 +986,7 @@ define([
               }
 
               function update() {
+                // debugger;
                 oldNodes = nodes;
                 maintainNodePositions();
 
@@ -1010,19 +1011,20 @@ define([
 
                 // link.style("stroke-width", function(d) { return d.weight; });
 
-                node.select("circle").attr("r", 1);
+                node.select("circle").attr("r", 10);
 
                 force.start();
               }
 
               function enterNodes(n) {
                 var g = n.enter().append("g")
-                  .attr("class", "node");
+                  .attr("class", "node")
+                  .on('click',click);
 
                 g.append("circle")
                   .attr("cx", 0)
                   .attr("cy", 0)
-                  .attr("r", 1)
+                  .attr("r", 10)
                   .call(force.drag);
 
                 g.append("text")
@@ -1080,10 +1082,11 @@ define([
                   .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
               });
 
-
+              function click(node){
+                update();
+              }
 
               render();
-              update();
             }
             function finishUpAndRender() {
                 addVersionEdges();
