@@ -912,161 +912,178 @@ define([
             }
 
             function renderTest(){
-                var width = 960,
-                    height = 500,
-                    radius = 6;
+              var width = 400,
+                  height = 400,
+                  oldNodes, // data
+                  svg, node, link, // d3 selections
+                  force = d3.layout.force()
+                  .charge(-300)
+                  .linkDistance(50)
+                  .size([width, height]);
 
-                // var nodes = [
-                //     { node:0, name:"test0", info: [], nodeType: "core", objId: 123},
-                //     { node:1, name:"test1", info: [], nodeType: "core", objId: 1234},
-                //     { node:2, name:"test2", info: [], nodeType: "core", objId: 12345},
-                //     { node:3, name:"test3", info: [], nodeType: "core", objId: 12345},
-                //     { node:4, name:"test4", info: [], nodeType: "core", objId: 12345},
-                //     { node:5, name:"test5", info: [], nodeType: "core", objId: 12345},
-                //     { node:6, name:"test6", info: [], nodeType: "core", objId: 12345},
-                //     { node:7, name:"test7", info: [], nodeType: "core", objId: 12345},
-                //     { node:8, name:"test8", info: [], nodeType: "core", objId: 12345},
-                //     { node:9, name:"test9", info: [], nodeType: "core", objId: 12345}
-                //
-                // ];
-                var nodes = [
+              var a = { node:0, name:"test0", info: [], nodeType: "core", objId: 1},
+                  b = { node:1, name:"test1", info: [], nodeType: "core", objId: 12},
+                  c = { node:2, name:"test2", info: [], nodeType: "core", objId: 123},
+                  e = { node:3, name:"test3", info: [], nodeType: "core", objId: 1234},
+                  f = { node:4, name:"test4", info: [], nodeType: "core", objId: 12345},
+                  nodes = [a, b, c],
+                  links = [{source: 0, target: 1},
+                          {source: 0, target: 2}];
 
-                    { node:0, name:"test0", info: [], nodeType: "core", objId: 1},
-                    { node:1, name:"test1", info: [], nodeType: "core", objId: 12},
-                    { node:2, name:"test2", info: [], nodeType: "core", objId: 123}
+              // function randomData() {
+              //   oldNodes = nodes;
+              //   // generate some data randomly
+              //   nodes = _.chain(_.range(_.random(10, 20)))
+              //     .map(function() {
+              //       var node = {};
+              //       node.key = _.random(0, 30);
+              //       node.weight = _.random(4, 10);
+              //
+              //       return node;
+              //     }).uniq(function(node) {
+              //       return node.key
+              //     }).value();
+              //
+              //   if (oldNodes) {
+              //     var add = _.initial(oldNodes, _.random(0, oldNodes.length));
+              //     add = _.rest(add, _.random(0, add.length));
+              //
+              //     nodes = _.union(nodes, add);
+              //   }
+              //
+              //   links = _.map(_.range(_.random(15, 25)), function() {
+              //       var link = {};
+              //       link.source = _.random(0, nodes.length - 1);
+              //       link.target = _.random(0, nodes.length - 1);
+              //       link.weight = _.random(1, 3);
+              //
+              //       return link;
+              //     });
+              //     debugger;
+              //   maintainNodePositions();
+              //
+              // }
 
-                ];
+              function render() {
+                // randomData();
+                force.nodes(nodes).links(links);
 
-                var newNodes = [
-                  { node:3, name:"test3", info: [], nodeType: "core", objId: 1234},
-                  { node:4, name:"test4", info: [], nodeType: "core", objId: 12345},
-                  { node:5, name:"test5", info: [], nodeType: "core", objId: 123456}
-                ];
-                //
-                //
-                // var nodes = provenanceGraph.nodes;
+                svg = d3.select("body").append("svg")
+                  .attr("width", width)
+                  .attr("height", height);
 
-                // console.log(provenanceGraph.links);
-                // var links = provenanceGraph.links;
-                var links = [
-                    { source: 0, target: 1, linkNum : 0 },
-                    { source: 0, target: 2, linkNum : 1 }
+                var l = svg.selectAll(".link")
+                  .data(links, function(d) {return d.source + "," + d.target});
+                var n = svg.selectAll(".node")
+                  .data(nodes, function(d) {return d.name});
+                enterLinks(l);
+                enterNodes(n);
 
-                ];
+                link = svg.selectAll(".link");
+                node = svg.selectAll(".node");
 
-                var links2 = [
-                    { source: 2, target: 3 , linkNum : 2},
-                    { source: 2, target: 4 , linkNum : 3}
+                force.start();
+              }
 
-                ];
-                var fill = d3.scale.category20();
+              function update() {
+                oldNodes = nodes;
+                maintainNodePositions();
 
+                nodes.push(e);
+                nodes.push(f);
+                links.push({source: 2, target: 3});
+                links.push({source: 3, target: 4});
+                // debugger;
+                // randomData();
+                force.nodes(nodes).links(links);
 
-                var force = d3.layout.force()
-                    .charge(-120)
-                    .linkDistance(30)
-                    .size([width, height])
-                    .nodes(nodes)
-                    .links(links)
-                    .on("tick", tick)
-                    .start();
+                var l = svg.selectAll(".link")
+                  .data(links, function(d) {return d.source + "," + d.target});
+                var n = svg.selectAll(".node")
+                  .data(nodes, function(d) {return d.name});
+                enterLinks(l);
+                // exitLinks(l);
+                enterNodes(n);
+                exitNodes(n);
+                link = svg.selectAll(".link");
+                node = svg.selectAll(".node");
 
-                var svg = d3.select("body").append("svg")
-                    .attr("width", width)
-                    .attr("height", height);
+                // link.style("stroke-width", function(d) { return d.weight; });
 
+                node.select("circle").attr("r", 1);
 
-                  var g = svg.append("g").attr("transform", "translate(32," + (height / 2) + ")");
+                force.start();
+              }
 
+              function enterNodes(n) {
+                var g = n.enter().append("g")
+                  .attr("class", "node");
 
+                g.append("circle")
+                  .attr("cx", 0)
+                  .attr("cy", 0)
+                  .attr("r", 1)
+                  .call(force.drag);
 
-                  // var node = g.selectAll("circle")
-                  //     .data(nodes, function(d) { return d.node; })
-                  //     .enter().append("circle")
-                  //     .attr("r", radius - .75)
-                  //     .on('click', click)
-                  //     .style('fill', "pink")
-                  //     .style("stroke", "black");
+                g.append("text")
+                  .attr("dy", ".35em")
+                  .text(function(d) {return d.name});
+              }
 
+              function exitNodes(n) {
+                n.exit().remove();
+              }
 
-                  var link = g.selectAll("line")
-                      .data(links , function(d) {return d.linkNum; })
-                      .enter().append("line")
-                      .style("stroke", 'black');
-                  //
-                  // var link2 = g.selectAll("line")
-                  //     .data(links2 , function(d) {return d.linkNum; })
-                  //     .enter().append("line")
-                  //     .style("stroke", 'black');
+              function enterLinks(l) {
+                l.enter().insert("line", ".node")
+                  .attr("class", "link")
+                  .style("stroke-width", function(d) { return d.weight; });
+              }
 
+              function exitLinks(l) {
+                l.exit().remove();
+              }
 
+              function maintainNodePositions() {
+                // var kv = {};
+                // oldNodes.forEach( function(d) {
+                //   debugger;
+                //   d.fixed = true;
+                //   kv[d.name] = d;
+                // });
+                // _.each(nodes, function(d) {
+                //   if (kv[d.name]) {
+                //     // if the node already exists, maintain current position
+                //     d.x = kv[d.name].x;
+                //     d.y = kv[d.name].y;
+                //   } else {
+                //     // else assign it a random position near the center
+                //     d.x = width / 2 + _.random(-150, 150);
+                //     d.y = height / 2 + _.random(-25, 25);
+                //   }
+                // });
+              }
 
-                  // var link = g.selectAll("line")
-                  //     .data(links, function(d) {return d.linkNum; })
-                  //     .enter().append("line")
-                  //     .style("stroke", 'black')
+              force.on("tick", function(e) {
+                var k = 10 * e.alpha;
+                // Push sources up and targets down to form a weak tree.
+                link
+                    .each(function(d) {d.source.y += k, d.target.y -= k; })
+                    .attr("x1", function(d) { return d.source.x; })
+                    .attr("y1", function(d) { return d.source.y; })
+                    .attr("x2", function(d) { return d.target.x; })
+                    .attr("y2", function(d) { return d.target.y; });
 
-
-                  var nodelabels = g.selectAll(".nodelabel")
-                      .data(nodes)
-                      .enter()
-                      .append("text")
-                      .attr({"x":function(d){return d.x;},
-                             "y":function(d){return d.y;},
-                             "class":"nodelabel",
-                             "stroke":"black"})
-                      .text(function(d){return d.name;});
-
-
-
-                  function tick(e) {
-                    var k = 6 * e.alpha;
-                    console.log(k);
-
-                    // Push sources up and targets down to form a weak tree.
-                    link
-                        .each(function(d) {d.source.y -= k, d.target.y += k; })
-                        .attr("x1", function(d) { return d.source.x; })
-                        .attr("y1", function(d) { return d.source.y; })
-                        .attr("x2", function(d) { return d.target.x; })
-                        .attr("y2", function(d) { return d.target.y; });
-
-                    g.selectAll("circle")
-                        .attr("cx", function(d) { return d.x; })
-                        .attr("cy", function(d) { return d.y; });
-
-                    nodelabels.attr("x", function(d) { return d.x; })
-                        .attr("y", function(d) { return d.y; });
-
-
-                  }
-
-
-                  function update(nodes){
-                    var newnode = d3.select('g').selectAll("circle")
-                        .data( nodes, function(d) { return d.objId; })
-
-                    newnode.enter()
-                        .append("circle")
-                        .attr("r", radius - .75)
-                        .attr("cx", function(d) {return d.x; })
-                        .attr("cy", function(d) { return d.y; })
-                        .style('fill', "green")
-                        .style('stroke', 'green');
+                node
+                  .attr("cx", function(d) { return d.x; })
+                  .attr("cy", function(d) { return d.y; })
+                  .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+              });
 
 
 
-                  }
-                  function click(data){
-                    // var newData = { node:3, name:"test3", info: [], nodeType: "core", objId: 12345};
-                    // update([newData]);
-                  }
-                  // update([{}]);
-                  update(nodes);
-                  nodes = nodes.concat(newNodes);
-                  update(nodes);
-                  // update(newData);
-                  // setTimeout(function(){ update(newData); }, 3000);
+              render();
+              update();
             }
             function finishUpAndRender() {
                 addVersionEdges();
