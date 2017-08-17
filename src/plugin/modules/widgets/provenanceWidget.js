@@ -910,6 +910,7 @@ define([
 
 
             }
+
             function renderTest(){
                 var width = 960,
                     height = 500,
@@ -928,29 +929,38 @@ define([
                 //     { node:9, name:"test9", info: [], nodeType: "core", objId: 12345}
                 //
                 // ];
+                var nodes = [
+
+                    { node:0, name:"test0", info: [], nodeType: "core", objId: 1},
+                    { node:1, name:"test1", info: [], nodeType: "core", objId: 12},
+                    { node:2, name:"test2", info: [], nodeType: "core", objId: 123}
+
+                ];
+
+                var newNodes = [
+                  { node:3, name:"test3", info: [], nodeType: "core", objId: 1234},
+                  { node:4, name:"test4", info: [], nodeType: "core", objId: 12345},
+                  { node:5, name:"test5", info: [], nodeType: "core", objId: 123456}
+                ];
                 //
                 //
-                var nodes = provenanceGraph.nodes;
+                // var nodes = provenanceGraph.nodes;
 
                 // console.log(provenanceGraph.links);
-                var links = provenanceGraph.links;
-                // var links = [
-                //     { source: 0, target: 1 },
-                //     { source: 0, target: 2 },
-                //
-                // ];
-                // var links = [
-                //     { source: 0, target: 1 },
-                //     { source: 0, target: 2 },
-                //     { source: 2, target: 3 },
-                //     { source: 2, target: 4 },
-                //     { source: 3, target: 5 },
-                //     { source: 3, target: 6 },
-                //     { source: 4, target: 7 },
-                //     { source: 4, target: 8 },
-                //     { source: 8, target: 9 },
-                // ];
+                // var links = provenanceGraph.links;
+                var links = [
+                    { source: 0, target: 1, linkNum : 0 },
+                    { source: 0, target: 2, linkNum : 1 }
+
+                ];
+
+                var links2 = [
+                    { source: 2, target: 3 , linkNum : 2},
+                    { source: 2, target: 4 , linkNum : 3}
+
+                ];
                 var fill = d3.scale.category20();
+
 
                 var force = d3.layout.force()
                     .charge(-120)
@@ -959,28 +969,45 @@ define([
                     .nodes(nodes)
                     .links(links)
                     .on("tick", tick)
-                    .start();;
+                    .start();
 
                 var svg = d3.select("body").append("svg")
                     .attr("width", width)
                     .attr("height", height);
 
 
+                  var g = svg.append("g").attr("transform", "translate(32," + (height / 2) + ")");
 
-                  var link = svg.selectAll("line")
-                      .data(links)
+
+
+                  // var node = g.selectAll("circle")
+                  //     .data(nodes, function(d) { return d.node; })
+                  //     .enter().append("circle")
+                  //     .attr("r", radius - .75)
+                  //     .on('click', click)
+                  //     .style('fill', "pink")
+                  //     .style("stroke", "black");
+
+
+                  var link = g.selectAll("line")
+                      .data(links , function(d) {return d.linkNum; })
                       .enter().append("line")
                       .style("stroke", 'black');
+                  //
+                  // var link2 = g.selectAll("line")
+                  //     .data(links2 , function(d) {return d.linkNum; })
+                  //     .enter().append("line")
+                  //     .style("stroke", 'black');
 
-                  var node = svg.selectAll("circle")
-                      .data(nodes)
-                    .enter().append("circle")
-                      .attr("r", radius - .75)
-                      .style("fill", function(d) { return fill(d.group); })
-                      .style("stroke", function(d) { return d3.rgb(fill(d.group)).darker(); })
-                      .call(force.drag);
 
-                  var nodelabels = svg.selectAll(".nodelabel")
+
+                  // var link = g.selectAll("line")
+                  //     .data(links, function(d) {return d.linkNum; })
+                  //     .enter().append("line")
+                  //     .style("stroke", 'black')
+
+
+                  var nodelabels = g.selectAll(".nodelabel")
                       .data(nodes)
                       .enter()
                       .append("text")
@@ -994,16 +1021,17 @@ define([
 
                   function tick(e) {
                     var k = 6 * e.alpha;
+                    console.log(k);
 
                     // Push sources up and targets down to form a weak tree.
                     link
-                        .each(function(d) { d.source.y -= k, d.target.y += k; })
+                        .each(function(d) {d.source.y -= k, d.target.y += k; })
                         .attr("x1", function(d) { return d.source.x; })
                         .attr("y1", function(d) { return d.source.y; })
                         .attr("x2", function(d) { return d.target.x; })
                         .attr("y2", function(d) { return d.target.y; });
 
-                    node
+                    g.selectAll("circle")
                         .attr("cx", function(d) { return d.x; })
                         .attr("cy", function(d) { return d.y; });
 
@@ -1012,7 +1040,33 @@ define([
 
 
                   }
-                  
+
+
+                  function update(nodes){
+                    var newnode = d3.select('g').selectAll("circle")
+                        .data( nodes, function(d) { return d.objId; })
+
+                    newnode.enter()
+                        .append("circle")
+                        .attr("r", radius - .75)
+                        .attr("cx", function(d) {return d.x; })
+                        .attr("cy", function(d) { return d.y; })
+                        .style('fill', "green")
+                        .style('stroke', 'green');
+
+
+
+                  }
+                  function click(data){
+                    // var newData = { node:3, name:"test3", info: [], nodeType: "core", objId: 12345};
+                    // update([newData]);
+                  }
+                  // update([{}]);
+                  update(nodes);
+                  nodes = nodes.concat(newNodes);
+                  update(nodes);
+                  // update(newData);
+                  // setTimeout(function(){ update(newData); }, 3000);
             }
             function finishUpAndRender() {
                 addVersionEdges();
