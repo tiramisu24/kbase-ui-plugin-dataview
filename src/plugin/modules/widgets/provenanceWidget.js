@@ -689,13 +689,14 @@ define([
                     // debugger;
                   //TODO: set oldNodes here
                 })
-                  .on('click',click);
+                  .on('click',click)
+                  .call(force.drag);
+
 
                 g.append("circle")
                   .attr("cx", 0)
                   .attr("cy", 0)
-                  .attr("r", 10)
-                  .call(force.drag);
+                  .attr("r", 10);
 
                 g.append("text")
                   .attr("dy", ".35em")
@@ -723,6 +724,13 @@ define([
                   d.fixed = true;
                 });
 
+              }
+              var drag = force.drag()
+                  .on("dragstart", dragstart);
+              function dragstart(d) {
+                  force.stop();
+                  d.fixed = true;
+                  // d3.select(this).classed("fixed", d.fixed = true);
               }
 
               force.on("tick", function(e) {
