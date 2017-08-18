@@ -251,201 +251,6 @@ define([
                         });
                 }
             }
-
-            function renderSankeyStyleGraph() {
-              console.log(referenceGraph);
-
-                var margin = {top: 10, right: 10, bottom: 10, left: 10},
-                    width = config.width - 50 - margin.left - margin.right,
-                    height = provenanceGraph.nodes.length * 38 - margin.top - margin.bottom,
-                    color = d3.scale.category20(),
-                    svg, sankey, path, link, node;
-
-                if (provenanceGraph.links.length === 0) {
-                    // in order to render, we need at least two nodes
-                    let node = {
-                        node: 1,
-                        name: "No references found",
-                        info: [-1, "No references found", "No Type", 0, 0, "N/A", 0, "N/A", 0, 0, {}],
-                        nodeType: "none",
-                        objId: "-1",
-                        isFake: true
-                    }
-                    provenanceGraph.nodes.push(node);
-                    provenanceGraph.links.push(makeLink(0, 1, 1));
-                }
-
-                if (height < 450) {
-                    $container.find("#objgraphview").height(height + 40);
-                }
-                /*var zoom = d3.behavior.zoom()
-                 .translate([0, 0])
-                 .scale(1)
-                 .scaleExtent([1, 8])
-                 .on("zoom", function() {
-                 features.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-                 //features.select(".state-border").style("stroke-width", 1.5 / d3.event.scale + "px");
-                 //features.select(".county-border").style("stroke-width", .5 / d3.event.scale + "px");
-                 });
-                 */
-                // append the svg canvas to the page
-                d3.select($container.find("#objgraphview")[0]).html("");
-                $container.find('#objgraphview').show();
-                svg = d3.select($container.find("#objgraphview")[0]).append("svg");
-                svg
-                    .attr("width", width + margin.left + margin.right)
-                    .attr("height", height + margin.top + margin.bottom)
-                    .append("g")
-                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-                // Set the sankey diagram properties
-                sankey = d3.sankey()
-                    .nodeWidth(25)
-                    .nodePadding(40)
-                    .size([width, height]);
-
-                path = sankey.link();
-
-                sankey
-                    .nodes(provenanceGraph.nodes)
-                    .links(provenanceGraph.links)
-                    .layout(40);
-
-                // add in the links
-                link = svg.append("g").selectAll(".link")
-                    .data(provenanceGraph.links)
-                    .enter().append("path")
-                    .attr("class", "sankeylink")
-                    .attr("d", path)
-                    .style("stroke-width", function (d) {
-                        return 10; /*Math.max(1, d.dy);*/
-                    })
-                    .sort(function (a, b) {
-                        return b.dy - a.dy;
-                    });
-
-                // add the link titles
-                link.append("title")
-                    .text(function (d) {
-                        if (d.source.nodeType === 'copied') {
-                            d.text = d.target.name + ' copied from ' + d.source.name;
-                        } else if (d.source.nodeType === 'core') {
-                            d.text = d.target.name + ' is a newer version of ' + d.source.name;
-                        } else if (d.source.nodeType === 'ref') {
-                            d.text = d.source.name + ' references ' + d.target.name;
-                        } else if (d.source.nodeType === 'included') {
-                            d.text = d.target.name + ' references ' + d.source.name;
-                        }
-                        return d.text;
-                    });
-                $(link).tooltip({delay: {"show": 0, "hide": 100}});
-
-                // add in the nodes
-                node = svg.append("g")
-                    .selectAll(".node")
-                    .data(provenanceGraph.nodes)
-                    .enter().append("g")
-                    .attr("class", "sankeynode")
-                    .attr("transform", function (d) {
-                        return "translate(" + d.x + "," + d.y + ")";
-                    })
-                    .call(d3.behavior.drag()
-                        .origin(function (d) {
-                            return d;
-                        })
-                        .on("dragstart", function () {
-                            this.parentNode.appendChild(this);
-                        })
-                        .on("drag",
-                            function (d) {
-                                d.x = Math.max(0, Math.min(width - d.dx, d3.event.x));
-                                d.y = Math.max(0, Math.min(height - d.dy, d3.event.y));
-                                d3.select(this).attr("transform",
-                                    "translate(" + d.x + "," + d.y + ")");
-                                sankey.relayout();
-                                link.attr("d", path);
-                            }))
-                    .on('dblclick', function (d) {
-                        if (d3.event.defaultPrevented) {
-                            return;
-                        }
-                        // TODO: toggle switch between redirect vs redraw
-
-                        // alternate redraw
-                        //self.$elem.find('#objgraphview').hide();
-                        //self.buildDataAndRender({ref:d['objId']});
-
-                        //alternate reload page so we can go forward and back
-                        if (d.isFake) {
-                            // Oh, no!
-                            alert("Cannot expand this node.");
-                        } else {
-                            //if (d.info[1].indexOf(' ') >= 0) {
-                            //    // TODO: Fix this
-                            //    window.location.href = "#provenance/" + encodeURI(d.info[7] + "/" + d.info[0]);
-                            //} else {
-                                // TODO: Fix this
-                                runtime.navigate("provenance/" + encodeURI(d.info[6] + "/" + d.info[0] + '/' + d.info[4]));
-                            //}
-                        }
-                    })
-                    .on('mouseover', nodeMouseover);
-
-                // add the rectangles for the nodes
-                node.append("rect")
-                    .attr("y", function (d) {
-                        return -5;
-                    })
-                    .attr("height", function (d) {
-                        return Math.abs(d.dy) + 10;
-                    })
-                    .attr("width", sankey.nodeWidth())
-                    .style("fill", function (d) {
-                        return d.color = types[d['nodeType']].color;
-                    })
-                    .style("stroke", function (d) {
-                        return 0 * d3.rgb(d.color).darker(2);
-                    })
-                    .append("title")
-                    .html(function (d) {
-                        //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
-                        var info = d.info;
-                        var text =
-                            info[1] + " (" + info[6] + "/" + info[0] + "/" + info[4] + ")\n" +
-                            "--------------\n" +
-                            "  type:  " + info[2] + "\n" +
-                            "  saved on:  " + getTimeStampStr(info[3]) + "\n" +
-                            "  saved by:  " + info[5] + "\n";
-                        var found = false;
-                        var metadata = "  metadata:\n";
-                        for (var m in info[10]) {
-                            text += "     " + m + " : " + info[10][m] + "\n";
-                            found = true;
-                        }
-                        if (found) {
-                            text += metadata;
-                        }
-                        return text;
-                    });
-
-                // add in the title for the nodes
-                node.append("text")
-                    .attr("y", function (d) {
-                        return d.dy / 2;
-                    })
-                    .attr("dy", ".35em")
-                    .attr("text-anchor", "end")
-                    .attr("transform", null)
-                    .text(function (d) {
-                        return d.name;
-                    })
-                    .filter(function (d) {
-                        return d.x < width / 2;
-                    })
-                    .attr("x", 6 + sankey.nodeWidth())
-                    .attr("text-anchor", "start");
-                return this;
-            }
             function getProvRows(provenanceAction, prefix) {
                 /* structure {
                  timestamp time;
@@ -627,11 +432,6 @@ define([
                     objRefToNodeIdx[objId] = nodeId;
                     objIdentities.push({ref: objId});
                 });
-                // if (latestObjId.length > 0) {
-                //     graph.nodes[objRefToNodeIdx[latestObjId].nodeType] = 'selected';
-                //     provenanceGraph.nodes[objRefToNodeIdx[latestObjId].nodeType] = 'selected';
-                //     referenceGraph.nodes[objRefToNodeIdx[latestObjId].nodeType] = 'selected';
-                // }
                 return objIdentities;
             }
 
@@ -654,33 +454,11 @@ define([
             function addNodeLink(refData,objectIdentity, isRef) {
               //refData is the objects that reference current object
                 for (var i = 0; i < refData.length; i++) {
-                    var limit = 50;
-                        /**
-                        if (k >= limit) {
-                            //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
-                            var nodeId = graph['nodes'].length,
-                                nameStr = refData[i].length - limit + " more ...";
-                            graph['nodes'].push({
-                                node: nodeId,
-                                name: nameStr,
-                                info: [-1, nameStr, "Multiple Types", 0, 0, "N/A", 0, "N/A", 0, 0, {}],
-                                nodeType: "ref",
-                                objId: "-1",
-                                isFake: true
-                            });
-                            objRefToNodeIdx[objId] = nodeId;
-
-                            // add the link now too
-                            if (objRefToNodeIdx[objectIdentity[i]['ref']] !== null) {  // only add the link if it is visible
-                                graph['links'].push({
-                                    source: objRefToNodeIdx[objectIdentity[i]['ref']],
-                                    target: nodeId,
-                                    value: 1
-                                });
-                            }
-                            break;
+                    var limit = 10;
+                        if(i >=limit){
+                          //TODO: combine nodes
+                          break;
                         }
-                        **/
 
                         var refInfo =refData[i];
                         //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
@@ -706,6 +484,7 @@ define([
                             graph.links.push(makeLink(targetId, nodeId, 1));
                             if(isRef){
                               referenceGraph.nodes.push(node);
+                              //TODO: change to contain actual reference to objects
                               referenceGraph.links.push(makeLink(targetId, nodeId, 1));
                               // referenceGraph.referenceNode.push(makeLink(targetId, nodeId, 1));
                             }else{
@@ -812,106 +591,12 @@ define([
                     });
 
             }
-            function renderTree(){
-              var treeData = [{
-                name: 'parent',
-                children: [
-                  {name: 'child1'},
-                  {name: 'child2'}
-                ]
-              }];
-              var updateData = [{
-                name: 'child1',
-                children: [
-                  {name: 'child3'},
-                  {name: 'child4'}
-                ]
-              }];
-
-              // ************** Generate the tree diagram  *****************
-              var margin = {top: 20, right: 120, bottom: 20, left: 120},
-               width = 960 - margin.right - margin.left,
-               height = 500 - margin.top - margin.bottom;
-
-              var i = 0;
-
-              var tree = d3.layout.tree()
-               .size([height, width]);
-
-              var diagonal = d3.svg.diagonal()
-               .projection(function(d) { return [d.y, d.x]; });
-
-              var svg = d3.select("body").append("svg")
-               .attr("width", width + margin.right + margin.left)
-               .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-               .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-              var root = treeData[0];
-
-              update(root);
-              update(updateData[0]);
-
-
-              function update(source) {
-                // Compute the new tree layout.
-                var nodes = tree.nodes(root).reverse(),
-                 links = tree.links(nodes);
-
-                // Normalize for fixed-depth.
-                nodes.forEach(function(d) { d.y = d.depth * 180; });
-
-                // Declare the nodesâ€¦
-                var node = svg.selectAll("g.node")
-                 .data(nodes, function(d) { return d.id || (d.id = ++i); });
-
-
-                // Enter the nodes.
-                var nodeEnter = node.enter().append("g")
-                 .attr("class", "node")
-                 .attr("transform", function(d) {
-                  return "translate(" + d.y + "," + d.x + ")"; });
-
-                nodeEnter.append("circle")
-                 .attr("r", 10)
-                 .style("fill", "pink");
-
-                nodeEnter.append("text")
-                 .attr("x", function(d) {
-                  return d.children || d._children ? -13 : 13; })
-                 .attr("dy", ".35em")
-                 .attr("text-anchor", function(d) {
-                  return d.children || d._children ? "end" : "start"; })
-                 .text(function(d) { return d.name; })
-                 .style("fill-opacity", 1);
-
-                // Declare the linksâ€¦
-                var link = svg.selectAll("path.link")
-                 .data(links, function(d) { return d.target.id; });
-
-                // Enter the links.
-                link.enter().insert("path", "g")
-                 .attr("class", "link")
-                 .attr("d", diagonal);
-              debugger;
-
-              }
-
-              function click(d) {
-                if (d.children) {
-                  d._children = d.children;
-                  d.children = null;
-                } else {
-                  d.children = d._children;
-                  d._children = null;
-                }
-              }
-
-
-
-            }
 
             function renderTest(){
+              // TODO: put module back into container
+              // d3.select($container.find("#objgraphview")[0]).html("");
+              // $container.find('#objgraphview').show();
+              // svg = d3.select($container.find("#objgraphview")[0]).append("svg");
               var width = 400,
                   height = 400,
                   oldNodes, // data
@@ -920,57 +605,34 @@ define([
                   .charge(-300)
                   .linkDistance(50)
                   .size([width, height]);
-
+              //dummy code
+              /**
               var a = { node:0, name:"test0", info: [], nodeType: "core", objId: 1},
-                  b = { node:1, name:"test1", info: [], nodeType: "core", objId: 12},
-                  c = { node:2, name:"test2", info: [], nodeType: "core", objId: 123},
-                  e = { node:3, name:"test3", info: [], nodeType: "core", objId: 1234},
-                  f = { node:4, name:"test4", info: [], nodeType: "core", objId: 12345},
-                  nodes = [a, b, c],
-                  links = [{source: 0, target: 1},
+                   b = { node:1, name:"test1", info: [], nodeType: "core", objId: 12},
+                   c = { node:2, name:"test2", info: [], nodeType: "core", objId: 123},
+                   e = { node:3, name:"test3", info: [], nodeType: "core", objId: 1234},
+                   f = { node:4, name:"test4", info: [], nodeType: "core", objId: 12345},
+                   nodes = [a, b, c],
+                   links = [{source: 0, target: 1},
                           {source: 0, target: 2}];
-
-              // function randomData() {
-              //   oldNodes = nodes;
-              //   // generate some data randomly
-              //   nodes = _.chain(_.range(_.random(10, 20)))
-              //     .map(function() {
-              //       var node = {};
-              //       node.key = _.random(0, 30);
-              //       node.weight = _.random(4, 10);
-              //
-              //       return node;
-              //     }).uniq(function(node) {
-              //       return node.key
-              //     }).value();
-              //
-              //   if (oldNodes) {
-              //     var add = _.initial(oldNodes, _.random(0, oldNodes.length));
-              //     add = _.rest(add, _.random(0, add.length));
-              //
-              //     nodes = _.union(nodes, add);
-              //   }
-              //
-              //   links = _.map(_.range(_.random(15, 25)), function() {
-              //       var link = {};
-              //       link.source = _.random(0, nodes.length - 1);
-              //       link.target = _.random(0, nodes.length - 1);
-              //       link.weight = _.random(1, 3);
-              //
-              //       return link;
-              //     });
-              //     debugger;
-              //   maintainNodePositions();
-              //
-              // }
+              **/
+              var nodes = provenanceGraph.nodes;
+              var links = provenanceGraph.links;
 
               function render() {
                 // randomData();
+                // debugger;
                 force.nodes(nodes).links(links);
 
+                // TODO: put module back into container
+                svg = d3.select("body").append("svg")
+                //   .attr("width", width)
+                //   .attr("height", height);
                 svg = d3.select("body").append("svg")
                   .attr("width", width)
                   .attr("height", height);
+
+
 
                 var l = svg.selectAll(".link")
                   .data(links, function(d) {return d.source + "," + d.target});
@@ -985,17 +647,18 @@ define([
                 force.start();
               }
 
-              function update() {
+              function update(newNodes, newLinks) {
+                // TODO: make old nodes only the added nodes
+                // oldNodes = nodes;
+                // // debugger;
+                // maintainNodePositions ();
+                // nodes.push(e);
+                // nodes.push(f);
+                nodes = nodes.concat(referenceGraph.nodes.slice(3));
+                links.push({source: 4, target: 5});
+                links.push({source: 4, target: 6});
+                // links.concat(referenceNode.links);
                 // debugger;
-                oldNodes = nodes;
-                maintainNodePositions();
-
-                nodes.push(e);
-                nodes.push(f);
-                links.push({source: 2, target: 3});
-                links.push({source: 3, target: 4});
-                // debugger;
-                // randomData();
                 force.nodes(nodes).links(links);
 
                 var l = svg.selectAll(".link")
@@ -1008,17 +671,20 @@ define([
                 exitNodes(n);
                 link = svg.selectAll(".link");
                 node = svg.selectAll(".node");
-
-                // link.style("stroke-width", function(d) { return d.weight; });
-
                 node.select("circle").attr("r", 10);
-
                 force.start();
               }
 
               function enterNodes(n) {
-                var g = n.enter().append("g")
+                oldNodes = [];
+                var g = n.enter()
+                  .append("g")
                   .attr("class", "node")
+                  .each(function (d) {
+                    oldNodes.concat(d);
+                    // debugger;
+                  //TODO: set oldNodes here
+                })
                   .on('click',click);
 
                 g.append("circle")
@@ -1039,7 +705,8 @@ define([
               function enterLinks(l) {
                 l.enter().insert("line", ".node")
                   .attr("class", "link")
-                  .style("stroke-width", function(d) { return d.weight; });
+                  .style("stroke-width", function(d) { return d.weight; })
+                  .on('click', linkClick);
               }
 
               function exitLinks(l) {
@@ -1047,23 +714,11 @@ define([
               }
 
               function maintainNodePositions() {
-                // var kv = {};
-                // oldNodes.forEach( function(d) {
-                //   debugger;
-                //   d.fixed = true;
-                //   kv[d.name] = d;
-                // });
-                // _.each(nodes, function(d) {
-                //   if (kv[d.name]) {
-                //     // if the node already exists, maintain current position
-                //     d.x = kv[d.name].x;
-                //     d.y = kv[d.name].y;
-                //   } else {
-                //     // else assign it a random position near the center
-                //     d.x = width / 2 + _.random(-150, 150);
-                //     d.y = height / 2 + _.random(-25, 25);
-                //   }
-                // });
+                // TODO:  make old nodes only the added nodes
+                oldNodes.forEach( function(d) {
+                  d.fixed = true;
+                });
+
               }
 
               force.on("tick", function(e) {
@@ -1081,40 +736,28 @@ define([
                   .attr("cy", function(d) { return d.y; })
                   .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
               });
+              force.on('end', function(e){
+                  oldNodes = nodes;
+                  maintainNodePositions();
+              });
 
               function click(node){
                 update();
               }
 
+              function linkClick(link){
+                //TODO: tree prune
+              }
+
               render();
             }
             function finishUpAndRender() {
-                addVersionEdges();
                 //TODO: provenance.graph.links seems to get mutated
-
-                // renderSankeyStyleGraph();
                 renderTest();
                 addNodeColorKey();
-                // debugger;
-                // console.log(provenanceGraph);
                 $container.find('#loading-mssg').hide();
             }
-            function addVersionEdges() {
-                //loop over graph nodes, get next version, if it is in our node list, then add it
-                var expectedNextVersion, expectedNextId;
-                graph.nodes.forEach(function (node) {
-                    if (node.nodeType === 'copied') {
-                        return;
-                    }
-                    //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
-                    expectedNextVersion = node.info[4] + 1;
-                    expectedNextId = node.info[6] + "/" + node.info[0] + "/" + expectedNextVersion;
-                    if (objRefToNodeIdx[expectedNextId]) {
-                        // add the link now too
-                        graph.links.push(makeLink(objRefToNodeIdx[node.objId], objRefToNodeIdx[expectedNextId], 1));
-                    }
-                });
-            }
+
             function getData() {
                 return {title: "Data Object Reference Network", workspace: workspaceId, id: "This view shows the data reference connections to object " + objectId};
             }
