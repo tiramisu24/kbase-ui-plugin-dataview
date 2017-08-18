@@ -645,6 +645,8 @@ define([
                 node = svg.selectAll(".node");
 
                 force.start();
+                for (var i = 100; i > 0; --i) force.tick();
+                force.stop();
               }
 
               function update(newNodes, newLinks) {
@@ -673,6 +675,8 @@ define([
                 node = svg.selectAll(".node");
                 node.select("circle").attr("r", 10);
                 force.start();
+                for (var i = 100; i > 0; --i) force.tick();
+                force.stop();
               }
 
               function enterNodes(n) {
