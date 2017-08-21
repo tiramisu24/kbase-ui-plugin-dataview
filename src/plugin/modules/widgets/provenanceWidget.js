@@ -690,7 +690,7 @@ define([
                     // debugger;
                   //TODO: set oldNodes here
                 })
-                  .on('click',click)
+                  .on('dblclick',click)
                   .call(force.drag);
 
 
@@ -712,7 +712,7 @@ define([
                 l.enter().insert("line", ".node")
                   .attr("class", "link")
                   .style("stroke-width", function(d) { return d.weight; })
-                  .on('click', linkClick);
+                  .on('dblclick', linkClick);
               }
 
               function exitLinks(l) {
