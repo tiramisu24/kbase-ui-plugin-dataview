@@ -726,12 +726,18 @@ define([
 
               }
               var drag = force.drag()
-                  .on("dragstart", dragstart);
+                  .on("dragstart", dragstart)
+                  .on("dragend", dragstop);
               function dragstart(d) {
-                  force.stop();
                   d.fixed = true;
+                  force.stop();
                   // d3.select(this).classed("fixed", d.fixed = true);
               }
+              function dragstop(d){
+                d.fixed = true;
+                force.stop();
+              }
+
 
               force.on("tick", function(e) {
                 var k = 10 * e.alpha;
