@@ -657,10 +657,9 @@ define([
                 // maintainNodePositions ();
                 // nodes.push(e);
                 // nodes.push(f);
-                nodes = nodes.concat(referenceGraph.nodes.slice(3));
-                links.push({source: 4, target: 5});
-                links.push({source: 4, target: 6});
-                // links.concat(referenceNode.links);
+                // nodes = nodes.concat(referenceGraph.nodes.slice(3));
+                // links.push({source: 4, target: 5});
+                // links.push({source: 4, target: 6});
                 // debugger;
                 force.nodes(nodes).links(links);
 
@@ -762,6 +761,9 @@ define([
               });
 
               function click(node){
+                debugger;
+                getObjectProvenance({ref: node.objId});
+                console.log(provenanceGraph);
                 update();
               }
 
