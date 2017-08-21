@@ -599,6 +599,7 @@ define([
               // svg = d3.select($container.find("#objgraphview")[0]).append("svg");
               var width = 400,
                   height = 400,
+                  radius = 10,
                   oldNodes, // data
                   svg, node, link, // d3 selections
                   force = d3.layout.force()
@@ -673,7 +674,7 @@ define([
                 exitNodes(n);
                 link = svg.selectAll(".link");
                 node = svg.selectAll(".node");
-                node.select("circle").attr("r", 10);
+                node.select("circle").attr("r", radius);
                 force.start();
                 for (var i = 100; i > 0; --i) force.tick();
                 force.stop();
@@ -743,16 +744,17 @@ define([
                 var k = 10 * e.alpha;
                 // Push sources up and targets down to form a weak tree.
                 link
-                    .each(function(d) {d.source.y += k, d.target.y -= k; })
-                    .attr("x1", function(d) { return d.source.x; })
-                    .attr("y1", function(d) { return d.source.y; })
-                    .attr("x2", function(d) { return d.target.x; })
-                    .attr("y2", function(d) { return d.target.y; });
+                  node.attr("cx", function(d) { return d.x = Math.max(radius, Math.min(width - radius, d.x)); })
+                      .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(height - radius, d.y)); })
+                    .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+                  // Push sources up and targets down to form a weak tree.
+                  link
+                      .each(function(d) {d.source.y += k, d.target.y -= k; })
+                      .attr("x1", function(d) { return d.source.x; })
+                      .attr("y1", function(d) { return d.source.y; })
+                      .attr("x2", function(d) { return d.target.x; })
+                      .attr("y2", function(d) { return d.target.y; });
 
-                node
-                  .attr("cx", function(d) { return d.x; })
-                  .attr("cy", function(d) { return d.y; })
-                  .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
               });
               force.on('end', function(e){
                   oldNodes = nodes;
