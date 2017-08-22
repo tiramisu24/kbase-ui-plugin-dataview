@@ -590,7 +590,7 @@ define([
 
             }
 
-            function renderTest(){
+            function renderForceTree(){
               // TODO: put module back into container
               // d3.select($container.find("#objgraphview")[0]).html("");
               // $container.find('#objgraphview').show();
@@ -604,61 +604,19 @@ define([
                   .charge(-300)
                   .linkDistance(50)
                   .size([width, height]);
-              //dummy code
-              /**
-              var a = { node:0, name:"test0", info: [], nodeType: "core", objId: 1},
-                   b = { node:1, name:"test1", info: [], nodeType: "core", objId: 12},
-                   c = { node:2, name:"test2", info: [], nodeType: "core", objId: 123},
-                   e = { node:3, name:"test3", info: [], nodeType: "core", objId: 1234},
-                   f = { node:4, name:"test4", info: [], nodeType: "core", objId: 12345},
-                   nodes = [a, b, c],
-                   links = [{source: 0, target: 1},
-                          {source: 0, target: 2}];
-              **/
+
               var nodes = provenanceGraph.nodes;
               var links = provenanceGraph.links;
 
               function render() {
-                // randomData();
-                // debugger;
-                force.nodes(nodes).links(links);
-
-                // TODO: put module back into container
-                svg = d3.select("body").append("svg")
-                //   .attr("width", width)
-                //   .attr("height", height);
                 svg = d3.select("body").append("svg")
                   .attr("width", width)
                   .attr("height", height);
-
-
-
-                var l = svg.selectAll(".link")
-                  .data(links, function(d) {return d.source + "," + d.target});
-                var n = svg.selectAll(".node")
-                  .data(nodes, function(d) {return d.name});
-                enterLinks(l);
-                enterNodes(n);
-
-                link = svg.selectAll(".link");
-                node = svg.selectAll(".node");
-
-                force.start();
-                for (var i = 100; i > 0; --i) force.tick();
-                force.stop();
+                update();
               }
 
               function update(newNodes, newLinks) {
-                // TODO: make old nodes only the added nodes
-                // oldNodes = nodes;
-                // // debugger;
-                // maintainNodePositions ();
-                // nodes.push(e);
-                // nodes.push(f);
-                // nodes = nodes.concat(referenceGraph.nodes.slice(3));
-                // links.push({source: 4, target: 5});
-                // links.push({source: 4, target: 6});
-                // debugger;
+
                 force.nodes(nodes).links(links);
 
                 var l = svg.selectAll(".link")
@@ -666,9 +624,7 @@ define([
                 var n = svg.selectAll(".node")
                   .data(nodes, function(d) {return d.name});
                 enterLinks(l);
-                // exitLinks(l);
                 enterNodes(n);
-                exitNodes(n);
                 link = svg.selectAll(".link");
                 node = svg.selectAll(".node");
                 node.select("circle").attr("r", radius);
@@ -683,9 +639,8 @@ define([
                   .append("g")
                   .attr("class", "node")
                   .each(function (d) {
-                    oldNodes.concat(d);
-                    // debugger;
-                  //TODO: set oldNodes here
+                    oldNodes.push(d);
+
                 })
                   .on('dblclick',click)
                   .call(force.drag);
@@ -700,25 +655,16 @@ define([
                   .attr("dy", ".35em")
                   .text(function(d) {return d.name});
               }
-              //
-              // function exitNodes(n) {
-              //   n.exit().remove();
-              // }
 
               function enterLinks(l) {
                 l.enter().insert("line", ".node")
                   .attr("class", "link")
                   .attr('id', function(d){return "#path" + d.source + "_" + d.target})
                   .style("stroke-width", function(d) { return d.weight; })
-                  .on('dblclick', linkClick);
+
               }
-              //
-              // function exitLinks(l) {
-              //   l.exit().remove();
-              // }
 
               function maintainNodePositions() {
-                // TODO:  make old nodes only the added nodes
                 oldNodes.forEach( function(d) {
                   d.fixed = true;
                 });
@@ -759,25 +705,16 @@ define([
               });
 
               function click(node){
-                debugger;
                 getObjectProvenance({ref: node.objId})
                   .then(function(){
-                    // debugger;
-                    // console.log(provenanceGraph);
                     update();
                   });
-                // debugger;
               }
-
-              function linkClick(link){
-                //TODO: tree prune
-              }
-
               render();
             }
             function finishUpAndRender() {
                 //TODO: provenance.graph.links seems to get mutated
-                renderTest();
+                renderForceTree();
                 addNodeColorKey();
                 $container.find('#loading-mssg').hide();
             }
