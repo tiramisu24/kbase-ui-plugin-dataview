@@ -56,12 +56,12 @@ define([
                 referenceGraph = {
                     nodes:[],
                     links:[],
-                    referenceNode: []
+                    targetNodesSvgId: []
                 },
                 provenanceGraph = {
                     nodes: [],
                     links: [],
-                    referenceNode: []
+                    targetNodesSvgId: []
                 },
                 div = html.tag('div'),
                 br = html.tag('br'),
@@ -472,26 +472,24 @@ define([
                             node: nodeId,
                             name: getNodeLabel(refInfo),
                             info: refInfo,
-                            nodeType: "ref",
-                            objId: objId
+                            objId: objId,
+                            targetNodesSvgId : []
                         };
                         graph.nodes.push(node);
                         objRefToNodeIdx[objId] = nodeId;
                         let targetId = objRefToNodeIdx[objectIdentity.ref];
                         if (targetId !== null) {  // only add the link if it is visible
                             // debugger;
+                            var link = makeLink(targetId, nodeId, 1);
+                            node.targetNodesSvgId.push("#path" + nodeId + "_" + targetId);
 
                             graph.links.push(makeLink(targetId, nodeId, 1));
                             if(isRef){
                               referenceGraph.nodes.push(node);
-                              //TODO: change to contain actual reference to objects
-                              referenceGraph.links.push(makeLink(targetId, nodeId, 1));
-                              // referenceGraph.referenceNode.push(makeLink(targetId, nodeId, 1));
+                              referenceGraph.links.push(link);
                             }else{
-                              // debugger;
                               provenanceGraph.nodes.push(node);
-                              provenanceGraph.links.push(makeLink(targetId, nodeId, 1));
-                              // provenanceGraph.referenceNode.push(makeLink(targetId, nodeId, 1));
+                              provenanceGraph.links.push(link);
                             }
                         }
                 }
@@ -702,21 +700,22 @@ define([
                   .attr("dy", ".35em")
                   .text(function(d) {return d.name});
               }
-
-              function exitNodes(n) {
-                n.exit().remove();
-              }
+              //
+              // function exitNodes(n) {
+              //   n.exit().remove();
+              // }
 
               function enterLinks(l) {
                 l.enter().insert("line", ".node")
                   .attr("class", "link")
+                  .attr('id', function(d){return "#path" + d.source + "_" + d.target})
                   .style("stroke-width", function(d) { return d.weight; })
                   .on('dblclick', linkClick);
               }
-
-              function exitLinks(l) {
-                l.exit().remove();
-              }
+              //
+              // function exitLinks(l) {
+              //   l.exit().remove();
+              // }
 
               function maintainNodePositions() {
                 // TODO:  make old nodes only the added nodes
@@ -760,6 +759,7 @@ define([
               });
 
               function click(node){
+                debugger;
                 getObjectProvenance({ref: node.objId})
                   .then(function(){
                     // debugger;
