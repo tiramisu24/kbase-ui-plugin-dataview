@@ -50,18 +50,16 @@ define([
                     nodes:[],
                     links:[]
                 },
-                objRefToNodeIdx = {
+                objIdtoData = {
                   "-1" : 1
                 },
                 referenceGraph = {
                     nodes:[],
-                    links:[],
-                    targetNodesSvgId: []
+                    links:[]
                 },
                 provenanceGraph = {
                     nodes: [],
-                    links: [],
-                    targetNodesSvgId: []
+                    links: []
                 },
                 div = html.tag('div'),
                 br = html.tag('br'),
@@ -404,7 +402,7 @@ define([
 
             function processObjectHistory(data) {
                 //central object (current object and all its versions)
-                var objIdentities = [],
+                var node, objIdentities = [],
                     latestVersion = 0,
                     latestObjId = "";
 
@@ -415,24 +413,28 @@ define([
                         objId = objectInfo[6] + "/" + objectInfo[0] + "/" + objectInfo[4],
                         nodeId = graph.nodes.length;
                       //pushes current nodes into graph
-                    let node = {
-                        node: nodeId,
-                        name: getNodeLabel(objectInfo),
-                        info: objectInfo,
-                        nodeType: "core",
-                        objId: objId
-                    }
-                    graph.nodes.push(node);
-                    provenanceGraph.nodes.push(node);
-                    referenceGraph.nodes.push(node);
+
+
                     if (objectInfo[4] > latestVersion) {
+                        node = {
+                            node: nodeId,
+                            name: getNodeLabel(objectInfo),
+                            info: objectInfo,
+                            objId: objId
+                        }
                         latestVersion = objectInfo[4];
                         latestObjId = objId;
                     }
-                    objRefToNodeIdx[objId] = nodeId;
+                    objIdtoData[objId] = nodeId;
                     objIdentities.push({ref: objId});
                 });
-                return objIdentities;
+                //objIdentities is all versions
+                // return objIdentities;
+
+                graph.nodes.push(node);
+                provenanceGraph.nodes.push(node);
+                referenceGraph.nodes.push(node);
+                return {ref: latestObjId};
             }
 
             function showError(err) {
@@ -476,8 +478,8 @@ define([
                             targetNodesSvgId : []
                         };
                         graph.nodes.push(node);
-                        objRefToNodeIdx[objId] = nodeId;
-                        let targetId = objRefToNodeIdx[objectIdentity.ref];
+                        objIdtoData[objId] = nodeId;
+                        let targetId = objIdtoData[objectIdentity.ref];
                         if (targetId !== null) {  // only add the link if it is visible
                             // debugger;
                             var link = makeLink(targetId, nodeId, 1);
@@ -567,9 +569,10 @@ define([
                         return processObjectHistory(data);
                         //returns the objIdentities
                     })
-                    .then(function (objIdentities) {
+                    .then(function (objectIdentity) {
+
                       // TODO: ADD CHECK TO MAKE SURE THIS IS LATEST VERSION
-                        const objectIdentity = objIdentities[objIdentities.length -1];
+                        // const objectIdentity = objIdentities[objIdentities.length -1];
                         // we have the history of the object of interest,
                         // now we can fetch all referencing object, and
                         // get prov info for each of these objects
@@ -592,9 +595,7 @@ define([
 
             function renderForceTree(){
               // TODO: put module back into container
-              // d3.select($container.find("#objgraphview")[0]).html("");
-              // $container.find('#objgraphview').show();
-              // svg = d3.select($container.find("#objgraphview")[0]).append("svg");
+
               var width = 400,
                   height = 400,
                   radius = 10,
@@ -607,16 +608,18 @@ define([
 
               var nodes = provenanceGraph.nodes;
               var links = provenanceGraph.links;
-
-              function render() {
-                svg = d3.select("body").append("svg")
-                  .attr("width", width)
-                  .attr("height", height);
-                update();
-              }
+              svg = d3.select("body").append("svg")
+                .attr("width", width)
+                .attr("height", height);
+              //  TODO: uncomment to place back in widget
+              // d3.select($container.find("#objgraphview")[0]).html("");
+              // $container.find('#objgraphview').show();
+              // svg = d3.select($container.find("#objgraphview")[0])
+              //         .append("svg")
+              //           .attr("width", width)
+              //           .attr("height", height);
 
               function update(newNodes, newLinks) {
-
                 force.nodes(nodes).links(links);
 
                 var l = svg.selectAll(".link")
@@ -638,13 +641,9 @@ define([
                 var g = n.enter()
                   .append("g")
                   .attr("class", "node")
-                  .each(function (d) {
-                    oldNodes.push(d);
-
-                })
+                  .each(function (d) {oldNodes.push(d);})
                   .on('dblclick',click)
                   .call(force.drag);
-
 
                 g.append("circle")
                   .attr("cx", 0)
@@ -661,14 +660,12 @@ define([
                   .attr("class", "link")
                   .attr('id', function(d){return "#path" + d.source + "_" + d.target})
                   .style("stroke-width", function(d) { return d.weight; })
-
               }
 
               function maintainNodePositions() {
                 oldNodes.forEach( function(d) {
                   d.fixed = true;
                 });
-
               }
               var drag = force.drag()
                   .on("dragstart", dragstart)
@@ -681,7 +678,6 @@ define([
                 d.fixed = true;
                 force.stop();
               }
-
 
               force.on("tick", function(e) {
                 var k = 10 * e.alpha;
@@ -697,8 +693,8 @@ define([
                       .attr("y1", function(d) { return d.source.y; })
                       .attr("x2", function(d) { return d.target.x; })
                       .attr("y2", function(d) { return d.target.y; });
-
               });
+
               force.on('end', function(e){
                   oldNodes = nodes;
                   maintainNodePositions();
@@ -710,7 +706,7 @@ define([
                     update();
                   });
               }
-              render();
+              update();
             }
             function finishUpAndRender() {
                 //TODO: provenance.graph.links seems to get mutated
