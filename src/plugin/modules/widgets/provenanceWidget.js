@@ -731,7 +731,6 @@ define([
               function dragstart(d) {
                   d.fixed = true;
                   force.stop();
-                  // d3.select(this).classed("fixed", d.fixed = true);
               }
               function dragstop(d){
                 d.fixed = true;
@@ -761,10 +760,13 @@ define([
               });
 
               function click(node){
-                debugger;
-                getObjectProvenance({ref: node.objId});
-                console.log(provenanceGraph);
-                update();
+                getObjectProvenance({ref: node.objId})
+                  .then(function(){
+                    // debugger;
+                    // console.log(provenanceGraph);
+                    update();
+                  });
+                // debugger;
               }
 
               function linkClick(link){
