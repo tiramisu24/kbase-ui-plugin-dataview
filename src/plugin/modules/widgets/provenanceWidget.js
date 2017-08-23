@@ -545,7 +545,6 @@ define([
                       }
                       return uniquePaths;
                   }).then(function(uniqueRefObjectIdentities){
-                          // debugger;
                           return Promise.all([workspace.get_object_info3({
                              objects: uniqueRefObjectIdentities,
                              includeMetadata: 1
