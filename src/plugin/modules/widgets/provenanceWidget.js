@@ -498,6 +498,7 @@ define([
             }
             function getReferencingObjects(objectIdentity) {
                 //workspace requires list for referencing objects
+
                 return workspace.list_referencing_objects([objectIdentity])
                     .then(function(refData){
                       const isRef = true;
@@ -517,12 +518,17 @@ define([
             function getObjectProvenance(objectIdentity){
               //TODO: unique provenance items
               //had to wrap identity in array as it somehow wanted a list
-              return workspace.get_object_provenance([objectIdentity])
+              // debugger;
+              return workspace.get_objects2({
+                  objects:[objectIdentity],
+                  no_data: 1
+                })
                   .then(function (provData) {
                     var uniqueRefs = {},
                         uniquePaths = [];
-                    for (var i = 0; i < provData.length; i++) {
-                            let objectProvenance = provData[i];
+                        debugger;
+                    for (var i = 0; i < provData.data.length; i++) {
+                            let objectProvenance = provData.data[i];
                             objectProvenance.provenance.forEach(function (provenance) {
                                 var objRef = getObjectRef(objectProvenance.info);
 
@@ -539,13 +545,14 @@ define([
                       }
                       return uniquePaths;
                   }).then(function(uniqueRefObjectIdentities){
-
+                          debugger;
                           return Promise.all([workspace.get_object_info_new({
                              objects: uniqueRefObjectIdentities,
                              includeMetadata: 1
                           }),objectIdentity]);
 
                    }).spread(function (refData, objectIdentity) {
+                     debugger;
                      const isRef = false;
                      addNodeLink(refData,objectIdentity, false);
                    }).catch(function(err){console.log(err)});
@@ -560,13 +567,11 @@ define([
 
 
             function buildDataAndRender(objref) {
-                // init the graph
                 $container.find('#loading-mssg').show();
                 $container.find('#objgraphview').hide();
-
+                //gets verions of object
                 workspace.get_object_history(objref)
                     .then(function (data) {
-
                         return processObjectHistory(data);
                         //returns the objIdentities
                     })
