@@ -61,6 +61,9 @@ define([
                     nodes: [],
                     links: []
                 },
+                nodePaths = {
+
+                },
                 div = html.tag('div'),
                 br = html.tag('br'),
                 table = html.tag('table'),
@@ -426,6 +429,7 @@ define([
                         latestObjId = objId;
                     }
                     objIdtoData[objId] = nodeId;
+                    nodePaths [objId] = objId;
                     objIdentities.push({ref: objId});
                 });
                 //objIdentities is all versions
@@ -516,6 +520,7 @@ define([
             }
 
             function getObjectProvenance(objectIdentity){
+              // debugger;
               //TODO: unique provenance items
               //had to wrap identity in array as it somehow wanted a list
               // debugger;
@@ -539,7 +544,9 @@ define([
                                          if (!(resolvedObjectRef in uniqueRefs)) {
                                             uniqueRefs[resolvedObjectRef] = 'included';
                                             //resolvedObjectref is the prov id
-                                            var path = objectIdentity.ref + ";" + resolvedObjectRef;
+                                            //TODO: check if in set!!
+                                            var path = nodePaths[objectIdentity.ref] + ";" + resolvedObjectRef;
+                                            nodePaths[resolvedObjectRef] = path;
                                             uniquePaths.push({ref: path});
                                         }
                                     });
@@ -548,15 +555,20 @@ define([
                       }
                       return uniquePaths;
                   }).then(function(uniqueRefObjectIdentities){
+                          //TODO: add check to see if
                           return Promise.all([workspace.get_object_info_new({
                              objects: uniqueRefObjectIdentities,
-                             includeMetadata: 1
+                             includeMetadata: 1,
+                             ignoreErrors: 1
                           }),objectIdentity, serviceData]);
 
                    }).spread(function (refData, objectIdentity) {
                     //  debugger;
-                     const isRef = false;
-                     addNodeLink(refData,objectIdentity, false);
+                    if(refData[0] !== null){
+                      addNodeLink(refData,objectIdentity, false);
+                      const isRef = false;
+
+                    }
                    }).catch(function(err){console.log(err)});
             }
 
