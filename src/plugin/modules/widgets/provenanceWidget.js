@@ -526,7 +526,7 @@ define([
                   .then(function (provData) {
                     var uniqueRefs = {},
                         uniquePaths = [];
-                        debugger;
+                        // debugger;
                     for (var i = 0; i < provData.data.length; i++) {
                             let objectProvenance = provData.data[i];
                             objectProvenance.provenance.forEach(function (provenance) {
@@ -545,8 +545,8 @@ define([
                       }
                       return uniquePaths;
                   }).then(function(uniqueRefObjectIdentities){
-                          debugger;
-                          return Promise.all([workspace.get_object_info_new({
+                          // debugger;
+                          return Promise.all([workspace.get_object_info3({
                              objects: uniqueRefObjectIdentities,
                              includeMetadata: 1
                           }),objectIdentity]);
