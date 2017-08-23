@@ -520,7 +520,7 @@ define([
               return workspace.get_object_provenance([objectIdentity])
                   .then(function (provData) {
                     var uniqueRefs = {},
-                        uniqueRefObjectIdentities = [];
+                        uniquePaths = [];
                     for (var i = 0; i < provData.length; i++) {
                             let objectProvenance = provData[i];
                             objectProvenance.provenance.forEach(function (provenance) {
@@ -531,23 +531,24 @@ define([
                                          if (!(resolvedObjectRef in uniqueRefs)) {
                                             uniqueRefs[resolvedObjectRef] = 'included';
                                             //resolvedObjectref is the prov id
-                                            uniqueRefObjectIdentities.push({ref: resolvedObjectRef});
+                                            uniquePaths.push({ref: resolvedObjectRef});
                                         }
                                     });
                                 }
                             });
                       }
-                      return uniqueRefObjectIdentities;
+                      return uniquePaths;
                   }).then(function(uniqueRefObjectIdentities){
+
                           return Promise.all([workspace.get_object_info_new({
                              objects: uniqueRefObjectIdentities,
-                             includeMetadata: 1,
-                             ignoreErrors: 1
+                             includeMetadata: 1
                           }),objectIdentity]);
+
                    }).spread(function (refData, objectIdentity) {
                      const isRef = false;
                      addNodeLink(refData,objectIdentity, false);
-                   });
+                   }).catch(function(err){console.log(err)});
             }
 
             function isUndefNull(obj) {
@@ -701,6 +702,7 @@ define([
               });
 
               function click(node){
+                debugger;
                 getObjectProvenance({ref: node.objId})
                   .then(function(){
                     update();
