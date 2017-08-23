@@ -519,6 +519,7 @@ define([
               //TODO: unique provenance items
               //had to wrap identity in array as it somehow wanted a list
               // debugger;
+              var serviceData;
               return workspace.get_objects2({
                   objects:[objectIdentity],
                   no_data: 1
@@ -526,18 +527,20 @@ define([
                   .then(function (provData) {
                     var uniqueRefs = {},
                         uniquePaths = [];
-                        // debugger;
-                    for (var i = 0; i < provData.data.length; i++) {
+                     for (var i = 0; i < provData.data.length; i++) {
                             let objectProvenance = provData.data[i];
                             objectProvenance.provenance.forEach(function (provenance) {
                                 var objRef = getObjectRef(objectProvenance.info);
-
                                 if (provenance.resolved_ws_objects) {
+                                  //can have more than one service??
+                                  //TODO: add provenance.service, service_ver, method_params, method? to serviceData
                                     provenance.resolved_ws_objects.forEach(function (resolvedObjectRef) {
+
                                          if (!(resolvedObjectRef in uniqueRefs)) {
                                             uniqueRefs[resolvedObjectRef] = 'included';
                                             //resolvedObjectref is the prov id
-                                            uniquePaths.push({ref: resolvedObjectRef});
+                                            var path = objectIdentity.ref + ";" + resolvedObjectRef;
+                                            uniquePaths.push({ref: path});
                                         }
                                     });
                                 }
@@ -545,13 +548,13 @@ define([
                       }
                       return uniquePaths;
                   }).then(function(uniqueRefObjectIdentities){
-                          return Promise.all([workspace.get_object_info3({
+                          return Promise.all([workspace.get_object_info_new({
                              objects: uniqueRefObjectIdentities,
                              includeMetadata: 1
-                          }),objectIdentity]);
+                          }),objectIdentity, serviceData]);
 
                    }).spread(function (refData, objectIdentity) {
-                     debugger;
+                    //  debugger;
                      const isRef = false;
                      addNodeLink(refData,objectIdentity, false);
                    }).catch(function(err){console.log(err)});
@@ -706,7 +709,6 @@ define([
               });
 
               function click(node){
-                debugger;
                 getObjectProvenance({ref: node.objId})
                   .then(function(){
                     update();
