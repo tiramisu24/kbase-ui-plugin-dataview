@@ -53,7 +53,10 @@ define([
                     nodes:[],
                     links:[]
                 },
-                objIdtoData = {
+                objIdtoDataRef = {
+                  "-1" : 1
+                },
+                objIdtoDataProv = {
                   "-1" : 1
                 },
                 referenceGraph = {
@@ -431,7 +434,8 @@ define([
                         latestVersion = objectInfo[4];
                         latestObjId = objId;
                     }
-                    objIdtoData[objId] = nodeId;
+                    objIdtoDataRef[objId] = nodeId;
+                    objIdtoDataProv[objId] = nodeId;
                     nodePaths [objId] = objId;
                     objIdentities.push({ref: objId});
                 });
@@ -468,32 +472,46 @@ define([
                           //TODO: combine nodes
                           break;
                         }
+                        var targetId, nodeId;
 
                         var refInfo =refData[i];
                         //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
 
                         var t = refInfo[2].split("-")[0];
                         var objId = refInfo[6] + "/" + refInfo[0] + "/" + refInfo[4];
-                        // var nodeId = graph['nodes'].length;
-                        var nodeId = isRef ? referenceGraph.nodes.length : provenanceGraph.nodes.length;
+                        var nodeId;
+                        var nodeId= isRef ? referenceGraph.nodes.length : provenanceGraph.nodes.length;
+                        if(isRef){
+                          if(objIdtoDataRef[objId]){
+                            nodeId = objIdtoDataRef[objId];
+                          }else{
+                            objIdtoDataRef[objId] = nodeId;
+                          }
+                          targetId = objIdtoDataRef[objectIdentity.ref];
+                        }else{
+                          if(objIdtoDataProv[objId]){
+                            nodeId = objIdtoDataProv[objId];
+                          }else{
+                            objIdtoDataProv[objId] = nodeId;
+                          }
+                          targetId = objIdtoDataProv[objectIdentity.ref];
+                        }
+
                         //pushes reference nodes into list
                         let node = {
-                            node: nodeId,
                             name: getNodeLabel(refInfo),
                             info: refInfo,
                             objId: objId,
                             targetNodesSvgId : []
                         };
-                        graph.nodes.push(node);
-                        objIdtoData[objId] = nodeId;
-                        let targetId = objIdtoData[objectIdentity.ref];
+                        // graph.nodes.push(node);
                         if (targetId !== null) {  // only add the link if it is visible
-                            // debugger;
                             var link = makeLink(targetId, nodeId, 1);
                             node.targetNodesSvgId.push("#path" + nodeId + "_" + targetId);
 
                             graph.links.push(makeLink(targetId, nodeId, 1));
                             if(isRef){
+                              debugger;
                               referenceGraph.nodes.push(node);
                               referenceGraph.links.push(link);
                             }else{
@@ -508,6 +526,7 @@ define([
 
                 return workspace.list_referencing_objects([objectIdentity])
                     .then(function(refData){
+                      debugger;
                       const isRef = true;
                       //since only one item in list, will flatten array one level
                       addNodeLink(refData[0],objectIdentity, isRef);
@@ -523,13 +542,10 @@ define([
             }
 
             function getObjectProvenance(objectIdentity){
-              debugger;
               let path = nodePaths[objectIdentity.ref];
               var objectPath = (path)? ({ref:path}) : objectIdentity;
-              // debugger;
               //TODO: global unique provenance items
               //had to wrap identity in array as it somehow wanted a list
-              // debugger;
               var serviceData;
               return workspace.get_objects2({
                   objects:[objectPath],
@@ -562,7 +578,6 @@ define([
                       }
                       return uniquePaths;
                   }).then(function(uniqueRefObjectIdentities){
-                          console.log(uniqueRefObjectIdentities);
                           if(uniqueRefObjectIdentities.length === 0){
                             return [null, objectIdentity, serviceData];
                           }else{
@@ -574,7 +589,6 @@ define([
                           }
 
                    }).spread(function (refData, objectIdentity) {
-                    //  debugger;
                     if(refData !== null){
                       addNodeLink(refData,objectIdentity, false);
                       const isRef = false;
@@ -624,7 +638,7 @@ define([
 
             }
 
-            function renderForceTree(){
+            function renderForceTree(nodesData, linksData, isRef){
               // TODO: put module back into container
 
               var width = 400,
@@ -637,11 +651,17 @@ define([
                   .linkDistance(50)
                   .size([width, height]);
 
-              var nodes = provenanceGraph.nodes;
-              var links = provenanceGraph.links;
+              var nodes = nodesData
+              var links = linksData
+
               svg = d3.select("body").append("svg")
                 .attr("width", width)
                 .attr("height", height);
+              if(isRef){
+                svg.attr('class', 'ref');
+              }else{
+                svg.attr('class', 'prov');
+              }
               //  TODO: uncomment to place back in widget
               // d3.select($container.find("#objgraphview")[0]).html("");
               // $container.find('#objgraphview').show();
@@ -657,6 +677,7 @@ define([
                   .data(links, function(d) {return d.source + "," + d.target});
                 var n = svg.selectAll(".node")
                   .data(nodes, function(d) {return d.name});
+                // debugger;
                 enterLinks(l);
                 enterNodes(n);
                 link = svg.selectAll(".link");
@@ -711,7 +732,8 @@ define([
               }
 
               force.on("tick", function(e) {
-                var k = 10 * e.alpha;
+                var k = 6 * e.alpha;
+                // k *= isRef ? -1 : 1;
                 // Push sources up and targets down to form a weak tree.
                 link
                   node.attr("cx", function(d) { return d.x = Math.max(radius, Math.min(width - radius, d.x)); })
@@ -719,7 +741,13 @@ define([
                     .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
                   // Push sources up and targets down to form a weak tree.
                   link
-                      .each(function(d) {d.source.y += k, d.target.y -= k; })
+                      .each(function(d) {
+                        // if(isRef){
+                        //   d.source.y -= k, d.target.y += k;
+                        // }else{
+                          d.source.y += k, d.target.y -= k;
+                        // }
+                        })
                       .attr("x1", function(d) { return d.source.x; })
                       .attr("y1", function(d) { return d.source.y; })
                       .attr("x2", function(d) { return d.target.x; })
@@ -732,16 +760,26 @@ define([
               });
 
               function click(node){
-                getObjectProvenance({ref: node.objId})
+                var nodeId = {ref: node.objId};
+                if(isRef){
+                  debugger;
+                  getReferencingObjects(nodeId)
                   .then(function(){
-                    update();
+                    update("ref");
+                  })
+                }else{
+                  getObjectProvenance(nodeId)
+                  .then(function(){
+                    update("prov");
                   });
+                }
               }
               update();
             }
             function finishUpAndRender() {
                 //TODO: provenance.graph.links seems to get mutated
-                renderForceTree();
+                renderForceTree(referenceGraph.nodes, referenceGraph.links, true);
+                renderForceTree(provenanceGraph.nodes, provenanceGraph.links);
                 addNodeColorKey();
                 $container.find('#loading-mssg').hide();
             }
