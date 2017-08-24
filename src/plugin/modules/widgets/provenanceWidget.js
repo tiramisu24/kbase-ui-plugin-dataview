@@ -511,7 +511,6 @@ define([
 
                             graph.links.push(makeLink(targetId, nodeId, 1));
                             if(isRef){
-                              debugger;
                               referenceGraph.nodes.push(node);
                               referenceGraph.links.push(link);
                             }else{
@@ -526,7 +525,6 @@ define([
 
                 return workspace.list_referencing_objects([objectIdentity])
                     .then(function(refData){
-                      debugger;
                       const isRef = true;
                       //since only one item in list, will flatten array one level
                       addNodeLink(refData[0],objectIdentity, isRef);
@@ -641,7 +639,7 @@ define([
             function renderForceTree(nodesData, linksData, isRef){
               // TODO: put module back into container
 
-              var width = 400,
+              var width = 600,
                   height = 400,
                   radius = 10,
                   oldNodes, // data
@@ -654,21 +652,23 @@ define([
               var nodes = nodesData
               var links = linksData
 
-              svg = d3.select("body").append("svg")
-                .attr("width", width)
-                .attr("height", height);
+              // svg = d3.select("body").append("svg")
+              //   .attr("width", width)
+              //   .attr("height", height);
+
+              //  TODO: uncomment to place back in widget
+              d3.select($container.find("#objgraphview")).html("");
+              $container.find('#objgraphview').show();
+              svg = d3.select($container.find("#objgraphview")[0])
+                      .append("svg")
+                        .attr("width", width)
+                        .attr("height", height);
+
               if(isRef){
                 svg.attr('class', 'ref');
               }else{
                 svg.attr('class', 'prov');
               }
-              //  TODO: uncomment to place back in widget
-              // d3.select($container.find("#objgraphview")[0]).html("");
-              // $container.find('#objgraphview').show();
-              // svg = d3.select($container.find("#objgraphview")[0])
-              //         .append("svg")
-              //           .attr("width", width)
-              //           .attr("height", height);
 
               function update(newNodes, newLinks) {
                 force.nodes(nodes).links(links);
@@ -677,7 +677,6 @@ define([
                   .data(links, function(d) {return d.source + "," + d.target});
                 var n = svg.selectAll(".node")
                   .data(nodes, function(d) {return d.name});
-                // debugger;
                 enterLinks(l);
                 enterNodes(n);
                 link = svg.selectAll(".link");
@@ -762,7 +761,6 @@ define([
               function click(node){
                 var nodeId = {ref: node.objId};
                 if(isRef){
-                  debugger;
                   getReferencingObjects(nodeId)
                   .then(function(){
                     update("ref");
