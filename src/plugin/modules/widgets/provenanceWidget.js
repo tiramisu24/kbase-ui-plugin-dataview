@@ -7,12 +7,15 @@ define([
     'kb_common/html',
     'kb_common/dom',
     'kb_service/client/workspace',
+    'kb_common/jsonRpc/genericClient',
     'd3_sankey'
-],
-    function (Promise, $, d3, html, dom, Workspace) {
-        'use strict';
 
+
+],
+    function (Promise, $, d3, html, dom, Workspace, GenericClient) {
+        'use strict';
         function widget(config) {
+
             var mount, container, $container, runtime = config.runtime,
                 workspaceId, objectId,
                 needColorKey = true,
@@ -520,13 +523,16 @@ define([
             }
 
             function getObjectProvenance(objectIdentity){
+              debugger;
+              let path = nodePaths[objectIdentity.ref];
+              var objectPath = (path)? ({ref:path}) : objectIdentity;
               // debugger;
-              //TODO: unique provenance items
+              //TODO: global unique provenance items
               //had to wrap identity in array as it somehow wanted a list
               // debugger;
               var serviceData;
               return workspace.get_objects2({
-                  objects:[objectIdentity],
+                  objects:[objectPath],
                   no_data: 1
                 })
                   .then(function (provData) {
@@ -544,7 +550,8 @@ define([
                                          if (!(resolvedObjectRef in uniqueRefs)) {
                                             uniqueRefs[resolvedObjectRef] = 'included';
                                             //resolvedObjectref is the prov id
-                                            //TODO: check if in set!!
+                                            //TODO: check if in set of workspace!!
+
                                             var path = nodePaths[objectIdentity.ref] + ";" + resolvedObjectRef;
                                             nodePaths[resolvedObjectRef] = path;
                                             uniquePaths.push({ref: path});
@@ -555,16 +562,20 @@ define([
                       }
                       return uniquePaths;
                   }).then(function(uniqueRefObjectIdentities){
-                          //TODO: add check to see if
-                          return Promise.all([workspace.get_object_info_new({
-                             objects: uniqueRefObjectIdentities,
-                             includeMetadata: 1,
-                             ignoreErrors: 1
-                          }),objectIdentity, serviceData]);
+                          console.log(uniqueRefObjectIdentities);
+                          if(uniqueRefObjectIdentities.length === 0){
+                            return [null, objectIdentity, serviceData];
+                          }else{
+                            return Promise.all([workspace.get_object_info_new({
+                              objects: uniqueRefObjectIdentities,
+                              includeMetadata: 1,
+                              ignoreErrors: 1
+                            }),objectIdentity, serviceData]);
+                          }
 
                    }).spread(function (refData, objectIdentity) {
                     //  debugger;
-                    if(refData[0] !== null){
+                    if(refData !== null){
                       addNodeLink(refData,objectIdentity, false);
                       const isRef = false;
 
