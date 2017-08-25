@@ -8,11 +8,12 @@ define([
     'kb_common/dom',
     'kb_service/client/workspace',
     'kb_common/jsonRpc/genericClient',
+    'bootstrap',
     'd3_sankey'
 
 
 ],
-    function (Promise, $, d3, html, dom, Workspace, GenericClient) {
+    function (Promise, $, d3, html, dom, Workspace, GenericClient,Bootstrap) {
         'use strict';
         function widget(config) {
 
@@ -551,6 +552,7 @@ define([
             }
 
             function getObjectProvenance(objectIdentity){
+              // debugger;
               let path = nodePaths[objectIdentity.ref];
               var objectPath = (path)? ({ref:path}) : objectIdentity;
               //TODO: global unique provenance items
@@ -561,7 +563,7 @@ define([
                   no_data: 1
                 })
                   .then(function (provData) {
-                    debugger;
+                    // debugger;
                     var uniqueRefs = {},
                         uniquePaths = [];
                      for (var i = 0; i < provData.data.length; i++) {
@@ -654,6 +656,7 @@ define([
             }
 
             function renderForceTree(nodesData, linksData, isRef){
+
               // TODO: put module back into container
               var width = 600,
                   height = 400,
@@ -662,7 +665,7 @@ define([
                   svg, node, link, // d3 selections
                   force = d3.layout.force()
                   .charge(-300)
-                  .linkDistance(50)
+                  .linkDistance(30)
                   .size([width, height]);
 
               var nodes = nodesData
@@ -673,9 +676,9 @@ define([
               //   .attr("height", height);
 
               //  TODO: uncomment to place back in widget
-              d3.select($container.find("#objgraphview")).html("");
-              $container.find('#objgraphview').show();
-              svg = d3.select($container.find("#objgraphview")[0])
+
+
+              svg = d3.select($container.find("#prov-tab")[0])
                       .append("svg")
                         .attr("width", width)
                         .attr("height", height);
@@ -745,7 +748,6 @@ define([
                       .attr("markerHeight", 6)
                       .attr("orient", "auto")
                       .append("circle")
-                      .attr("cx", function(d){debugger;})
                       .attr("cy", 0)
                       .attr("r", 4)
                       .style("fill", "black");
@@ -818,6 +820,9 @@ define([
                   }else{
                     getObjectProvenance(nodeId)
                     .then(function(){
+                      // height +=100
+                      // svg.attr("height", height);
+
                       update();
                       node.isPresent = true;
                     });
@@ -828,6 +833,13 @@ define([
             }
             function finishUpAndRender() {
                 //TODO: provenance.graph.links seems to get mutated
+                // debugger;
+                d3.select($container.find("#objgraphview")).html("");
+                $container.find('#objgraphview').show();
+                var ul = $('<ul class="nav nav-tabs"/>');
+                ul.append('<li role="presentation" id = "prov-tab" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Provenance and Dependencies</a></li>')
+                ul.append('<li role="presentation" id = "ref-tab" class ="usage"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Object Usage</a></li>')
+                $('#objgraphview').append(ul)
                 renderForceTree(provenanceGraph.nodes, provenanceGraph.links);
                 renderForceTree(referenceGraph.nodes, referenceGraph.links, true);
                 addNodeColorKey();
