@@ -171,6 +171,7 @@ define([
             }
 
             function nodeMouseover(d) {
+                if(d.isFunction){return;}
                 if (d.isFake) {
                     var info = d.info,
                         savedate = new Date(info[3]),
@@ -429,7 +430,8 @@ define([
                             name: getNodeLabel(objectInfo),
                             info: objectInfo,
                             targetNodesSvgId : [],
-                            objId: objId
+                            objId: objId,
+                            isPresent: true
                         }
                         latestVersion = objectInfo[4];
                         latestObjId = objId;
@@ -559,6 +561,7 @@ define([
                   no_data: 1
                 })
                   .then(function (provData) {
+                    debugger;
                     var uniqueRefs = {},
                         uniquePaths = [];
                      for (var i = 0; i < provData.data.length; i++) {
@@ -652,7 +655,6 @@ define([
 
             function renderForceTree(nodesData, linksData, isRef){
               // TODO: put module back into container
-
               var width = 600,
                   height = 400,
                   radius = 10,
@@ -697,6 +699,7 @@ define([
                 node = svg.selectAll(".node");
                 // node.select("circle").attr("r", radius);
                 force.start();
+
                 for (var i = 100; i > 0; --i) force.tick();
                 force.stop();
               }
@@ -726,10 +729,26 @@ define([
               }
 
               function enterLinks(l) {
-                l.enter().insert("line", ".node")
+                l.enter()
+                  .append("g")
+                  .insert("line", ".node")
                   .attr("class", "link")
                   .attr('id', function(d){return "#path" + d.source + "_" + d.target})
+                  .attr('marker-end', 'markerArrow')
                   .style("stroke-width", function(d) { return d.weight; })
+
+
+
+                  l.append("svg:marker")
+                      .attr('id', 'markerArrow')// This section adds in the arrows
+                      .attr("markerWidth", 6)
+                      .attr("markerHeight", 6)
+                      .attr("orient", "auto")
+                      .append("circle")
+                      .attr("cx", function(d){debugger;})
+                      .attr("cy", 0)
+                      .attr("r", 4)
+                      .style("fill", "black");
               }
 
               function maintainNodePositions() {
@@ -749,11 +768,11 @@ define([
                 force.stop();
               }
 
-              force.on("tick", function(e) {
-                var k = 6 * e.alpha;
+              force.on("tick", tick);
+              function tick(e) {
+                var k = 10 * e.alpha;
                 // k *= isRef ? -1 : 1;
                 // Push sources up and targets down to form a weak tree.
-                link
                   node.attr("cx", function(d) { return d.x = Math.max(radius, Math.min(width - radius, d.x)); })
                       .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(height - radius, d.y)); })
                     .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
@@ -770,25 +789,39 @@ define([
                       .attr("y1", function(d) { return d.source.y; })
                       .attr("x2", function(d) { return d.target.x; })
                       .attr("y2", function(d) { return d.target.y; });
-              });
+              };
+
 
               force.on('end', function(e){
                   oldNodes = nodes;
+
                   maintainNodePositions();
+
               });
 
               function click(node){
                 var nodeId = {ref: node.objId};
-                if(isRef){
-                  getReferencingObjects(nodeId)
-                  .then(function(){
-                    update("ref");
-                  })
+                if(node.isPresent){
+                  debugger;
                 }else{
-                  getObjectProvenance(nodeId)
-                  .then(function(){
-                    update("prov");
-                  });
+                  if(isRef){
+                    getReferencingObjects(nodeId)
+                    .then(function(){
+                      update();
+                      node.isPresent = true;
+                      var buffer = 100;
+                      // height += buffer;
+                      // // debugger;
+                      // svg.attr('height', height);
+
+                    })
+                  }else{
+                    getObjectProvenance(nodeId)
+                    .then(function(){
+                      update();
+                      node.isPresent = true;
+                    });
+                  }
                 }
               }
               update();
