@@ -23,6 +23,11 @@ define([
                 workspace = new Workspace(runtime.getConfig('services.workspace.url'), {
                     token: runtime.service('session').getAuthToken()
                 }),
+                client = new GenericClient({
+                    url: runtime.config('services.workspace.url'),
+                    token: runtime.service('session').getAuthToken(),
+                    module: 'Workspace'
+                }),
                 types = {
                     selected: {
                         color: '#FF9800',
@@ -50,10 +55,6 @@ define([
                     }
                 },
                 monthLookup = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-                graph = {
-                    nodes:[],
-                    links:[]
-                },
                 objIdtoDataRef = {
                   "-1" : 1
                 },
@@ -86,7 +87,7 @@ define([
 
             function renderLayout() {
                 return div([
-                    div(['This is a visualization of the relationships between this piece of data and other data in KBase.  Mouse over objects to show additional information (shown below the graph). Double click on an object to select and recenter the graph on that object in a new window.', br(), br()]),
+                    div(['This is a visualization of the relationships between this piece of data and other data in KBase.  Click objects to show additional information (shown below the graph). Double click on an object expand graph.', br(), br()]),
                     div({id: 'objgraphview', style: {overflow: 'auto', height: '450px', resize: 'vertical'}}),
                     div({id: 'nodeColorKey'})
                 ]);
@@ -422,9 +423,8 @@ define([
                     //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
                     var t = objectInfo[2].split("-")[0],
                         objId = objectInfo[6] + "/" + objectInfo[0] + "/" + objectInfo[4],
-                        nodeId = graph.nodes.length;
-                      //pushes current nodes into graph
-
+                        //first object must be 0; TODO: change this to depend on usage or provenance
+                        nodeId = 0;
 
                     if (objectInfo[4] > latestVersion) {
                         node = {
@@ -442,10 +442,7 @@ define([
                     nodePaths [objId] = objId;
                     objIdentities.push({ref: objId});
                 });
-                //objIdentities is all versions
-                // return objIdentities;
 
-                graph.nodes.push(node);
                 provenanceGraph.nodes.push(node);
                 referenceGraph.nodes.push(node);
                 return {ref: latestObjId};
@@ -516,12 +513,10 @@ define([
                           }
                         }
 
-                        // graph.nodes.push(node);
                         if (targetId !== null) {  // only add the link if it is visible
                             var link = makeLink(targetId, nodeId, 1);
                             node.targetNodesSvgId.push("#path" + nodeId + "_" + targetId);
 
-                            graph.links.push(makeLink(targetId, nodeId, 1));
                             if(isRef){
                               referenceGraph.nodes.push(node);
                               referenceGraph.links.push(link);
@@ -598,14 +593,22 @@ define([
                           if(uniqueRefObjectIdentities.length === 0){
                             return [null, objectIdentity, functionNode];
                           }else{
-                            return Promise.all([workspace.get_object_info_new({
+                            //get_object_info_new deprecated. new method only availble on generic client
+                            // return Promise.all([workspace.get_object_info_new({
+                            //   objects: uniqueRefObjectIdentities,
+                            //   includeMetadata: 1,
+                            //   ignoreErrors: 1
+                            // }),objectIdentity, functionNode]);
+                            return Promise.all([client.callFunc('get_object_info3',[{
                               objects: uniqueRefObjectIdentities,
-                              includeMetadata: 1,
-                              ignoreErrors: 1
-                            }),objectIdentity, functionNode]);
+                              includeMetadata: 1
+                            }])
+                            ,objectIdentity, functionNode]);
                           }
 
                    }).spread(function (refData, objectIdentity, functionNode) {
+                    //generic client wrapped result in an array.    
+                    refData = refData[0].infos;
                     if(refData !== null){
                       const isRef = false;
                       addNodeLink(refData,objectIdentity, isRef, functionNode);
@@ -629,7 +632,6 @@ define([
                 workspace.get_object_history(objref)
                     .then(function (data) {
                         return processObjectHistory(data);
-                        //returns the objIdentities
                     })
                     .then(function (objectIdentity) {
 
@@ -654,10 +656,17 @@ define([
                     });
 
             }
+            function layer(nodesData){
+                const len = nodesData.length;
+                for(let i = 0; i <len; i++){
+                    //call provenance;
+                }
+
+                
+            }            
 
             function renderForceTree(nodesData, linksData, isRef){
-
-              // TODO: put module back into container
+                //TODO: copy loop through nodes and get provenances, with nodes hidden
               var width = 600,
                   height = 400,
                   radius = 10,
@@ -674,12 +683,6 @@ define([
               // svg = d3.select("body").append("svg")
               //   .attr("width", width)
               //   .attr("height", height);
-
-              //  TODO: uncomment to place back in widget
-
-
-        
-
               if(isRef){
                   svg = d3.select($container.find("#ref-tab")[0])
                       .append("svg")
@@ -744,18 +747,12 @@ define([
                   .attr('marker-end', 'url(#markerArrow)')
                   .style("stroke-width", function(d) { return d.weight; })
 
-
                 var defs = svg.append('svg:defs')
 
-
-                // var paths = svg.append('svg:g')
-                //   .attr('id', 'markers')
-                //   .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-
-                var data2 = [1];
+                var dummyData = [1];
 
                 var marker = defs.selectAll('marker')
-                    .data(data2)
+                    .data(dummyData)
                     .enter()
                     .append('svg:marker')
                     .attr('id', 'markerArrow')
@@ -769,8 +766,6 @@ define([
                     .append('svg:path')
                     .attr('d', 'M 0,0 m -5,-5 L 5,0 L -5,5 Z')
                     .attr('fill', "blue");
-
-              
               }
 
               function maintainNodePositions() {
@@ -783,6 +778,7 @@ define([
                   .on("dragend", dragstop);
               function dragstart(d) {
                   d.fixed = true;
+
                   force.stop();
               }
               function dragstop(d){
@@ -816,10 +812,22 @@ define([
 
               force.on('end', function(e){
                   oldNodes = nodes;
-
+                // updatePos();
                   maintainNodePositions();
 
               });
+
+              function updatePos(){
+                  node
+                      .attr("cy", function (d) { return d.y = Math.max(radius, Math.min(height - radius, d.y) + 100); })
+                      .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+                  link
+                      .attr("x1", function (d) { return d.source.x; })
+                      .attr("y1", function (d) { return d.source.y; })
+                      .attr("x2", function (d) { return d.target.x; })
+                      .attr("y2", function (d) { return d.target.y; });
+              }
 
               function click(node){
                 var nodeId = {ref: node.objId};
@@ -832,16 +840,14 @@ define([
                       update();
                       node.isPresent = true;
                       var buffer = 100;
-                      // height += buffer;
-                      // // debugger;
-                      // svg.attr('height', height);
 
                     })
                   }else{
                     getObjectProvenance(nodeId)
                     .then(function(){
-                      // height +=100
-                      // svg.attr("height", height);
+                    //   height +=100
+                    //   svg.attr("height", height);
+
 
                       update();
                       node.isPresent = true;
@@ -852,8 +858,7 @@ define([
               update();
             }
             function finishUpAndRender() {
-                //TODO: provenance.graph.links seems to get mutated
-                // debugger;
+
                 d3.select($container.find("#objgraphview")).html("");
                 $container.find('#objgraphview').show();
                 var ul = $('<ul class="nav nav-tabs"  role="tablist"/>');
