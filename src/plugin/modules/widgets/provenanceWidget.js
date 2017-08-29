@@ -738,24 +738,39 @@ define([
 
               function enterLinks(l) {
                 l.enter()
-                  .append("g")
                   .insert("line", ".node")
                   .attr("class", "link")
                   .attr('id', function(d){return "#path" + d.source + "_" + d.target})
-                  .attr('marker-end', 'markerArrow')
+                  .attr('marker-end', 'url(#markerArrow)')
                   .style("stroke-width", function(d) { return d.weight; })
 
 
+                var defs = svg.append('svg:defs')
 
-                  l.append("svg:marker")
-                      .attr('id', 'markerArrow')// This section adds in the arrows
-                      .attr("markerWidth", 6)
-                      .attr("markerHeight", 6)
-                      .attr("orient", "auto")
-                      .append("circle")
-                      .attr("cy", 0)
-                      .attr("r", 4)
-                      .style("fill", "black");
+
+                // var paths = svg.append('svg:g')
+                //   .attr('id', 'markers')
+                //   .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+                var data2 = [1];
+
+                var marker = defs.selectAll('marker')
+                    .data(data2)
+                    .enter()
+                    .append('svg:marker')
+                    .attr('id', 'markerArrow')
+                    .attr('markerHeight', 10)
+                    .attr('markerWidth', 10)
+                    .attr('markerUnits', 'strokeWidth')
+                    .attr('orient', 'auto')
+                    .attr('refX', 10)
+                    .attr('refY', 0)
+                    .attr('viewBox', '-5 -5 10 10')
+                    .append('svg:path')
+                    .attr('d', 'M 0,0 m -5,-5 L 5,0 L -5,5 Z')
+                    .attr('fill', "blue");
+
+              
               }
 
               function maintainNodePositions() {
@@ -844,9 +859,9 @@ define([
                 var ul = $('<ul class="nav nav-tabs"  role="tablist"/>');
                 ul.append('<li role="presentation" class="active"><a href="#prov-tab" aria-controls="prov-tab" role="tab" data-toggle="tab">Provenance and Dependencies</a></li>')
                 ul.append('<li role="presentation"  ><a href="#ref-tab" aria-controls="usage-tab" role="tab" data-toggle="tab">Object Usage</a></li>')
-                var content = $('<div class="tab-content"></div>');
+                var content = $('<div/>',{class:'tab-content'});
                 content.append('<div role="tabpanel" class="tab-pane active" id="prov-tab"></div>');
-                content.append('<div role="tabpanel" class="tab-pane active" id="ref-tab"></div>');
+                content.append('<div role="tabpanel" class="tab-pane " id="ref-tab"></div>');
                 $('#objgraphview').append(ul);
                 $('#objgraphview').append(content);
                 renderForceTree(provenanceGraph.nodes, provenanceGraph.links, false);
