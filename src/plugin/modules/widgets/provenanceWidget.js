@@ -678,16 +678,22 @@ define([
               //  TODO: uncomment to place back in widget
 
 
-              svg = d3.select($container.find("#prov-tab")[0])
-                      .append("svg")
-                        .attr("width", width)
-                        .attr("height", height);
+        
 
               if(isRef){
+                  svg = d3.select($container.find("#ref-tab")[0])
+                      .append("svg")
+                      .attr("width", width)
+                      .attr("height", height);
                 svg.attr('class', 'ref');
               }else{
-                svg.attr('class', 'prov');
-              }
+                  svg = d3.select($container.find("#prov-tab")[0])
+                      .append("svg")
+                      .attr("width", width)
+                      .attr("height", height);       
+                  svg.attr('class', 'prov');
+       
+             }
 
               function update(newNodes, newLinks) {
                 force.nodes(nodes).links(links);
@@ -700,7 +706,6 @@ define([
                 enterNodes(n);
                 link = svg.selectAll(".link");
                 node = svg.selectAll(".node");
-                // node.select("circle").attr("r", radius);
                 force.start();
 
                 for (var i = 100; i > 0; --i) force.tick();
@@ -836,11 +841,15 @@ define([
                 // debugger;
                 d3.select($container.find("#objgraphview")).html("");
                 $container.find('#objgraphview').show();
-                var ul = $('<ul class="nav nav-tabs"/>');
-                ul.append('<li role="presentation" id = "prov-tab" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Provenance and Dependencies</a></li>')
-                ul.append('<li role="presentation" id = "ref-tab" class ="usage"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Object Usage</a></li>')
-                $('#objgraphview').append(ul)
-                renderForceTree(provenanceGraph.nodes, provenanceGraph.links);
+                var ul = $('<ul class="nav nav-tabs"  role="tablist"/>');
+                ul.append('<li role="presentation" class="active"><a href="#prov-tab" aria-controls="prov-tab" role="tab" data-toggle="tab">Provenance and Dependencies</a></li>')
+                ul.append('<li role="presentation"  ><a href="#ref-tab" aria-controls="usage-tab" role="tab" data-toggle="tab">Object Usage</a></li>')
+                var content = $('<div class="tab-content"></div>');
+                content.append('<div role="tabpanel" class="tab-pane active" id="prov-tab"></div>');
+                content.append('<div role="tabpanel" class="tab-pane active" id="ref-tab"></div>');
+                $('#objgraphview').append(ul);
+                $('#objgraphview').append(content);
+                renderForceTree(provenanceGraph.nodes, provenanceGraph.links, false);
                 renderForceTree(referenceGraph.nodes, referenceGraph.links, true);
                 addNodeColorKey();
                 $container.find('#loading-mssg').hide();
