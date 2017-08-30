@@ -414,7 +414,7 @@ define([
 
             function processObjectHistory(data) {
                 //central object (current object and all its versions)
-                var node, objIdentities = [],
+                var node, node2, objIdentities = [],
                     latestVersion = 0,
                     latestObjId = "";
 
@@ -434,6 +434,13 @@ define([
                             objId: objId,
                             isPresent: true
                         }
+                        node2 = {
+                            name: getNodeLabel(objectInfo),
+                            info: objectInfo,
+                            targetNodesSvgId : [],
+                            objId: objId,
+                            isPresent: true
+                        }
                         latestVersion = objectInfo[4];
                         latestObjId = objId;
                     }
@@ -444,7 +451,7 @@ define([
                 });
 
                 provenanceGraph.nodes.push(node);
-                referenceGraph.nodes.push(node);
+                referenceGraph.nodes.push(node2);
                 return {ref: latestObjId};
             }
 
