@@ -567,9 +567,12 @@ define([
                   .then(function (provData) {
                     // debugger;
                     var uniqueRefs = {},
-                        uniquePaths = [];
+                        uniqueProvPaths = [],
+                        uniqueRefPaths = [],
+                        uniqueCombinePaths = [];
                      for (var i = 0; i < provData.data.length; i++) {
                             let objectProvenance = provData.data[i];
+                            debugger;
                             objectProvenance.provenance.forEach(function (provenance) {
                                 var objRef = getObjectRef(objectProvenance.info);
 
@@ -589,25 +592,36 @@ define([
 
                                             var path = nodePaths[objectIdentity.ref] + ";" + resolvedObjectRef;
                                             nodePaths[resolvedObjectRef] = path;
-                                            uniquePaths.push({ref: path});
+                                            uniqueProvPaths.push({ref: path});
                                         }
                                     });
                                 }
                             });
                       }
-                      return uniquePaths;
-                  }).then(function(uniqueRefObjectIdentities){
-                          if(uniqueRefObjectIdentities.length === 0){
+                    //   debugger;
+                    var dependencies = provData.data[0].refs;
+                    for (var i = 0; i <dependencies.length; i++){
+                        var path = nodePaths[objectIdentity.ref] + ";" + dependencies[i];
+                        nodePaths[dependencies[i]] = path;
+                        if(uniqueRefs[dependencies[i]]){
+                            uniqueCombinePaths.push(path);
+                        }else{
+                            uniqueRefPaths.push(path);
+                        }
+                    }
+                      return [uniqueProvPaths, uniqueRefPaths, uniqueCombinePaths];
+                  }).spread(function(uniqueProvPaths, uniqueRefPaths, uniqueCombinePaths){
+                          if(uniqueProvPaths.length === 0){
                             return [null, objectIdentity, functionNode];
                           }else{
                             //get_object_info_new deprecated. new method only availble on generic client
                             // return Promise.all([workspace.get_object_info_new({
-                            //   objects: uniqueRefObjectIdentities,
+                            //   objects: uniqueProvPaths,
                             //   includeMetadata: 1,
                             //   ignoreErrors: 1
                             // }),objectIdentity, functionNode]);
                             return Promise.all([client.callFunc('get_object_info3',[{
-                              objects: uniqueRefObjectIdentities,
+                              objects: uniqueProvPaths,
                               includeMetadata: 1
                             }])
                             ,objectIdentity, functionNode]);
@@ -615,9 +629,10 @@ define([
 
                    }).spread(function (refData, objectIdentity, functionNode) {
                     //generic client wrapped result in an array.    
-                    refData = refData[0].infos;
                     if(refData !== null){
+                        refData = refData[0].infos;
                       const isRef = false;
+                      //TODO set type of link
                       addNodeLink(refData,objectIdentity, isRef, functionNode);
 
                     }
@@ -752,7 +767,8 @@ define([
                   .attr("class", "link")
                   .attr('id', function(d){return "#path" + d.source + "_" + d.target})
                   .attr('marker-end', 'url(#markerArrow)')
-                  .style("stroke-width", function(d) { return d.weight; })
+                    .style("stroke-dasharray", function(d) {return ("3, 3")})
+                  .style("stroke-width", function(d) { return 5 })
 
                 var defs = svg.append('svg:defs')
 
@@ -763,11 +779,10 @@ define([
                     .enter()
                     .append('svg:marker')
                     .attr('id', 'markerArrow')
-                    .attr('markerHeight', 10)
-                    .attr('markerWidth', 10)
-                    .attr('markerUnits', 'strokeWidth')
+                    .attr('markerHeight', 3)
+                    .attr('markerWidth', 3)
                     .attr('orient', 'auto')
-                    .attr('refX', 10)
+                    .attr('refX', 5)
                     .attr('refY', 0)
                     .attr('viewBox', '-5 -5 10 10')
                     .append('svg:path')
