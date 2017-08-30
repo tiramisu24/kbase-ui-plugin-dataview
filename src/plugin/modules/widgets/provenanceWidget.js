@@ -31,19 +31,19 @@ define([
                 types = {
                     selected: {
                         color: '#FF9800',
-                        name: 'Current version'
+                        name: 'Current object'
                     },
                     core: {
                         color: '#FF9800',
-                        name: 'All Versions of this Data'
+                        name: 'Provenance References'
                     },
                     ref: {
                         color: '#C62828',
-                        name: 'Data Referencing this Data'
+                        name: 'Dependencies Refereneces'
                     },
                     included: {
                         color: '#2196F3',
-                        name: 'Data Referenced by this Data'
+                        name: ''
                     },
                     none: {
                         color: '#FFFFFF',
@@ -148,8 +148,8 @@ define([
                                     }
                                     return tr([
                                         td([
-                                            svg({width: '40', height: '20'}, [
-                                                rect({x: '0', y: '0', width: '40', height: '20', fill: types[type].color})
+                                            svg({width: '40', height: '20', class: 'legend'}, [
+                                                rect({ x: '0', y: '0', width: '40', height: '20', fill: types[type].color , 'stroke-dasharray': '(3,3)'})
                                             ])
                                         ]),
                                         td({valign: 'middle'}, [
@@ -168,6 +168,9 @@ define([
                             ])
                         ])
                     ]);
+
+                    // d3.select('#prov-widget-legend').append('g');
+
                     $('#nodeColorKey').html(content);
                 }
             }
@@ -472,20 +475,17 @@ define([
                 console.error(err);
             }
             function addNodeLink(refData,objectIdentity, isRef, functionNode) {
-              //refData is the objects that reference current object
-                for (var i = 0; i < refData.length; i++) {
+                //
+                for (var i = 0; i < Math.min(refData.length, 10); i++) {
                     var limit = 10;
-                        if(i >=limit){
-                          //TODO: combine nodes
-                          break;
-                        }
+    
                         var refInfo =refData[i];
                         var t = refInfo[2].split("-")[0];
                         var objId = refInfo[6] + "/" + refInfo[0] + "/" + refInfo[4];
                         //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
 
                         //pushes reference nodes into list
-                        let node = {
+                        var node = {
                             name: getNodeLabel(refInfo),
                             info: refInfo,
                             objId: objId,
@@ -572,7 +572,6 @@ define([
                         uniqueCombinePaths = [];
                      for (var i = 0; i < provData.data.length; i++) {
                             let objectProvenance = provData.data[i];
-                            debugger;
                             objectProvenance.provenance.forEach(function (provenance) {
                                 var objRef = getObjectRef(objectProvenance.info);
 
@@ -695,9 +694,12 @@ define([
                   oldNodes, // data
                   svg, node, link, // d3 selections
                   force = d3.layout.force()
-                  .charge(-300)
-                  .linkDistance(30)
-                  .size([width, height]);
+                    .charge(-1300)
+                    // .linkDistance(30)
+                      .friction(0.5)
+                      .gravity(0.05)
+
+                    .size([width, height]);
 
               var nodes = nodesData
               var links = linksData
@@ -750,14 +752,24 @@ define([
                 g.append("circle")
                   .attr("cx", 0)
                   .attr("cy", 0)
-                  .attr("r", function (d) {return d.isFunction ? radius/2 : radius})
+                  .attr("r", function (d) {return d.isFunction ? radius : radius*4})
                   .style('fill',  function (d) {
                     if (d.isFunction) return "black";
                     return isRef ? '#2196F3' : '#4BB856';
                   });
 
+                // g.append("rect")
+                //     .attr("x", 10)
+                //     .attr("y", 10)
+                //     .attr("width", function(d){ return (d.name.length * 5);})
+                //     .attr("height", 10)
+                //     .style('fill',  function (d) {
+                //     if (d.isFunction) return "black";
+                //     return isRef ? '#2196F3' : '#4BB856';
+                //   });
+
                 g.append("text")
-                  .attr("dy", ".35em")
+                //   .attr("dy", ".35em")
                   .text(function(d) {return d.name});
               }
 
@@ -810,6 +822,11 @@ define([
 
               force.on("tick", tick);
               function tick(e) {
+                  var q = d3.geom.quadtree(nodes),
+                      i = 0,
+                      n = nodes.length;
+
+                  while (++i < n) q.visit(collide(nodes[i]));
                 var k = 10 * e.alpha;
                 // k *= isRef ? -1 : 1;
                 // Push sources up and targets down to form a weak tree.
@@ -877,6 +894,31 @@ define([
                   }
                 }
               }
+
+              function collide(node) {
+                  var r = node.radius + 16,
+                      nx1 = node.x - r,
+                      nx2 = node.x + r,
+                      ny1 = node.y - r,
+                      ny2 = node.y + r;
+                  return function (quad, x1, y1, x2, y2) {
+                      if (quad.point && (quad.point !== node)) {
+                          var x = node.x - quad.point.x,
+                              y = node.y - quad.point.y,
+                              l = Math.sqrt(x * x + y * y),
+                              r = node.radius + quad.point.radius;
+                          if (l < r) {
+                              l = (l - r) / l * .5;
+                              node.x -= x *= l;
+                              node.y -= y *= l;
+                              quad.point.x += x;
+                              quad.point.y += y;
+                          }
+                      }
+                      return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+                  };
+                }
+              
               update();
             }
             function finishUpAndRender() {
@@ -892,7 +934,7 @@ define([
                 $('#objgraphview').append(ul);
                 $('#objgraphview').append(content);
                 renderForceTree(provenanceGraph.nodes, provenanceGraph.links, false);
-                renderForceTree(referenceGraph.nodes, referenceGraph.links, true);
+                // renderForceTree(referenceGraph.nodes, referenceGraph.links, true);
                 addNodeColorKey();
                 $container.find('#loading-mssg').hide();
             }
