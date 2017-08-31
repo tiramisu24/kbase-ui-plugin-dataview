@@ -701,8 +701,10 @@ define([
 
                     .size([width, height]);
 
-              var nodes = nodesData
-              var links = linksData
+              var nodes = nodesData;
+              var links = linksData;
+              var t = d3.transition()
+                  .duration(1750);
 
               // svg = d3.select("body").append("svg")
               //   .attr("width", width)
@@ -741,6 +743,7 @@ define([
 
               function enterNodes(n) {
                 oldNodes = [];
+     
                 var g = n.enter()
                   .append("g")
                   .attr("class", "node")
@@ -752,11 +755,13 @@ define([
                 g.append("circle")
                   .attr("cx", 0)
                   .attr("cy", 0)
-                  .attr("r", function (d) {return d.isFunction ? radius : radius*4})
+                  .attr("r", function (d) {return d.isFunction ? radius : radius})
+                  .transition(t)
                   .style('fill',  function (d) {
                     if (d.isFunction) return "black";
                     return isRef ? '#2196F3' : '#4BB856';
                   });
+                g.transition
 
                 // g.append("rect")
                 //     .attr("x", 10)
@@ -779,7 +784,8 @@ define([
                   .attr("class", "link")
                   .attr('id', function(d){return "#path" + d.source + "_" + d.target})
                   .attr('marker-end', 'url(#markerArrow)')
-                    .style("stroke-dasharray", function(d) {return ("3, 3")})
+                  .transition(t)
+                  .style("stroke-dasharray", function(d) {return ("3, 3")})
                   .style("stroke-width", function(d) { return 5 })
 
                 var defs = svg.append('svg:defs')
