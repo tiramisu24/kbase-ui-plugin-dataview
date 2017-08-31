@@ -82,6 +82,10 @@ define([
                     nodes: [],
                     links: []
                 },
+                combineGraph = {
+                    nodes: [],
+                    links: []
+                },
                 nodePaths = {
 
                 },
@@ -186,7 +190,6 @@ define([
             }
 
             function nodeMouseover(d) {
-                debugger;
                 if(d.isFunction){return;}
                 if (d.isFake) {
                     var info = d.info,
@@ -465,6 +468,7 @@ define([
                 });
 
                 provenanceGraph.nodes.push(node);
+                combineGraph.nodes.push(node);
                 referenceGraph.nodes.push(node2);
                 return {ref: latestObjId};
             }
@@ -507,16 +511,20 @@ define([
 
                         if(functionNode){
                           if(!isRef){
-                            var functionId = provenanceGraph.nodes.length;
-                            provenanceGraph.nodes.push(functionNode);
-                            provenanceGraph.links.push(makeLink(targetId, functionId));
+                            // var functionId = provenanceGraph.nodes.length;
+                            // provenanceGraph.nodes.push(functionNode);
+                            // provenanceGraph.links.push(makeLink(targetId, functionId));
+                            var functionId = combineGraph.nodes.length;
+                            combineGraph.nodes.push(functionNode);
+                            combineGraph.links.push(makeLink(targetId, functionId, isRef));
                             targetId = functionId;
                           }
                         }
 
                         var nodeId;
 
-                        var nodeId= isRef ? referenceGraph.nodes.length : provenanceGraph.nodes.length;
+                        // var nodeId= isRef ? referenceGraph.nodes.length : provenanceGraph.nodes.length;
+                        var nodeId = combineGraph.nodes.length;
                         if(isRef){
                           if(objIdtoDataRef[objId]){
                             nodeId = objIdtoDataRef[objId];
@@ -532,9 +540,10 @@ define([
                         }
 
                         if (targetId !== null) {  // only add the link if it is visible
-                            var link = makeLink(targetId, nodeId, 1);
+                            var link = makeLink(targetId, nodeId, isRef);
                             node.targetNodesSvgId.push("#path" + nodeId + "_" + targetId);
-
+                            combineGraph.nodes.push(node);
+                            combineGraph.links.push(link);
                             if(isRef){
                               referenceGraph.nodes.push(node);
                               referenceGraph.links.push(link);
@@ -556,16 +565,15 @@ define([
                     });
             }
 
-            function makeLink(source, target, value) {
+            function makeLink(source, target, isRef) {
                 return {
                     source: source,
                     target: target,
-                    value: value
+                    isRef: isRef
                 };
             }
 
             function getObjectProvenance(objectIdentity){
-              // debugger;
               let path = nodePaths[objectIdentity.ref];
               var objectPath = (path)? ({ref:path}) : objectIdentity;
               //TODO: global unique provenance items
@@ -576,7 +584,6 @@ define([
                   no_data: 1
                 })
                   .then(function (provData) {
-                    // debugger;
                     var uniqueRefs = {},
                         uniqueProvPaths = [],
                         uniqueRefPaths = [],
@@ -608,7 +615,6 @@ define([
                                 }
                             });
                       }
-                    //   debugger;
                     var dependencies = provData.data[0].refs;
                     for (var i = 0; i <dependencies.length; i++){
                         var path = nodePaths[objectIdentity.ref] + ";" + dependencies[i];
@@ -853,11 +859,11 @@ define([
                   // Push sources up and targets down to form a weak tree.
                   link
                       .each(function(d) {
-                        // if(isRef){
-                        //   d.source.y -= k, d.target.y += k;
-                        // }else{
+                        if(d.isRef){
+                          d.source.y -= k, d.target.y += k;
+                        }else{
                           d.source.y += k, d.target.y -= k;
-                        // }
+                        }
                         })
                       .attr("x1", function(d) { return d.source.x; })
                       .attr("y1", function(d) { return d.source.y; })
@@ -892,7 +898,6 @@ define([
               function click(node){
                 var nodeId = {ref: node.objId};
                 if(node.isPresent){
-                  debugger;
                 }else{
                   if(isRef){
                     getReferencingObjects(nodeId)
@@ -954,8 +959,9 @@ define([
                 content.append('<div role="tabpanel" class="tab-pane " id="ref-tab"></div>');
                 $('#objgraphview').append(ul);
                 $('#objgraphview').append(content);
-                renderForceTree(provenanceGraph.nodes, provenanceGraph.links, false);
-                renderForceTree(referenceGraph.nodes, referenceGraph.links, true);
+                // renderForceTree(provenanceGraph.nodes, provenanceGraph.links, false);
+                renderForceTree(combineGraph.nodes, combineGraph.links, false);
+                // renderForceTree(referenceGraph.nodes, referenceGraph.links, true);
                 addNodeColorKey();
                 $container.find('#loading-mssg').hide();
             }
