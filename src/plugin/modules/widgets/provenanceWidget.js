@@ -28,30 +28,43 @@ define([
                     token: runtime.service('session').getAuthToken(),
                     module: 'Workspace'
                 }),
+                lineWidth = 4,
+                objWidth= 20,
                 types = {
                     selected: {
                         color: '#FF9800',
-                        name: 'Current object'
-                    },
+                        name: 'Current object',
+                        width: objWidth,
+                        stroke: (10,0)                    },
                     core: {
                         color: '#FF9800',
-                        name: 'Provenance References'
+                        name: 'No Provenance or Dependencies',
+                        width: objWidth,
+                        stroke: (10,0)
                     },
                     ref: {
                         color: '#C62828',
-                        name: 'Dependencies Refereneces'
+                        name: 'Nodes with Provenance or Dependencies',
+                        width: objWidth,
+                        stroke: (10,0)
                     },
                     included: {
                         color: '#2196F3',
-                        name: ''
+                        name: 'Dependencies Refereneces',
+                        width: lineWidth,
+                        stroke: (5, 5)
                     },
                     none: {
-                        color: '#FFFFFF',
-                        name: ''
+                        color: 'grey',
+                        name: 'Provenance References',
+                        width: lineWidth,
+                        stroke: (3, 7)
                     },
                     copied: {
                         color: '#4BB856',
-                        name: 'Copied From'
+                        name: 'Copied From',
+                        width: lineWidth,
+                        stroke: (10,0)
                     }
                 },
                 monthLookup = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
@@ -135,43 +148,77 @@ define([
             function addNodeColorKey() {
                 if (needColorKey) {
                     needColorKey = false;
-                    var content = table({cellpadding: '0', cellspacing: '0', border: '0', width: '100%', style: {border: '1px silver solid; padding: 4px;'}}, [
-                        tr([
-                            td({valign: 'top'}, [
-                                table({cellpadding: '2', cellspacing: '0', border: '0', id: 'graphkey', style: ''},
-                                    Object.keys(types).map(function (type) {
-                                    if (type === 'selected') {
-                                        return;
-                                    }
-                                    if (types[type].name === '') {
-                                        return;
-                                    }
-                                    return tr([
-                                        td([
-                                            svg({width: '40', height: '20', class: 'legend'}, [
-                                                rect({ x: '0', y: '0', width: '40', height: '20', fill: types[type].color , 'stroke-dasharray': '(3,3)'})
-                                            ])
-                                        ]),
-                                        td({valign: 'middle'}, [
-                                            types[type].name
-                                        ])
-                                    ]);
-                                }).filter(function (x) {
-                                    if (x === undefined) {
-                                        return false;
-                                    }
-                                    return true;
-                                }))
-                            ]),
-                            td([
-                                div({id: 'objdetailsdiv'})
-                            ])
-                        ])
-                    ]);
+                    // var content = table({cellpadding: '0', cellspacing: '0', border: '0', width: '100%', style: {border: '1px silver solid; padding: 4px;'}}, [
+                    //     tr([
+                    //         td({valign: 'top'}, [
+                    //             table({cellpadding: '2', cellspacing: '0', border: '0', id: 'graphkey', style: ''},
+                    //                 Object.keys(types).map(function (type) {
+                    //                 if (type === 'selected') {
+                    //                     return;
+                    //                 }
+                    //                 if (types[type].name === '') {
+                    //                     return;
+                    //                 }
+                    //                 return tr([
+                    //                     td([
+                    //                         svg({width: '40', height: '20'}, [
+                    //                             rect({ x: '0', y: '0', width: '40', height: '20', fill: types[type].color })
+                    //                         ])
+                    //                     ]),
+                    //                     td({valign: 'middle'}, [
+                    //                         types[type].name
+                    //                     ])
+                    //                 ]);
+                    //             }).filter(function (x) {
+                    //                 if (x === undefined) {
+                    //                     return false;
+                    //                 }
+                    //                 return true;
+                    //             }))
+                    //         ]),
+                    //         td([
+                    //             div({id: 'objdetailsdiv'})
+                    //         ])
+                    //     ])
+                    // ]);
 
                     // d3.select('#prov-widget-legend').append('g');
+                    // $('#graphkey').append(' <div >sdjflsdjflksdjl</div>')
+                    // $('#prov-legend').append(' <line stroke-dasharray="5, 5"              x1="10" y1="10" x2="190" y2="10" />')
 
-                    $('#nodeColorKey').html(content);
+                    var content = $('<table/>', { cellpadding: '2', cellspacing: '0', border: '0', id: 'graphkey', style: '' });
+                    var div = $('<div/>');
+                    Object.keys(types).map(function (type){
+                        var row = $('<tr/>', { class: 'prov-graph-color' });
+                        var colorId = "row" + type
+                        var colorGrid = $('<td/>', {id: colorId})
+                                           
+                        var colorName = $('<td/>',{text:( types[type].name)})
+                                        .css('vertical-align', "top");
+                        
+                        row.append(colorGrid);
+                        row.append(colorName);
+                        $('body').append(row);
+                        var temp = "#" + colorId
+                        var colorSvg = d3.select(temp)
+                                        .append('svg')
+                                        .attr('height',26)
+                                        .attr('width',60);
+          
+                        var circle2 = colorSvg.append("line")
+                            .attr("x1", 5)
+                            .attr("y1", 5)
+                            .attr("x2", 50)
+                            .attr("y2", 5)
+                            .attr("stroke-dasharray", types[type].stroke)
+                            .attr("stroke-width", types[type].width)
+                            .attr("stroke", types[type].color);    
+        
+
+                    })
+       
+                    $('body').append(content);
+                    // $('#nodeColorKey').html(content);
                 }
             }
 
@@ -694,11 +741,7 @@ define([
                   oldNodes, // data
                   svg, node, link, // d3 selections
                   force = d3.layout.force()
-                    .charge(-1300)
-                    // .linkDistance(30)
-                      .friction(0.5)
-                      .gravity(0.05)
-
+                    .charge(-300)
                     .size([width, height]);
 
               var nodes = nodesData;
@@ -706,9 +749,6 @@ define([
               var t = d3.transition()
                   .duration(1750);
 
-              // svg = d3.select("body").append("svg")
-              //   .attr("width", width)
-              //   .attr("height", height);
               if(isRef){
                   svg = d3.select($container.find("#ref-tab")[0])
                       .append("svg")
@@ -725,6 +765,7 @@ define([
              }
 
               function update(newNodes, newLinks) {
+         
                 force.nodes(nodes).links(links);
 
                 var l = svg.selectAll(".link")
@@ -815,6 +856,7 @@ define([
               }
               var drag = force.drag()
                   .on("dragstart", dragstart)
+                //   .on('drag', drag)
                   .on("dragend", dragstop);
               function dragstart(d) {
                   d.fixed = true;
@@ -825,6 +867,11 @@ define([
                 d.fixed = true;
                 force.stop();
               }
+            //   function drag(d){
+            //     //   console.log(d);
+            //       force.stop();
+
+            //   }
 
               force.on("tick", tick);
               function tick(e) {
@@ -863,15 +910,19 @@ define([
               });
 
               function updatePos(){
-                  node
-                      .attr("cy", function (d) { return d.y = Math.max(radius, Math.min(height - radius, d.y) + 100); })
-                      .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+                  height += 100;
+                  svg.attr('height', height);
+                  svg.selectAll(".node")
+                      .attr("cy", function (d) { d.y += 100; return d.y = Math.max(radius, Math.min(height - radius, d.y)); })
+                      .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; })
+                      .transition();
 
-                  link
+                  svg.selectAll(".link")
                       .attr("x1", function (d) { return d.source.x; })
                       .attr("y1", function (d) { return d.source.y; })
                       .attr("x2", function (d) { return d.target.x; })
-                      .attr("y2", function (d) { return d.target.y; });
+                      .attr("y2", function (d) { return d.target.y; })
+                      .transition();
               }
 
               function click(node){
@@ -892,9 +943,9 @@ define([
                     .then(function(){
                     //   height +=100
                     //   svg.attr("height", height);
-
-
-                      update();
+                    
+                    update();
+                    // updatePos();
                       node.isPresent = true;
                     });
                   }
@@ -940,7 +991,7 @@ define([
                 $('#objgraphview').append(ul);
                 $('#objgraphview').append(content);
                 renderForceTree(provenanceGraph.nodes, provenanceGraph.links, false);
-                // renderForceTree(referenceGraph.nodes, referenceGraph.links, true);
+                renderForceTree(referenceGraph.nodes, referenceGraph.links, true);
                 addNodeColorKey();
                 $container.find('#loading-mssg').hide();
             }
