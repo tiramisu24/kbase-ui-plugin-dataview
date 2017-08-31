@@ -148,43 +148,6 @@ define([
             function addNodeColorKey() {
                 if (needColorKey) {
                     needColorKey = false;
-                    // var content = table({cellpadding: '0', cellspacing: '0', border: '0', width: '100%', style: {border: '1px silver solid; padding: 4px;'}}, [
-                    //     tr([
-                    //         td({valign: 'top'}, [
-                    //             table({cellpadding: '2', cellspacing: '0', border: '0', id: 'graphkey', style: ''},
-                    //                 Object.keys(types).map(function (type) {
-                    //                 if (type === 'selected') {
-                    //                     return;
-                    //                 }
-                    //                 if (types[type].name === '') {
-                    //                     return;
-                    //                 }
-                    //                 return tr([
-                    //                     td([
-                    //                         svg({width: '40', height: '20'}, [
-                    //                             rect({ x: '0', y: '0', width: '40', height: '20', fill: types[type].color })
-                    //                         ])
-                    //                     ]),
-                    //                     td({valign: 'middle'}, [
-                    //                         types[type].name
-                    //                     ])
-                    //                 ]);
-                    //             }).filter(function (x) {
-                    //                 if (x === undefined) {
-                    //                     return false;
-                    //                 }
-                    //                 return true;
-                    //             }))
-                    //         ]),
-                    //         td([
-                    //             div({id: 'objdetailsdiv'})
-                    //         ])
-                    //     ])
-                    // ]);
-
-                    // d3.select('#prov-widget-legend').append('g');
-                    // $('#graphkey').append(' <div >sdjflsdjflksdjl</div>')
-                    // $('#prov-legend').append(' <line stroke-dasharray="5, 5"              x1="10" y1="10" x2="190" y2="10" />')
 
                     var content = $('<table/>', { cellpadding: '2', cellspacing: '0', border: '0', id: 'graphkey', style: '' });
                     var div = $('<div/>');
@@ -198,7 +161,7 @@ define([
                         
                         row.append(colorGrid);
                         row.append(colorName);
-                        $('body').append(row);
+                        $('#nodeColorKey').append(row);
                         var temp = "#" + colorId
                         var colorSvg = d3.select(temp)
                                         .append('svg')
