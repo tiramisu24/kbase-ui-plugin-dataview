@@ -186,6 +186,7 @@ define([
             }
 
             function nodeMouseover(d) {
+                debugger;
                 if(d.isFunction){return;}
                 if (d.isFake) {
                     var info = d.info,
