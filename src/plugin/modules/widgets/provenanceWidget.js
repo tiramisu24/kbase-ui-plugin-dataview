@@ -37,7 +37,7 @@ define([
                         width: objWidth,
                         stroke: (10,0)                    },
                     core: {
-                        color: '#FF9800',
+                        color: 'pink',
                         name: 'No Provenance or Dependencies',
                         width: objWidth,
                         stroke: (10,0)
@@ -69,6 +69,9 @@ define([
                 },
                 monthLookup = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
                 objIdtoDataRef = {
+                  "-1" : 1
+                },
+                objIdtoDataCombine = {
                   "-1" : 1
                 },
                 objIdtoDataProv = {
@@ -451,18 +454,13 @@ define([
                             objId: objId,
                             isPresent: true
                         }
-                        node2 = {
-                            name: getNodeLabel(objectInfo),
-                            info: objectInfo,
-                            targetNodesSvgId : [],
-                            objId: objId,
-                            isPresent: true
-                        }
+            
                         latestVersion = objectInfo[4];
                         latestObjId = objId;
                     }
-                    objIdtoDataRef[objId] = nodeId;
-                    objIdtoDataProv[objId] = nodeId;
+                    // objIdtoDataRef[objId] = nodeId;
+                    objIdtoDataCombine[objId] = nodeId;
+                    // objIdtoDataProv[objId] = nodeId;
                     nodePaths [objId] = objId;
                     objIdentities.push({ref: objId});
                 });
@@ -489,7 +487,15 @@ define([
                 console.error("Error in building object graph!");
                 console.error(err);
             }
-            function addNodeLink(refData,objectIdentity, isRef, functionNode) {
+            function addFunctionLink(objIdentity, functionNode, isRef){
+                // var targetId = isRef ? objIdtoDataRef[objIdentity.ref] : objIdtoDataProv[objIdentity.ref];
+                var targetId = objIdtoDataCombine[objIdentity.ref];
+                var functionId = combineGraph.nodes.length;
+                combineGraph.nodes.push(functionNode);
+                combineGraph.links.push(makeLink(targetId, functionId, isRef));
+                return functionId;
+            }
+            function addNodeLink(refData, targetId, isRef) {
                 //
                 for (var i = 0; i < Math.min(refData.length, 10); i++) {
                     var limit = 10;
@@ -506,38 +512,44 @@ define([
                             objId: objId,
                             targetNodesSvgId : []
                         };
-                        var targetId = isRef ? objIdtoDataRef[objectIdentity.ref] : objIdtoDataProv[objectIdentity.ref];
+                        // var targetId = isRef ? objIdtoDataRef[objectIdentity.ref] : objIdtoDataProv[objectIdentity.ref];
+                        // var targetId = functionId
 
 
-                        if(functionNode){
-                          if(!isRef){
-                            // var functionId = provenanceGraph.nodes.length;
-                            // provenanceGraph.nodes.push(functionNode);
-                            // provenanceGraph.links.push(makeLink(targetId, functionId));
-                            var functionId = combineGraph.nodes.length;
-                            combineGraph.nodes.push(functionNode);
-                            combineGraph.links.push(makeLink(targetId, functionId, isRef));
-                            targetId = functionId;
-                          }
-                        }
+                        // if(functionNode){
+                        //   if(!isRef){
+                        //     // var functionId = provenanceGraph.nodes.length;
+                        //     // provenanceGraph.nodes.push(functionNode);
+                        //     // provenanceGraph.links.push(makeLink(targetId, functionId));
+                        //     var functionId = combineGraph.nodes.length;
+                        //     combineGraph.nodes.push(functionNode);
+                        //     combineGraph.links.push(makeLink(targetId, functionId, isRef));
+                        //     targetId = functionId;
+                        //   }
+                        // }
 
                         var nodeId;
 
                         // var nodeId= isRef ? referenceGraph.nodes.length : provenanceGraph.nodes.length;
                         var nodeId = combineGraph.nodes.length;
-                        if(isRef){
-                          if(objIdtoDataRef[objId]){
-                            nodeId = objIdtoDataRef[objId];
-                          }else{
-                            objIdtoDataRef[objId] = nodeId;
-                          }
+                        if(objIdtoDataCombine[objId]){
+                            nodeId = objIdtoDataCombine[objId];
                         }else{
-                          if(objIdtoDataProv[objId]){
-                            nodeId = objIdtoDataProv[objId];
-                          }else{
-                            objIdtoDataProv[objId] = nodeId;
-                          }
+                            objIdtoDataCombine[objId] = nodeId;
                         }
+                        // if(isRef){
+                        //   if(objIdtoDataRef[objId]){
+                        //     nodeId = objIdtoDataRef[objId];
+                        //   }else{
+                        //     objIdtoDataRef[objId] = nodeId;
+                        //   }
+                        // }else{
+                        //   if(objIdtoDataProv[objId]){
+                        //     nodeId = objIdtoDataProv[objId];
+                        //   }else{
+                        //     objIdtoDataProv[objId] = nodeId;
+                        //   }
+                        // }
 
                         if (targetId !== null) {  // only add the link if it is visible
                             var link = makeLink(targetId, nodeId, isRef);
@@ -556,16 +568,25 @@ define([
             }
             function getReferencingObjects(objectIdentity) {
                 //workspace requires list for referencing objects
-
+                // debugger;
+                // console.log(combineGraph);
                 return workspace.list_referencing_objects([objectIdentity])
                     .then(function(refData){
-                      const isRef = true;
+                      var isRef = true;
                       //since only one item in list, will flatten array one level
-                      addNodeLink(refData[0],objectIdentity, isRef);
+                      var objectId = objIdtoDataCombine[objectIdentity.ref];
+                      addNodeLink(refData[0],objectId, isRef);
                     });
             }
 
             function makeLink(source, target, isRef) {
+                if(isRef){
+                    return {
+                        source: target,
+                        target: source,
+                        isRef: isRef
+                    }; 
+                }
                 return {
                     source: source,
                     target: target,
@@ -649,7 +670,8 @@ define([
                         refData = refData[0].infos;
                       const isRef = false;
                       //TODO set type of link
-                      addNodeLink(refData,objectIdentity, isRef, functionNode);
+                      var functionId = addFunctionLink(objectIdentity,functionNode,isRef);
+                      addNodeLink(refData,functionId, isRef);
 
                     }
                    }).catch(function(err){console.log(err)});
@@ -706,7 +728,7 @@ define([
             function renderForceTree(nodesData, linksData, isRef){
                 //TODO: copy loop through nodes and get provenances, with nodes hidden
               var width = 600,
-                  height = 400,
+                  height = 500,
                   radius = 10,
                   oldNodes, // data
                   svg, node, link, // d3 selections
@@ -859,11 +881,11 @@ define([
                   // Push sources up and targets down to form a weak tree.
                   link
                       .each(function(d) {
-                        if(d.isRef){
-                          d.source.y -= k, d.target.y += k;
-                        }else{
+                        // if(d.isRef){
+                        //   d.source.y -= k, d.target.y += k;
+                        // }else{
                           d.source.y += k, d.target.y -= k;
-                        }
+                        // }
                         })
                       .attr("x1", function(d) { return d.source.x; })
                       .attr("y1", function(d) { return d.source.y; })
