@@ -488,7 +488,6 @@ define([
                 console.error(err);
             }
             function addFunctionLink(objIdentity, functionNode, isRef){
-                // var targetId = isRef ? objIdtoDataRef[objIdentity.ref] : objIdtoDataProv[objIdentity.ref];
                 var targetId = objIdtoDataCombine[objIdentity.ref];
                 var functionId = combineGraph.nodes.length;
                 combineGraph.nodes.push(functionNode);
@@ -498,14 +497,13 @@ define([
             function getObjectIds(refData){
                 var objIds = []
                 for (var i = 0; i < Math.min(refData.length, 10);i++){
-                    debugger;
                     var objId = refData[i][6] + "/" + refData[i][0] + "/" + refData[i][4];
-                    objIds.push(objId)
+                    objIds.push({ref: objId})
                 }
                 return objIds;
             }
             function addNodeLink(refData, targetId, isRef) {
-                //
+                debugger;
                 for (var i = 0; i < Math.min(refData.length, 10); i++) {
     
                         var refInfo =refData[i];
@@ -520,21 +518,6 @@ define([
                             objId: objId,
                             targetNodesSvgId : []
                         };
-                        // var targetId = isRef ? objIdtoDataRef[objectIdentity.ref] : objIdtoDataProv[objectIdentity.ref];
-                        // var targetId = functionId
-
-
-                        // if(functionNode){
-                        //   if(!isRef){
-                        //     // var functionId = provenanceGraph.nodes.length;
-                        //     // provenanceGraph.nodes.push(functionNode);
-                        //     // provenanceGraph.links.push(makeLink(targetId, functionId));
-                        //     var functionId = combineGraph.nodes.length;
-                        //     combineGraph.nodes.push(functionNode);
-                        //     combineGraph.links.push(makeLink(targetId, functionId, isRef));
-                        //     targetId = functionId;
-                        //   }
-                        // }
 
                         var nodeId;
 
@@ -545,19 +528,6 @@ define([
                         }else{
                             objIdtoDataCombine[objId] = nodeId;
                         }
-                        // if(isRef){
-                        //   if(objIdtoDataRef[objId]){
-                        //     nodeId = objIdtoDataRef[objId];
-                        //   }else{
-                        //     objIdtoDataRef[objId] = nodeId;
-                        //   }
-                        // }else{
-                        //   if(objIdtoDataProv[objId]){
-                        //     nodeId = objIdtoDataProv[objId];
-                        //   }else{
-                        //     objIdtoDataProv[objId] = nodeId;
-                        //   }
-                        // }
 
                         if (targetId !== null) {  // only add the link if it is visible
                             var link = makeLink(targetId, nodeId, isRef);
@@ -581,17 +551,35 @@ define([
                 return workspace.list_referencing_objects([objectIdentity])
                     .then(function(refData){
 
-                        // debugger;
                       var isRef = true;
-                      var objectId = objIdtoDataCombine[objectIdentity.ref];
-                      //since only one item in list, will flatten array one level
-                      var objectIds = getObjectIds(refData[0]);
-                    //   debugger;
-                      for(var i = 0; i <objectIds.length; i++){
 
-                          getObjectProvenance(objectIds[i]);
-                      }
-                    //   addNodeLink(refData[0],objectId, isRef);
+                      var objectIds = getObjectIds(refData[0]);
+                    //   for(var i = 0; i<objectIds.length; i++){
+                    //       getObjectProvenance(objectIds[i]);
+                    //   }
+                      return workspace.get_objects2({
+                          objects: objectIds,
+                          no_data: 1
+                      })
+                          .then(function (provData) {
+                              for(var i = 0; i < provData.data.length; i++){
+                                    var data = provData.data[i]
+                                    for(var j = 0; j<data.provenance.length; j++){
+                                        var provenance = data.provenance[j];
+                                        var functionNode = {
+                                            isFunction: true,
+                                            objId: "to" + objectIdentity.ref,
+                                            name: provenance.service,
+                                            method: provenance.method
+                                        }
+                                        var functionId = addFunctionLink(objectIdentity, functionNode, isRef);
+                                        addNodeLink([data.info],functionId,isRef);
+
+                                    }
+ 
+                              }
+
+                          });
                     });
             }
 
@@ -609,6 +597,7 @@ define([
                     isRef: isRef
                 };
             }
+            
 
             function getObjectProvenance(objectIdentity){
               var path = nodePaths[objectIdentity.ref];
@@ -621,18 +610,19 @@ define([
                   no_data: 1
                 })
                   .then(function (provData) {
+                    //   debugger;
                     var uniqueRefs = {},
                         uniqueProvPaths = [],
                         uniqueRefPaths = [],
                         uniqueCombinePaths = [];
                      for (var i = 0; i < provData.data.length; i++) {
-                            let objectProvenance = provData.data[i];
+                            var objectProvenance = provData.data[i];
                             objectProvenance.provenance.forEach(function (provenance) {
                                 var objRef = getObjectRef(objectProvenance.info);
 
                                 functionNode = {
                                     isFunction: true,
-                                    objId: "to" + objectIdentity.ref,
+                                    objId: "from" + objectIdentity.ref,
                                     name: provenance.service,
                                     method: provenance.method
                                 }
@@ -684,7 +674,7 @@ define([
                     //generic client wrapped result in an array.    
                     if(refData !== null){
                         refData = refData[0].infos;
-                      const isRef = false;
+                      var isRef = false;
                       //TODO set type of link
                       var functionId = addFunctionLink(objectIdentity,functionNode,isRef);
                       addNodeLink(refData,functionId, isRef);
@@ -743,7 +733,6 @@ define([
             }            
 
             function renderForceTree(nodesData, linksData, isRef){
-                debugger;
                 //TODO: copy loop through nodes and get provenances, with nodes hidden
               var width = 600,
                   height = 500,
