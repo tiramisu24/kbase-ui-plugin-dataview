@@ -495,10 +495,18 @@ define([
                 combineGraph.links.push(makeLink(targetId, functionId, isRef));
                 return functionId;
             }
+            function getObjectIds(refData){
+                var objIds = []
+                for (var i = 0; i < Math.min(refData.length, 10);i++){
+                    debugger;
+                    var objId = refData[i][6] + "/" + refData[i][0] + "/" + refData[i][4];
+                    objIds.push(objId)
+                }
+                return objIds;
+            }
             function addNodeLink(refData, targetId, isRef) {
                 //
                 for (var i = 0; i < Math.min(refData.length, 10); i++) {
-                    var limit = 10;
     
                         var refInfo =refData[i];
                         var t = refInfo[2].split("-")[0];
@@ -572,10 +580,18 @@ define([
                 // console.log(combineGraph);
                 return workspace.list_referencing_objects([objectIdentity])
                     .then(function(refData){
+
+                        // debugger;
                       var isRef = true;
-                      //since only one item in list, will flatten array one level
                       var objectId = objIdtoDataCombine[objectIdentity.ref];
-                      addNodeLink(refData[0],objectId, isRef);
+                      //since only one item in list, will flatten array one level
+                      var objectIds = getObjectIds(refData[0]);
+                    //   debugger;
+                      for(var i = 0; i <objectIds.length; i++){
+
+                          getObjectProvenance(objectIds[i]);
+                      }
+                    //   addNodeLink(refData[0],objectId, isRef);
                     });
             }
 
@@ -595,7 +611,7 @@ define([
             }
 
             function getObjectProvenance(objectIdentity){
-              let path = nodePaths[objectIdentity.ref];
+              var path = nodePaths[objectIdentity.ref];
               var objectPath = (path)? ({ref:path}) : objectIdentity;
               //TODO: global unique provenance items
               //had to wrap identity in array as it somehow wanted a list
@@ -700,9 +716,10 @@ define([
                         // we have the history of the object of interest,
                         // now we can fetch all referencing object, and
                         // get prov info for each of these objects
+                        
                         return Promise.all([
-                            getReferencingObjects(objectIdentity),
-                            getObjectProvenance(objectIdentity)
+                            getObjectProvenance(objectIdentity),
+                            getReferencingObjects(objectIdentity)
                         ]);
 
                     })
@@ -726,6 +743,7 @@ define([
             }            
 
             function renderForceTree(nodesData, linksData, isRef){
+                debugger;
                 //TODO: copy loop through nodes and get provenances, with nodes hidden
               var width = 600,
                   height = 500,
@@ -1004,7 +1022,9 @@ define([
                 needColorKey = true; // so that the key renders
                 workspaceId = params.workspaceId;
                 objectId = params.objectId;
-                buildDataAndRender(getObjectIdentity(params.workspaceId, params.objectId));
+
+                var objectIdentity = getObjectIdentity(params.workspaceId, params.objectId);
+                buildDataAndRender(objectIdentity);
             }
             function stop() {
 
