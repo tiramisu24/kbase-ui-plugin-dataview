@@ -512,7 +512,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
             }
             return objIds;
         }
-        function addNodeLink(refData, targetId, isDep) {
+        function addNodeLink(refData, targetId, isDep, flip) {
             for (var i = 0; i < Math.min(refData.length, 10); i++) {
                     
                 //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
@@ -539,7 +539,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                 }
 
                 if (targetId !== null) {  // only add the link if it is visible
-                    var link = makeLink(targetId, nodeId, isDep);
+                    var link = makeLink(targetId, nodeId, isDep, flip);
                     combineGraph.links.push(link);
                 }
             }
@@ -561,7 +561,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                                 var data = provData.data[i];
                                 for (var j = 0; j < data.refs.length; j++) {
                                     if(objectIdentity.ref === data.refs[j]){
-                                        addNodeLink([data.info], objIdtoDataCombine[objectIdentity.ref], isDep);
+                                        var flip = true;
+                                        addNodeLink([data.info], objIdtoDataCombine[objectIdentity.ref], isDep, flip);
                                         break;
                                     }
                                 }
@@ -585,8 +586,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                 });
         }
 
-        function makeLink(source, target, isDep) {
-            if(isDep){
+        function makeLink(source, target, isDep, flip) {
+            if(flip){
                 return {
                     source: target,
                     target: source,
