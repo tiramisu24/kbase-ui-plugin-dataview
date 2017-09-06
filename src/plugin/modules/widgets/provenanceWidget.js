@@ -491,7 +491,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
             console.error(err);
         }
         function addFunctionLink(objIdentity, functionNode, isRef){
-            // debugger;
+            
             var functionId = existingLinks[functionNode.objId];
             if(functionId !== undefined){
                 return functionId;
@@ -574,7 +574,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                                             name: provenance.service,
                                             method: provenance.method
                                         };
-                                        debugger;
+                                        
                                         var functionId = addFunctionLink(objectIdentity, functionNode, isRef);
                                         addNodeLink([data.info],functionId,isRef);
                                     }
@@ -805,7 +805,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                 var l = svg.selectAll('.link')
                     .data(links, function(d) {return d.source + ',' + d.target;});
                 var n = svg.selectAll('.node')
-                    .data(nodes, function(d) {return d.name;});
+                    .data(nodes, function(d) {return d.objId;});
                 enterLinks(l);
                 enterNodes(n);
                 link = svg.selectAll('.link');
@@ -866,7 +866,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                     .attr('markerHeight', 3)
                     .attr('markerWidth', 3)
                     .attr('orient', 'auto')
-                    .attr('refX', 5)
+                    .attr('refX', 10)
                     .attr('refY', 0)
                     .attr('viewBox', '-5 -5 10 10')
                     .append('svg:path')
@@ -955,6 +955,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                             //   svg.attr("height", height);
                             
                             console.log(combineGraph);
+                            
                             update();
                             // updatePos();
                             node.isPresent = true;
