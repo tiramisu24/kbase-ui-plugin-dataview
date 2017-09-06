@@ -511,7 +511,7 @@ define([
                     var objId = refInfo[6] + "/" + refInfo[0] + "/" + refInfo[4];
 
                     var nodeId;
-                    if(objIdtoDataCombine[objId]){
+                    if(objIdtoDataCombine[objId] !== undefined){
                         nodeId = objIdtoDataCombine[objId];
                     }else{
                         var t = refInfo[2].split("-")[0];
@@ -560,7 +560,6 @@ define([
                                     var functionId = addFunctionLink(objectIdentity, functionNode, isRef);
                                     addNodeLink([data.info],functionId,isRef);
                                 }
-                                // debugger;
                                 var refsIds = [];
                                 for(var j =0; j< data.refs.length;j++){
                                     refsIds.push({ref: data.refs[j]});
@@ -669,19 +668,19 @@ define([
                                 });
              
                           }else if(uniqueRefPaths.length >0){
-                              debugger;
                               return Promise.all([client.callFunc('get_object_info3', [{
                                   objects: uniqueRefPaths,
                                   includeMetadata: 1
                               }]), objectIdentity])
                                   .spread(function (refData, objectIdentity) {
-                                      debugger
                                       //generic client wrapped result in an array.    
                                       if (refData !== null) {
                                           refData = refData[0].infos;
                                           var isRef = false;
                                           //TODO set type of link
-                                          addNodeLink(refData, objectIdentity, isRef);
+                                          var objId = objIdtoDataCombine[objectIdentity.ref];
+                                          addNodeLink(refData, objId, isRef);
+                    
 
                                       }
                                   });
@@ -936,12 +935,12 @@ define([
                 var nodeId = {ref: node.objId};
                 if(node.isPresent){
                 }else{
-                    debugger;
                     getObjectProvenance(nodeId)
                     .then(function(){
                     //   height +=100
                     //   svg.attr("height", height);
-                    
+                    debugger;
+                    console.log(combineGraph);
                     update();
                     // updatePos();
                       node.isPresent = true;
