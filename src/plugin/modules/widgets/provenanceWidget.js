@@ -548,9 +548,10 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
         }
         function getReferencingObjects(objectIdentity) {
             //workspace requires list for referencing objects
+            
             return workspace.list_referencing_objects([objectIdentity])
                 .then(function(refData){
-
+                    
                     var isDep = true;
 
                     var objectIds = getObjectIds(refData[0]);
@@ -914,7 +915,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                 // var k = 10 * e.alpha;
                 link
                     .each(function (d) {
-                        if (d.source.y < d.target.y) {
+        
+                        if (d.source.y < d.target.y && !d.target.fixed) {
                             d.target.y = d.source.y - 20;
                         }  
                         // d.source.y += k, d.target.y -= k;
@@ -931,7 +933,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
             }
 
 
-              force.on('end', function(e){
+            force.on('end', function(e){
                 oldNodes = nodes;
                 // updatePos();
                 maintainNodePositions();
@@ -957,8 +959,13 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
             function dblClick(node){
                 var nodeId = {ref: node.objId};
                 if(node.isPresent){
-                }else{
-                    getObjectProvenance(nodeId)
+                    //add pruning
+                }
+                else{
+                    return Promise.all([
+                        getObjectProvenance(nodeId),
+                        getReferencingObjects(nodeId)
+                    ])
                         .then(function(){
                             //   height +=100
                             //   svg.attr("height", height);
