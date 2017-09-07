@@ -160,7 +160,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                 needColorKey = false;
 
                 var content = $('<table/>', { cellpadding: '2', cellspacing: '0', border: '0', id: 'graphkey', style: '' });
-                var div = $('<div/>');
                 Object.keys(types).map(function (type){
                     var row = $('<tr/>', { class: 'prov-graph-color' });
                     var colorId = 'row' + type;
@@ -190,8 +189,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
 
                 });
        
-                $('body').append(content);
-                // $('#nodeColorKey').html(content);
+                // $('body').append(content);
+                $('#nodeColorKey').append($('<div/>', {id : 'objdetailsdiv'}));
             }
         }
 
@@ -210,6 +209,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                 text += '</td></tr></table>';
                 $container.find('#objdetailsdiv').html(text);
             } else {
+                // var path = nodePaths[d.objId.ref];
+                // var objectPath = (path) ? ({ ref: path }) : d.objId;
+                // debugger;
                 workspace.get_object_provenance([{
                     ref: d.objId
                 }])
@@ -557,6 +559,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                         no_data: 1
                     })
                         .then(function (provData) {
+                            
                             for(var i = 0; i < provData.data.length; i++){
                                 var data = provData.data[i];
                                 for (var j = 0; j < data.refs.length; j++) {
@@ -675,6 +678,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                                 //generic client wrapped result in an array.    
                                 if (refData !== null) {
                                     refData = refData[0].infos;
+                                    
                                     var isDep = false;
                                     //TODO set type of link
                                     addNodeLink(refData, functionId, isDep);
@@ -782,7 +786,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                 oldNodes, // data
                 svg, node, link, // d3 selections
                 force = d3.layout.force()
-                    .charge(-1300)
+                    .charge(-800)
                     .size([width, height]);
 
             var nodes = nodesData;
@@ -823,7 +827,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                     .append('g')
                     .attr('class', 'node')
                     .each(function (d) {oldNodes.push(d);})
-                    .on('dblclick',click)
+                    .on('dblclick',dblClick)
                     .on('click', nodeMouseover)
                     .call(force.drag);
 
@@ -907,20 +911,23 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                     n = nodes.length;
 
                 while (++i < n) q.visit(collide(nodes[i]));
-                var k = 30 * e.alpha;
-                // Push sources up and targets down to form a weak tree.
+                // var k = 10 * e.alpha;
+                link
+                    .each(function (d) {
+                        if (d.source.y < d.target.y) {
+                            d.target.y = d.source.y - 20;
+                        }  
+                        // d.source.y += k, d.target.y -= k;
+                    })
+                    .attr('x1', function (d) { return d.source.x; })
+                    .attr('y1', function (d) { return d.source.y; })
+                    .attr('x2', function (d) { return d.target.x; })
+                    .attr('y2', function (d) { return d.target.y; });
+
                 node.attr('cx', function(d) { return d.x = Math.max(radius, Math.min(width - radius, d.x)); })
                     .attr('cy', function(d) { return d.y = Math.max(radius, Math.min(height - radius, d.y)); })
                     .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
-                // Push sources up and targets down to form a weak tree.
-                link
-                    .each(function(d) {
-                        d.source.y += k, d.target.y -= k;
-                    })
-                    .attr('x1', function(d) { return d.source.x; })
-                    .attr('y1', function(d) { return d.source.y; })
-                    .attr('x2', function(d) { return d.target.x; })
-                    .attr('y2', function(d) { return d.target.y; });
+
             }
 
 
@@ -947,7 +954,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                     .transition();
             }
 
-            function click(node){
+            function dblClick(node){
                 var nodeId = {ref: node.objId};
                 if(node.isPresent){
                 }else{
