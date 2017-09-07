@@ -37,19 +37,19 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     width: objWidth,
                     stroke: (10,0)                    },
                 core: {
-                    color: 'pink',
-                    name: 'No Provenance or Dependencies',
+                    color: 'black',
+                    name: 'Functions',
                     width: objWidth,
                     stroke: (10,0)
                 },
                 ref: {
-                    color: '#C62828',
-                    name: 'Nodes with Provenance or Dependencies',
+                    color: '#2196F3',
+                    name: 'Objects',
                     width: objWidth,
                     stroke: (10,0)
                 },
                 included: {
-                    color: '#2196F3',
+                    color: 'grey',
                     name: 'Dependencies Refereneces',
                     width: lineWidth,
                     stroke: (5, 5)
@@ -58,13 +58,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     color: 'grey',
                     name: 'Provenance References',
                     width: lineWidth,
-                    stroke: (3, 7)
-                },
-                copied: {
-                    color: '#4BB856',
-                    name: 'Copied From',
-                    width: lineWidth,
-                    stroke: (10,0)
+                    stroke: (10, 0)
                 }
             },
             monthLookup = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -445,7 +439,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         targetNodesSvgId : [],
                         objId: objId,
                         type: t,
-                        isPresent: true
+                        isPresent: true,
+                        startingObject : true
                     };
             
                     latestVersion = objectInfo[4];
@@ -536,6 +531,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             }
         }
         function getReferencingObjects(objectIdentity) {
+            debugger;
             //workspace requires list for referencing objects
             
             return workspace.list_referencing_objects([objectIdentity])
@@ -596,6 +592,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             
 
         function getObjectProvenance(objectIdentity){
+            debugger;
             var path = nodePaths[objectIdentity.ref];
             var objectPath = (path)? ({ref:path}) : objectIdentity;
             //TODO: global unique provenance items
@@ -751,7 +748,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
         function renderForceTree(nodesData, linksData){
             //TODO: copy loop through nodes and get provenances, with nodes hidden
             var width = 900,
-                height = 800,
+                height = 600,
                 radius = 10,
                 oldNodes, // data
                 svg, node, link, // d3 selections
@@ -807,6 +804,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .transition(t)
                     .style('fill',  function (d) {
                         if (d.isFunction) return 'black';
+                        if (d.startingObject) return 'orange';
                         return '#2196F3' ;
                     });
                 g.transition;
@@ -930,6 +928,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     //add pruning
                 }
                 else{
+                    debugger;
                     return Promise.all([
                         getObjectProvenance(nodeId),
                         getReferencingObjects(nodeId)
