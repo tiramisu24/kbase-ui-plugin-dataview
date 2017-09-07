@@ -13,7 +13,7 @@ define([
 
 
 ],
-function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
+function (Promise, $, d3, html, dom, Workspace, GenericClient) {
     'use strict';
     function widget(config) {
 
@@ -68,13 +68,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                 }
             },
             monthLookup = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            objIdtoDataRef = {
-                '-1' : 1
-            },
             objIdtoDataCombine = {
-                '-1' : 1
-            },
-            objIdtoDataProv = {
                 '-1' : 1
             },
             referenceGraph = {
@@ -97,11 +91,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
             },
             div = html.tag('div'),
             br = html.tag('br'),
-            table = html.tag('table'),
             tr = html.tag('tr'),
             td = html.tag('td'),
-            svg = html.tag('svg'),
-            rect = html.tag('rect'),
             b = html.tag('b');
 
             // config settings?
@@ -123,12 +114,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
             }
             return {ref: wsNameOrId + '/' + objNameOrId};
         }
-        function getObjectRefShort(objectInfo) {
-            return [objectInfo[6], objectInfo[0]].join('/');
-        }
-        function getObjectRef(objectInfo) {
-            return [objectInfo[6], objectInfo[0], objectInfo[4]].join('/');
-        }
+        // function getObjectRef(objectInfo) {
+        //     return [objectInfo[6], objectInfo[0], objectInfo[4]].join('/');
+        // }
         // edited from: http://stackoverflow.com/questions/3177836/how-to-format-time-since-xxx-e-g-4-minutes-ago-similar-to-stack-exchange-site
         function getTimeStampStr(objInfoTimeStamp) {
             if (!objInfoTimeStamp) {
@@ -159,7 +147,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
             if (needColorKey) {
                 needColorKey = false;
 
-                var content = $('<table/>', { cellpadding: '2', cellspacing: '0', border: '0', id: 'graphkey', style: '' });
+                // var content = $('<table/>', { cellpadding: '2', cellspacing: '0', border: '0', id: 'graphkey', style: '' });
                 Object.keys(types).map(function (type){
                     var row = $('<tr/>', { class: 'prov-graph-color' });
                     var colorId = 'row' + type;
@@ -177,7 +165,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                         .attr('height',26)
                         .attr('width',60);
           
-                    var circle2 = colorSvg.append('line')
+                    colorSvg.append('line')
                         .attr('x1', 5)
                         .attr('y1', 5)
                         .attr('x2', 50)
@@ -198,7 +186,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
             if(d.isFunction){return;}
             if (d.isFake) {
                 var info = d.info,
-                    savedate = new Date(info[3]),
                     text = '<center><table cellpadding="2" cellspacing="0" class="table table-bordered"><tr><td>';
                 text += '<h4>Object Details</h4><table cellpadding="2" cellspacing="0" border="0" class="table table-bordered table-striped">';
                 text += '<tr><td><b>Name</b></td><td>' + info[1] + '</td></tr>';
@@ -457,6 +444,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                         info: objectInfo,
                         targetNodesSvgId : [],
                         objId: objId,
+                        type: t,
                         isPresent: true
                     };
             
@@ -531,6 +519,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                         name: getNodeLabel(refInfo),
                         info: refInfo,
                         objId: objId,
+                        type: t,
                         targetNodesSvgId: []
                     };
                     nodeId = combineGraph.nodes.length;
@@ -570,8 +559,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                                         break;
                                     }
                                 }
-                                for(var j = 0; j<data.provenance.length; j++){
-                                    var provenance = data.provenance[j];
+                                for(var k = 0; k<data.provenance.length; k++){
+                                    var provenance = data.provenance[k];
                                     if(provenance.resolved_ws_objects.length >0){
                                         var functionNode = {
                                             isFunction: true,
@@ -625,7 +614,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                         
                         var objectProvenance = provData.data[i];
                         objectProvenance.provenance.forEach(function (provenance) {
-                            var objRef = getObjectRef(objectProvenance.info);
+                            // var objRef = getObjectRef(objectProvenance.info);
 
                             functionNode = {
                                 isFunction: true,
@@ -652,15 +641,15 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                             }
                         });
                         var dependencies = provData.data[i].refs;
-                        for (var i = 0; i <dependencies.length; i++){
+                        for (var j = 0; j <dependencies.length; j++){
                             var prevPath = nodePaths[objectIdentity.ref];
                             if(!prevPath){
                                 prevPath = objectIdentity.ref;
                                 nodePaths[objectIdentity.ref] = prevPath;
                             }
-                            var path = prevPath + ';' + dependencies[i];
-                            nodePaths[dependencies[i]] = path;
-                            if(uniqueRefs[dependencies[i]]){
+                            var path = prevPath + ';' + dependencies[j];
+                            nodePaths[dependencies[j]] = path;
+                            if(uniqueRefs[dependencies[j]]){
                                 uniqueCombinePaths.push({ref: path});
                             }else{
                                 uniqueRefPaths.push({ref: path});
@@ -724,26 +713,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                 });
 
         }
-        function provHelper(uniqueProvPaths, uniqueRefPaths, uniqueCombinePaths){
-            if (uniqueProvPaths.length === 0) {
-                return [null, objectIdentity, functionNode];
-            } else {
-                //get_object_info_new deprecated. new method only availble on generic client
-                return Promise.all([client.callFunc('get_object_info3', [{
-                    objects: uniqueProvPaths,
-                    includeMetadata: 1
-                }])
-                    , objectIdentity, functionNode]);
-            }
-
-        }
-
-        function isUndefNull(obj) {
-            if (obj === null || obj === undefined) {
-                return true;
-            }
-            return false;
-        }
 
 
         function buildDataAndRender(objref) {
@@ -781,7 +750,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
 
         function renderForceTree(nodesData, linksData){
             //TODO: copy loop through nodes and get provenances, with nodes hidden
-            var width = 600,
+            var width = 900,
                 height = 800,
                 radius = 10,
                 oldNodes, // data
@@ -789,7 +758,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, Bootstrap) {
                 force = d3.layout.force()
                     .charge(-800)
                     .size([width, height]);
-
             var nodes = nodesData;
             var links = linksData;
             var t = d3.transition()
