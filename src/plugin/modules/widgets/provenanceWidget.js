@@ -603,119 +603,122 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             var objectPath = (path)? ({ref:path}) : objectIdentity;
             //TODO: global unique provenance items
             //had to wrap identity in array as it somehow wanted a list
-            var functionNode, functionId;
             return workspace.get_objects2({
                 objects:[objectPath],
                 no_data: 1
             })
-                .then(function (provData) {
-                    var uniqueRefs = {},
-                        uniqueProvPaths = [],
-                        uniqueRefPaths = [],
-                        uniqueCombinePaths = [];
-                    for (var i = 0; i < provData.data.length; i++) {
-                        
-                        var objectProvenance = provData.data[i];
-                        objectProvenance.provenance.forEach(function (provenance) {
-                            // var objRef = getObjectRef(objectProvenance.info);
+                .then(provHelper.bind(null, objectIdentity));
 
-                            functionNode = {
-                                isFunction: true,
-                                objId: objectIdentity.ref + 'to' + provenance.service,
-                                name: provenance.service,
-                                method: provenance.method
-                            };
-                            var isDep = false;
-                            functionId = addFunctionLink(objectIdentity, functionNode, isDep);
+        }
+        function provHelper(objectIdentity, provData) {
+            
+            var functionNode, functionId;
 
-                            if (provenance.resolved_ws_objects) {
-                                provenance.resolved_ws_objects.forEach(function (resolvedObjectRef) {
+            var uniqueRefs = {},
+                uniqueProvPaths = [],
+                uniqueRefPaths = [],
+                uniqueCombinePaths = [];
+            for (var i = 0; i < provData.data.length; i++) {
 
-                                    if (!(resolvedObjectRef in uniqueRefs)) {
-                                        uniqueRefs[resolvedObjectRef] = 'included';
-                                        //resolvedObjectref is the prov id
-                                        //TODO: check if in set of workspace!!
+                var objectProvenance = provData.data[i];
+                objectProvenance.provenance.forEach(function (provenance) {
+                    // var objRef = getObjectRef(objectProvenance.info);
 
-                                        var path = nodePaths[objectIdentity.ref] + ';' + resolvedObjectRef;
-                                        nodePaths[resolvedObjectRef] = path;
-                                        uniqueProvPaths.push({ref: path});
-                                    }
-                                });
+                    functionNode = {
+                        isFunction: true,
+                        objId: objectIdentity.ref + 'to' + provenance.service,
+                        name: provenance.service,
+                        method: provenance.method
+                    };
+                    var isDep = false;
+                    functionId = addFunctionLink(objectIdentity, functionNode, isDep);
+
+                    if (provenance.resolved_ws_objects) {
+                        provenance.resolved_ws_objects.forEach(function (resolvedObjectRef) {
+
+                            if (!(resolvedObjectRef in uniqueRefs)) {
+                                uniqueRefs[resolvedObjectRef] = 'included';
+                                //resolvedObjectref is the prov id
+                                //TODO: check if in set of workspace!!
+
+                                var path = nodePaths[objectIdentity.ref] + ';' + resolvedObjectRef;
+                                nodePaths[resolvedObjectRef] = path;
+                                uniqueProvPaths.push({ ref: path });
                             }
                         });
-                        var dependencies = provData.data[i].refs;
-                        for (var j = 0; j <dependencies.length; j++){
-                            var prevPath = nodePaths[objectIdentity.ref];
-                            if(!prevPath){
-                                prevPath = objectIdentity.ref;
-                                nodePaths[objectIdentity.ref] = prevPath;
-                            }
-                            var path = prevPath + ';' + dependencies[j];
-                            nodePaths[dependencies[j]] = path;
-                            if(uniqueRefs[dependencies[j]]){
-                                uniqueCombinePaths.push({ref: path});
-                            }else{
-                                uniqueRefPaths.push({ref: path});
-                            }
-                        }
                     }
-                    return [uniqueProvPaths, uniqueRefPaths, uniqueCombinePaths];
-                }).spread(function(uniqueProvPaths, uniqueRefPaths, uniqueCombinePaths){
-                    if(uniqueProvPaths.length > 0){
-                        //get_object_info_new deprecated. new method only availble on generic client
-                        return Promise.all([client.callFunc('get_objects2',[{
-                            objects: uniqueProvPaths,
-                            no_data:1
-                        }]),objectIdentity, functionId])
-                            .spread(function (refData, objectIdentity, functionId) {
-                                //generic client wrapped result in an array.    
-                                if (refData !== null) {
-                                    refData = refData[0].data;
-                                    
-                                    var isDep = false;
-                                    //TODO set type of link
-                                    addNodeLink(refData, functionId, isDep, null,refData);
-
-                                }
-                            });
-             
-                    }else if(uniqueRefPaths.length >0){
-                        return Promise.all([client.callFunc('get_objects2', [{
-                            objects: uniqueRefPaths,
-                            no_data: 1
-                        }]), objectIdentity])
-                            .spread(function (refData, objectIdentity) {
-                                //generic client wrapped result in an array.    
-                                if (refData !== null) {
-                                    refData = refData[0].data;
-                                    var isDep = true;
-                                    //TODO set type of link
-                                    var objId = objIdtoDataCombine[objectIdentity.ref];
-                                    addNodeLink(refData, objId, isDep,refData);
-                    
-
-                                }
-                            });
-                    }else if (uniqueCombinePaths.length >0){
-                        debugger;
-                        return Promise.all([client.callFunc('get_object2', [{
-                            objects: uniqueCombinePaths,
-                            no_data: 1
-                        }]), objectIdentity])
-                            .spread(function (refData, objectIdentity) {
-                                //generic client wrapped result in an array.    
-                                if (refData !== null) {
-                                    refData = refData[0].data;
-                                    var isDep = true;
-                                    //TODO set type of link
-                                    addNodeLink(refData, objectIdentity, isDep,refData);
-
-                                }
-                            });
-                    }
-
                 });
+                var dependencies = provData.data[i].refs;
+                for (var j = 0; j < dependencies.length; j++) {
+                    var prevPath = nodePaths[objectIdentity.ref];
+                    if (!prevPath) {
+                        prevPath = objectIdentity.ref;
+                        nodePaths[objectIdentity.ref] = prevPath;
+                    }
+                    var path = prevPath + ';' + dependencies[j];
+                    nodePaths[dependencies[j]] = path;
+                    if (uniqueRefs[dependencies[j]]) {
+                        uniqueCombinePaths.push({ ref: path });
+                    } else {
+                        uniqueRefPaths.push({ ref: path });
+                    }
+                }
+    
+                if (uniqueProvPaths.length > 0) {
+                //get_object_info_new deprecated. new method only availble on generic client
+                    return Promise.all([client.callFunc('get_objects2', [{
+                        objects: uniqueProvPaths,
+                        no_data: 1
+                    }]), objectIdentity, functionId])
+                        .spread(function (refData, objectIdentity, functionId) {
+                        //generic client wrapped result in an array.    
+                            if (refData !== null) {
+                                refData = refData[0].data;
 
+                                var isDep = false;
+                                //TODO set type of link
+                                addNodeLink(refData, functionId, isDep, null, refData);
+
+                            }
+                        });
+
+                } 
+                else if (uniqueRefPaths.length > 0) {
+                    return Promise.all([client.callFunc('get_objects2', [{
+                        objects: uniqueRefPaths,
+                        no_data: 1
+                    }]), objectIdentity])
+                        .spread(function (refData, objectIdentity) {
+                        //generic client wrapped result in an array.    
+                            if (refData !== null) {
+                                refData = refData[0].data;
+                                var isDep = true;
+                                //TODO set type of link
+                                var objId = objIdtoDataCombine[objectIdentity.ref];
+                                addNodeLink(refData, objId, isDep, refData);
+
+
+                            }
+                        });
+                } 
+                else if (uniqueCombinePaths.length > 0) {
+                    
+                    return Promise.all([client.callFunc('get_object2', [{
+                        objects: uniqueCombinePaths,
+                        no_data: 1
+                    }]), objectIdentity])
+                        .spread(function (refData, objectIdentity) {
+                        //generic client wrapped result in an array.    
+                            if (refData !== null) {
+                                refData = refData[0].data;
+                                var isDep = true;
+                                //TODO set type of link
+                                addNodeLink(refData, objectIdentity, isDep, refData);
+
+                            }
+                        });
+                }
+            }
         }
 
 
