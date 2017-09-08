@@ -267,7 +267,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     console.error('Error fetching provenance');
                     console.error(err);
                     $container.find('#objdetailsdiv').html(text);
-                };
+                }
             }
         }
         function getProvRows(provenanceAction, prefix) {
@@ -430,7 +430,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
             data.forEach(function (objectData) {
                 //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
-                var objectInfo = objectData.info
+                var objectInfo = objectData.info;
                 var t = objectInfo[2].split('-')[0],
                     objId = objectInfo[6] + '/' + objectInfo[0] + '/' + objectInfo[4],
                     //first object must be 0; TODO: change this to depend on usage or provenance
@@ -622,7 +622,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
         }
         function provHelper(objectIdentity, provData) {
-            debugger;
             var functionNode, functionId;
 
             var uniqueRefs = {},
@@ -779,7 +778,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
         function renderForceTree(nodesData, linksData){
             //TODO: copy loop through nodes and get provenances, with nodes hidden
             var width = 900,
-                height = 600,
+                height = 800,
                 radius = 10,
                 oldNodes, // data
                 svg, node, link, // d3 selections
@@ -919,7 +918,11 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .each(function (d) {
         
                         if (d.source.y < d.target.y && !d.target.fixed) {
-                            d.target.y = d.source.y - 20;
+                            if(d.target.fixed && !d.source.fixed){
+                                d.source.y = d.target.y + 20;
+                            }else if (d.source.fixed && !d.target.fixed){
+                                d.target.y = d.source.y - 20;
+                            }
                         }  
                         // d.source.y += k, d.target.y -= k;
                     })
@@ -980,7 +983,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                                 node.isPresent = true;
                             });
                     }
-                    catch(e){debugger;}
+                    catch(e){}
                 }
             }
 
