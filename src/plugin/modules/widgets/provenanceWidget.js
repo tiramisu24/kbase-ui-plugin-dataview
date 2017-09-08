@@ -607,20 +607,23 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 objects:[objectPath],
                 no_data: 1
             })
+                .then(function(provData){
+                    return provData.data;
+                })
                 .then(provHelper.bind(null, objectIdentity));
 
         }
         function provHelper(objectIdentity, provData) {
-            
+            debugger;
             var functionNode, functionId;
 
             var uniqueRefs = {},
                 uniqueProvPaths = [],
                 uniqueRefPaths = [],
                 uniqueCombinePaths = [];
-            for (var i = 0; i < provData.data.length; i++) {
+            for (var i = 0; i < provData.length; i++) {
 
-                var objectProvenance = provData.data[i];
+                var objectProvenance = provData[i];
                 objectProvenance.provenance.forEach(function (provenance) {
                     // var objRef = getObjectRef(objectProvenance.info);
 
@@ -648,7 +651,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         });
                     }
                 });
-                var dependencies = provData.data[i].refs;
+                var dependencies = provData[i].refs;
                 for (var j = 0; j < dependencies.length; j++) {
                     var prevPath = nodePaths[objectIdentity.ref];
                     if (!prevPath) {
@@ -944,7 +947,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 }
                 else if (!node.endNode){
                     return Promise.all([
-                        getObjectProvenance(nodeId),
+                        provHelper(nodeId, [node.data]),
                         getReferencingObjects(nodeId)
                     ])
                         .then(function(){
