@@ -89,6 +89,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             existingLinks = {
 
             },
+            existingFunctions ={
+
+            },
             div = html.tag('div'),
             br = html.tag('br'),
             tr = html.tag('tr'),
@@ -182,7 +185,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             }
         }
 
-        function nodeMouseover(d) {
+        function onNodeClick(d) {
             if(d.isFunction){return;}
             if (d.isFake) {
                 var info = d.info,
@@ -475,18 +478,18 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             console.error('Error in building object graph!');
             console.error(err);
         }
-        function addFunctionLink(objIdentity, functionNode, isDep){
+        function addFunctionLink(objIdentity, functionNode, isDep, flip){
             
-            var functionId = existingLinks[functionNode.objId];
+            var functionId = existingFunctions[functionNode.objId];
             if(functionId !== undefined){
                 return functionId;
             }else{
                 functionId = combineGraph.nodes.length;
-                existingLinks[functionNode.objId] = functionId;
+                existingFunctions[functionNode.objId] = functionId;
             }
             var targetId = objIdtoDataCombine[objIdentity.ref];
             combineGraph.nodes.push(functionNode);
-            combineGraph.links.push(makeLink(targetId, functionId, isDep));
+            makeLink(targetId, functionId, isDep, flip);
             return functionId;
         }
         function getObjectIds(refData){
@@ -525,10 +528,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     combineGraph.nodes.push(node);
 
                 }
-
                 if (targetId !== null) {  // only add the link if it is visible
-                    var link = makeLink(targetId, nodeId, isDep, flip);
-                    combineGraph.links.push(link);
+                    makeLink(targetId, nodeId, isDep, flip);
+                    // combineGraph.links.push(link);
                 }
             }
         }
@@ -546,48 +548,59 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 });
         }
         function refHelper(objectIdentity, provData){
-            var isDep = true;
 
             for (var i = 0; i < provData.data.length; i++) {
                 var data = provData.data[i];
                 for (var j = 0; j < data.refs.length; j++) {
                     if (objectIdentity.ref === data.refs[j]) {
-                        var flip = true;
-                        addNodeLink([data], objIdtoDataCombine[objectIdentity.ref], isDep, flip);
+                        var flip = true; 
+                        var isDep = true;
+                        addNodeLink([data], objIdtoDataCombine[objectIdentity.ref], isDep,flip);
                         break;
                     }
                 }
                 for (var k = 0; k < data.provenance.length; k++) {
                     var provenance = data.provenance[k];
+                    var refInfo = data.info;
+                    var objId = refInfo[6] + '/' + refInfo[0] + '/' + refInfo[4];
+                    var functionNode = {
+                        isFunction: true,
+                        objId: objId + 'to' + provenance.service,
+                        name: provenance.service,
+                        method: provenance.method
+                    };
+                    var isDep = false;
+                    var flip = true;
                     if (provenance.resolved_ws_objects.length > 0) {
-                        var functionNode = {
-                            isFunction: true,
-                            objId: provenance.service + 'to' + objectIdentity.ref,
-                            name: provenance.service,
-                            method: provenance.method
-                        };
-
-                        var functionId = addFunctionLink(objectIdentity, functionNode, isDep);
-                        addNodeLink([data], functionId, isDep);
+                        var functionId = addFunctionLink(objectIdentity, functionNode, isDep, flip);
+                        addNodeLink([data], functionId, isDep,flip);
                     }
                 }
 
             }
+
         }
 
-        function makeLink(source, target, isDep, flip) {
-            if(flip){
-                return {
-                    source: target,
-                    target: source,
-                    isDep: isDep
-                }; 
+        function makeLink(source, target, isDep, flip) {            
+            if (flip === true) {
+                var temp = source;
+                source = target;
+                target = temp;
+
             }
-            return {
-                source: source,
-                target: target,
-                isDep: isDep
-            };
+            var name = source + 'to' + target;
+
+            if (!existingLinks[name]){
+                existingLinks[name] = true;
+                var link =  {
+                    source: source,
+                    target: target,
+                    isDep: isDep
+                };
+                combineGraph.links.push(link);
+            }
+
+            
         }
             
 
@@ -607,6 +620,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
         }
         function provHelper(objectIdentity, provData) {
+            debugger;
             var functionNode, functionId;
 
             var uniqueRefs = {},
@@ -650,8 +664,11 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         prevPath = objectIdentity.ref;
                         nodePaths[objectIdentity.ref] = prevPath;
                     }
-                    var path = prevPath + ';' + dependencies[j];
-                    nodePaths[dependencies[j]] = path;
+                    var path = nodePaths[dependencies[j]];
+                    if(path === undefined){                       
+                        path = prevPath + ';' + dependencies[j];
+                        nodePaths[dependencies[j]] = path;
+                    }
                     if (uniqueRefs[dependencies[j]]) {
                         uniqueCombinePaths.push({ ref: path });
                     } else {
@@ -672,6 +689,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                                 var isDep = false;
                                 //TODO set type of link
+                                
                                 addNodeLink(refData, functionId, isDep, null, refData);
 
                             }
@@ -681,7 +699,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 else if (uniqueRefPaths.length > 0) {
                     return Promise.all([client.callFunc('get_objects2', [{
                         objects: uniqueRefPaths,
-                        no_data: 1
+                        no_data: 1,
+                        ignoreErrors:1
                     }]), objectIdentity])
                         .spread(function (refData, objectIdentity) {
                         //generic client wrapped result in an array.    
@@ -695,6 +714,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                             }
                         });
+           
                 } 
                 else if (uniqueCombinePaths.length > 0) {
                     
@@ -799,7 +819,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .attr('class', 'node')
                     .each(function (d) {oldNodes.push(d);})
                     .on('dblclick',dblClick)
-                    .on('click', nodeMouseover)
+                    .on('click', onNodeClick)
                     .call(force.drag);
 
                 g.append('circle')
@@ -938,21 +958,23 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     //add pruning
                 }
                 else if (!node.endNode){
-                    return Promise.all([
-                        provHelper(nodeId, [node.data]),
-                        getReferencingObjects(nodeId)
-                    ])
-                        .then(function(){
-                            //   height +=100
-                            //   svg.attr("height", height);
-                            
-                            console.log(combineGraph);
-                            
-                            update();
-                            // updatePos();
-                            node.isPresent = true;
-                        });
-                  
+                    try{ 
+                        return Promise.all([
+                            provHelper(nodeId, [node.data]),
+                            getReferencingObjects(nodeId)
+                        ])
+                            .then(function(){
+                                //   height +=100
+                                //   svg.attr("height", height);
+                                
+                                console.log(combineGraph);
+                                
+                                update();
+                                // updatePos();
+                                node.isPresent = true;
+                            });
+                    }
+                    catch(e){debugger;}
                 }
             }
 
