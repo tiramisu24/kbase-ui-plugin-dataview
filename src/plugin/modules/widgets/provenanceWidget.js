@@ -198,78 +198,73 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             } else {
                 // var path = nodePaths[d.objId.ref];
                 // var objectPath = (path) ? ({ ref: path }) : d.objId;
-                workspace.get_object_provenance([{
-                    ref: d.objId
-                }])
-                    .then(function (objdata) {
-                        var info = d.info,
-                            found = false,
-                            text = '<center><table cellpadding="2" cellspacing="0" class="table table-bordered"><tr><td>';
-                        text += '<h4>Data Object Details</h4><table cellpadding="2" cellspacing="0" border="0" class="table table-bordered table-striped">';
-                        text += '<tr><td><b>Name</b></td><td>' + info[1] + ' (<a href="#/dataview/' + info[6] + '/' + info[1] + '/' + info[4] + '" target="_blank">' + info[6] + '/' + info[0] + '/' + info[4] + '</a>)</td></tr>';
-                        text += '<tr><td><b>Type</b></td><td><a href="#/spec/type/' + info[2] + '">' + info[2] + '</a></td></tr>';
-                        text += '<tr><td><b>Saved on</b></td><td>' + getTimeStampStr(info[3]) + '</td></tr>';
-                        text += '<tr><td><b>Saved by</b></td><td><a href="#/people/' + info[5] + '" target="_blank">' + info[5] + '</td></tr>';
-                        var metadata = '<tr><td><b>Meta data</b></td><td><div style="width:250px;word-wrap: break-word;">';
-                        for (var m in info[10]) {
-                            found = true;
-                            metadata += '<b>' + m + '</b> : ' + info[10][m] + '<br>';
-                        }
-                        if (found) {
-                            text += metadata + '</div></td></tr>';
-                        }
-                        text += '</div></td></tr></table></td><td>';
-                        text += '<h4>Provenance</h4><table cellpadding="2" cellspacing="0" class="table table-bordered table-striped">';
 
-                        if (objdata.length > 0) {
-                            if (objdata[0].copied) {
-                                text += getTableRow('Copied from', '<a href="#/dataview/' + objdata[0].copied + '" target="_blank">' + objdata[0].copied + '</a>');
-                            }
-                            if (objdata[0]['provenance'].length > 0) {
-                                var prefix = '';
-                                for (var k = 0; k < objdata[0]['provenance'].length; k++) {
-                                    if (objdata[0]['provenance'].length > 1) {
-                                        prefix = 'Action ' + k + ': ';
-                                    }
-                                    text += getProvRows(objdata[0]['provenance'][k], prefix);
-                                }
-                            } else {
-                                text += '<tr><td></td><td><b><span style="color:red">No provenance data set.</span></b></td></tr>';
-                            }
-                        } else {
-                            text += '<tr><td></td><td><b><span style="color:red">No provenance data set.</span></b></td></tr>';
-                        }
-                        text += '</table>';
-                        text += '</td></tr></table>';
-                        $container.find('#objdetailsdiv').html(text);
+                try {
+                    var objdata = d.data;
+                    var info = objdata.info,
+                        found = false,
+                        text = '<center><table cellpadding="2" cellspacing="0" class="table table-bordered"><tr><td>';
+                    text += '<h4>Data Object Details</h4><table cellpadding="2" cellspacing="0" border="0" class="table table-bordered table-striped">';
+                    text += '<tr><td><b>Name</b></td><td>' + info[1] + ' (<a href="#/dataview/' + info[6] + '/' + info[1] + '/' + info[4] + '" target="_blank">' + info[6] + '/' + info[0] + '/' + info[4] + '</a>)</td></tr>';
+                    text += '<tr><td><b>Type</b></td><td><a href="#/spec/type/' + info[2] + '">' + info[2] + '</a></td></tr>';
+                    text += '<tr><td><b>Saved on</b></td><td>' + getTimeStampStr(info[3]) + '</td></tr>';
+                    text += '<tr><td><b>Saved by</b></td><td><a href="#/people/' + info[5] + '" target="_blank">' + info[5] + '</td></tr>';
+                    var metadata = '<tr><td><b>Meta data</b></td><td><div style="width:250px;word-wrap: break-word;">';
+                    for (var m in info[10]) {
+                        found = true;
+                        metadata += '<b>' + m + '</b> : ' + info[10][m] + '<br>';
+                    }
+                    if (found) {
+                        text += metadata + '</div></td></tr>';
+                    }
+                    text += '</div></td></tr></table></td><td>';
+                    text += '<h4>Provenance</h4><table cellpadding="2" cellspacing="0" class="table table-bordered table-striped">';
 
-                    })
-                    .catch(function (err) {
-                        var info = d.info;
-                        var text = '<center><table cellpadding="2" cellspacing="0" class="table table-bordered"><tr><td>';
-                        text += '<h4>Data Object Details</h4><table cellpadding="2" cellspacing="0" border="0" class="table table-bordered table-striped">';
-                        text += '<tr><td><b>Name</b></td><td>' + info[1] + '(<a href="#/dataview/' + info[6] + '/' + info[1] + '/' + info[4] + '" target="_blank">' + info[6] + '/' + info[0] + '/' + info[4] + '</a>)</td></tr>';
-                        text += '<tr><td><b>Type</b></td><td><a href="#/spec/type/' + info[2] + '">' + info[2] + '</a></td></tr>';
-                        text += '<tr><td><b>Saved on</b></td><td>' + getTimeStampStr(info[3]) + '</td></tr>';
-                        text += '<tr><td><b>Saved by</b></td><td><a href="#/people/' + info[5] + '" target="_blank">' + info[5] + '</td></tr>';
-                        var found = false;
-                        var metadata = '<tr><td><b>Meta data</b></td><td><div style="width:250px;word-wrap: break-word;">';
-                        for (var m in info[10]) {
-                            found = true;
-                            metadata += '<b>' + m + '</b> : ' + info[10][m] + '<br>';
+                    if (objdata.copied) {
+                        text += getTableRow('Copied from', '<a href="#/dataview/' + objdata[0].copied + '" target="_blank">' + objdata[0].copied + '</a>');
+                    }
+                    if (objdata.provenance.length > 0) {
+                        var prefix = '';
+                        for (var k = 0; k < objdata.provenance.length; k++) {
+                            if (objdata.provenance.length > 1) {
+                                prefix = 'Action ' + k + ': ';
+                            }
+                            text += getProvRows(objdata.provenance[k], prefix);
                         }
-                        if (found) {
-                            text += metadata + '</div></td></tr>';
-                        }
-                        text += '</div></td></tr></table></td><td>';
-                        text += '<h4>Provenance</h4><table cellpadding="2" cellspacing="0" class="table table-bordered table-striped">';
-                        text += 'error in fetching provenance';
-                        text += '</table>';
-                        text += '</td></tr></table>';
-                        console.error('Error fetching provenance');
-                        console.error(err);
-                        $container.find('#objdetailsdiv').html(text);
-                    });
+                    } else {
+                        text += '<tr><td></td><td><b><span style="color:red">No provenance data set.</span></b></td></tr>';
+                    }
+                    text += '</table>';
+                    text += '</td></tr></table>';
+                    $container.find('#objdetailsdiv').html(text);
+
+                }
+                catch(err) {
+                    var info = d.info;
+                    var text = '<center><table cellpadding="2" cellspacing="0" class="table table-bordered"><tr><td>';
+                    text += '<h4>Data Object Details</h4><table cellpadding="2" cellspacing="0" border="0" class="table table-bordered table-striped">';
+                    text += '<tr><td><b>Name</b></td><td>' + info[1] + '(<a href="#/dataview/' + info[6] + '/' + info[1] + '/' + info[4] + '" target="_blank">' + info[6] + '/' + info[0] + '/' + info[4] + '</a>)</td></tr>';
+                    text += '<tr><td><b>Type</b></td><td><a href="#/spec/type/' + info[2] + '">' + info[2] + '</a></td></tr>';
+                    text += '<tr><td><b>Saved on</b></td><td>' + getTimeStampStr(info[3]) + '</td></tr>';
+                    text += '<tr><td><b>Saved by</b></td><td><a href="#/people/' + info[5] + '" target="_blank">' + info[5] + '</td></tr>';
+                    var found = false;
+                    var metadata = '<tr><td><b>Meta data</b></td><td><div style="width:250px;word-wrap: break-word;">';
+                    for (var m in info[10]) {
+                        found = true;
+                        metadata += '<b>' + m + '</b> : ' + info[10][m] + '<br>';
+                    }
+                    if (found) {
+                        text += metadata + '</div></td></tr>';
+                    }
+                    text += '</div></td></tr></table></td><td>';
+                    text += '<h4>Provenance</h4><table cellpadding="2" cellspacing="0" class="table table-bordered table-striped">';
+                    text += 'error in fetching provenance';
+                    text += '</table>';
+                    text += '</td></tr></table>';
+                    console.error('Error fetching provenance');
+                    console.error(err);
+                    $container.find('#objdetailsdiv').html(text);
+                };
             }
         }
         function getProvRows(provenanceAction, prefix) {
@@ -507,7 +502,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     
                 //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
                 var refInfo =data[i].info;
-                // debugger;
                 var objId = refInfo[6] + '/' + refInfo[0] + '/' + refInfo[4];
 
                 var nodeId;
@@ -552,7 +546,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 });
         }
         function refHelper(objectIdentity, provData){
-            // debugger;
             var isDep = true;
 
             for (var i = 0; i < provData.data.length; i++) {
@@ -614,7 +607,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
         }
         function provHelper(objectIdentity, provData) {
-            debugger;
             var functionNode, functionId;
 
             var uniqueRefs = {},
