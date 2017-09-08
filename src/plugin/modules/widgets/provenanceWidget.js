@@ -428,8 +428,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 latestObjId = '';
 
 
-            data.forEach(function (objectInfo) {
+            data.forEach(function (objectData) {
                 //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
+                var objectInfo = objectData.info
                 var t = objectInfo[2].split('-')[0],
                     objId = objectInfo[6] + '/' + objectInfo[0] + '/' + objectInfo[4],
                     //first object must be 0; TODO: change this to depend on usage or provenance
@@ -442,6 +443,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         targetNodesSvgId : [],
                         objId: objId,
                         type: t,
+                        data: objectData,
                         isPresent: true,
                         startingObject : true
                     };
@@ -741,9 +743,13 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             $container.find('#loading-mssg').show();
             $container.find('#objgraphview').hide();
             //gets verions of object
-            workspace.get_object_history(objref)
-                .then(function (data) {
-                    return processObjectHistory(data);
+
+            workspace.get_objects2({
+                objects: [objref],
+                no_data: 1
+            })
+                .then(function (objData) {
+                    return processObjectHistory(objData.data);
                 })
                 .then(function (objectIdentity) {
 
