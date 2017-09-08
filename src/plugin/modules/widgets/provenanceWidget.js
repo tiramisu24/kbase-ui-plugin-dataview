@@ -42,6 +42,12 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     width: objWidth,
                     stroke: (10,0)
                 },
+                noRefs: {
+                    color: 'brown',
+                    name: 'Objects with no provenance or dependancies',
+                    width: objWidth,
+                    stroke: (10,0)
+                },
                 ref: {
                     color: '#2196F3',
                     name: 'Objects',
@@ -192,7 +198,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             } else {
                 // var path = nodePaths[d.objId.ref];
                 // var objectPath = (path) ? ({ ref: path }) : d.objId;
-                // debugger;
                 workspace.get_object_provenance([{
                     ref: d.objId
                 }])
@@ -497,12 +502,12 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             }
             return objIds;
         }
-        function addNodeLink(refData, targetId, isDep, flip) {
-            for (var i = 0; i < Math.min(refData.length, 10); i++) {
+        function addNodeLink(data, targetId, isDep, flip) {
+            for (var i = 0; i < Math.min(data.length, 10); i++) {
                     
                 //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
-                var refInfo = refData[i];
-
+                var refInfo =data[i].info;
+                // debugger;
                 var objId = refInfo[6] + '/' + refInfo[0] + '/' + refInfo[4];
 
                 var nodeId;
@@ -510,11 +515,14 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     nodeId = objIdtoDataCombine[objId];
                 }else{
                     var t = refInfo[2].split('-')[0];
+                    var endNode = ((data[i].provenance.length + data[i].refs.length) > 0) ? false : true;
                     var node = {
                         name: getNodeLabel(refInfo),
                         info: refInfo,
                         objId: objId,
                         type: t,
+                        data: data[i],
+                        endNode : endNode,
                         targetNodesSvgId: []
                     };
                     nodeId = combineGraph.nodes.length;
@@ -531,48 +539,47 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             }
         }
         function getReferencingObjects(objectIdentity) {
-            debugger;
             //workspace requires list for referencing objects
             
             return workspace.list_referencing_objects([objectIdentity])
                 .then(function(refData){
-                    
-                    var isDep = true;
-
                     var objectIds = getObjectIds(refData[0]);
                     return workspace.get_objects2({
                         objects: objectIds,
                         no_data: 1
                     })
-                        .then(function (provData) {
-                            
-                            for(var i = 0; i < provData.data.length; i++){
-                                var data = provData.data[i];
-                                for (var j = 0; j < data.refs.length; j++) {
-                                    if(objectIdentity.ref === data.refs[j]){
-                                        var flip = true;
-                                        addNodeLink([data.info], objIdtoDataCombine[objectIdentity.ref], isDep, flip);
-                                        break;
-                                    }
-                                }
-                                for(var k = 0; k<data.provenance.length; k++){
-                                    var provenance = data.provenance[k];
-                                    if(provenance.resolved_ws_objects.length >0){
-                                        var functionNode = {
-                                            isFunction: true,
-                                            objId: provenance.service + 'to' + objectIdentity.ref,
-                                            name: provenance.service,
-                                            method: provenance.method
-                                        };
-                                        
-                                        var functionId = addFunctionLink(objectIdentity, functionNode, isDep);
-                                        addNodeLink([data.info],functionId,isDep);
-                                    }
-                                }
-                               
-                            }
-                        });
+                        .then(refHelper.bind(null,objectIdentity));
                 });
+        }
+        function refHelper(objectIdentity, provData){
+            // debugger;
+            var isDep = true;
+
+            for (var i = 0; i < provData.data.length; i++) {
+                var data = provData.data[i];
+                for (var j = 0; j < data.refs.length; j++) {
+                    if (objectIdentity.ref === data.refs[j]) {
+                        var flip = true;
+                        addNodeLink([data], objIdtoDataCombine[objectIdentity.ref], isDep, flip);
+                        break;
+                    }
+                }
+                for (var k = 0; k < data.provenance.length; k++) {
+                    var provenance = data.provenance[k];
+                    if (provenance.resolved_ws_objects.length > 0) {
+                        var functionNode = {
+                            isFunction: true,
+                            objId: provenance.service + 'to' + objectIdentity.ref,
+                            name: provenance.service,
+                            method: provenance.method
+                        };
+
+                        var functionId = addFunctionLink(objectIdentity, functionNode, isDep);
+                        addNodeLink([data], functionId, isDep);
+                    }
+                }
+
+            }
         }
 
         function makeLink(source, target, isDep, flip) {
@@ -592,7 +599,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             
 
         function getObjectProvenance(objectIdentity){
-            debugger;
             var path = nodePaths[objectIdentity.ref];
             var objectPath = (path)? ({ref:path}) : objectIdentity;
             //TODO: global unique provenance items
@@ -657,51 +663,52 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 }).spread(function(uniqueProvPaths, uniqueRefPaths, uniqueCombinePaths){
                     if(uniqueProvPaths.length > 0){
                         //get_object_info_new deprecated. new method only availble on generic client
-                        return Promise.all([client.callFunc('get_object_info3',[{
+                        return Promise.all([client.callFunc('get_objects2',[{
                             objects: uniqueProvPaths,
-                            includeMetadata: 1
+                            no_data:1
                         }]),objectIdentity, functionId])
                             .spread(function (refData, objectIdentity, functionId) {
                                 //generic client wrapped result in an array.    
                                 if (refData !== null) {
-                                    refData = refData[0].infos;
+                                    refData = refData[0].data;
                                     
                                     var isDep = false;
                                     //TODO set type of link
-                                    addNodeLink(refData, functionId, isDep);
+                                    addNodeLink(refData, functionId, isDep, null,refData);
 
                                 }
                             });
              
                     }else if(uniqueRefPaths.length >0){
-                        return Promise.all([client.callFunc('get_object_info3', [{
+                        return Promise.all([client.callFunc('get_objects2', [{
                             objects: uniqueRefPaths,
-                            includeMetadata: 1
+                            no_data: 1
                         }]), objectIdentity])
                             .spread(function (refData, objectIdentity) {
                                 //generic client wrapped result in an array.    
                                 if (refData !== null) {
-                                    refData = refData[0].infos;
+                                    refData = refData[0].data;
                                     var isDep = true;
                                     //TODO set type of link
                                     var objId = objIdtoDataCombine[objectIdentity.ref];
-                                    addNodeLink(refData, objId, isDep);
+                                    addNodeLink(refData, objId, isDep,refData);
                     
 
                                 }
                             });
                     }else if (uniqueCombinePaths.length >0){
-                        return Promise.all([client.callFunc('get_object_info3', [{
+                        debugger;
+                        return Promise.all([client.callFunc('get_object2', [{
                             objects: uniqueCombinePaths,
-                            includeMetadata: 1
+                            no_data: 1
                         }]), objectIdentity])
                             .spread(function (refData, objectIdentity) {
                                 //generic client wrapped result in an array.    
                                 if (refData !== null) {
-                                    refData = refData[0].infos;
+                                    refData = refData[0].data;
                                     var isDep = true;
                                     //TODO set type of link
-                                    addNodeLink(refData, objectIdentity, isDep);
+                                    addNodeLink(refData, objectIdentity, isDep,refData);
 
                                 }
                             });
@@ -805,7 +812,12 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .style('fill',  function (d) {
                         if (d.isFunction) return 'black';
                         if (d.startingObject) return 'orange';
+                        if (d.endNode) return 'brown';
                         return '#2196F3' ;
+                    })
+                    .style('opacity', function (d){
+                        if (d.endNode){return 0.5;}
+                        return 1;
                     });
                 g.transition;
 
@@ -927,8 +939,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 if(node.isPresent){
                     //add pruning
                 }
-                else{
-                    debugger;
+                else if (!node.endNode){
                     return Promise.all([
                         getObjectProvenance(nodeId),
                         getReferencingObjects(nodeId)
