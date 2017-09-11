@@ -71,14 +71,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             objIdtoDataCombine = {
                 '-1' : 1
             },
-            referenceGraph = {
-                nodes:[],
-                links:[]
-            },
-            provenanceGraph = {
-                nodes: [],
-                links: []
-            },
             combineGraph = {
                 nodes: [],
                 links: []
@@ -179,8 +171,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
         
 
                 });
-       
-                // $('body').append(content);
+
                 $('#nodeColorKey').append($('<div/>', {id : 'objdetailsdiv'}));
             }
         }
@@ -199,9 +190,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 text += '</td></tr></table>';
                 $container.find('#objdetailsdiv').html(text);
             } else {
-                // var path = nodePaths[d.objId.ref];
-                // var objectPath = (path) ? ({ ref: path }) : d.objId;
-
                 try {
                     var objdata = d.data;
                     var info = objdata.info,
@@ -422,8 +410,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
         }
 
         function processObjectHistory(data) {
-            //central object (current object and all its versions)
-            var node, node2, objIdentities = [],
+            var node, objIdentities = [],
                 latestVersion = 0,
                 latestObjId = '';
 
@@ -451,16 +438,12 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     latestVersion = objectInfo[4];
                     latestObjId = objId;
                 }
-                // objIdtoDataRef[objId] = nodeId;
                 objIdtoDataCombine[objId] = nodeId;
-                // objIdtoDataProv[objId] = nodeId;
                 nodePaths [objId] = objId;
                 objIdentities.push({ref: objId});
             });
 
-            provenanceGraph.nodes.push(node);
             combineGraph.nodes.push(node);
-            referenceGraph.nodes.push(node2);
             return {ref: latestObjId};
         }
 
@@ -530,10 +513,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     combineGraph.nodes.push(node);
 
                 }
-                if (targetId !== null) {  // only add the link if it is visible
-                    makeLink(targetId, nodeId, isDep, flip);
-                    // combineGraph.links.push(link);
-                }
+                
+                makeLink(targetId, nodeId, isDep, flip);
+                
             }
         }
         function getReferencingObjects(objectIdentity) {
@@ -550,12 +532,11 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 });
         }
         function refHelper(objectIdentity, provData){
-
+            var flip = true;
             for (var i = 0; i < provData.data.length; i++) {
                 var data = provData.data[i];
                 for (var j = 0; j < data.refs.length; j++) {
                     if (objectIdentity.ref === data.refs[j]) {
-                        var flip = true; 
                         var isDep = true;
                         addNodeLink([data], objIdtoDataCombine[objectIdentity.ref], isDep,flip);
                         break;
@@ -573,7 +554,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         method: provenance.method
                     };
                     var isDep = false;
-                    var flip = true;
                     if (provenance.resolved_ws_objects.length > 0) {
                         var functionId = addFunctionLink(objectIdentity, functionNode, isDep, flip);
                         addNodeLink([data], functionId, isDep,flip);
@@ -584,7 +564,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
         }
 
-        function makeLink(source, target, isDep, flip) {            
+        function makeLink(source, target, isDep, flip) {
+            //flip arrow for calling on referencing objects            
             if (flip === true) {
                 var temp = source;
                 source = target;
@@ -602,8 +583,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 };
                 combineGraph.links.push(link);
             }
-
-            
         }
             
 
@@ -620,20 +599,17 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     return provData.data;
                 })
                 .then(provHelper.bind(null, objectIdentity));
-
         }
         function provHelper(objectIdentity, provData) {
             var functionNode, functionId;
 
             var uniqueRefs = {},
                 uniqueProvPaths = [],
-                uniqueRefPaths = [],
-                uniqueCombinePaths = [];
+                uniqueRefPaths = [];
             for (var i = 0; i < provData.length; i++) {
 
                 var objectProvenance = provData[i];
                 objectProvenance.provenance.forEach(function (provenance) {
-                    // var objRef = getObjectRef(objectProvenance.info);
 
                     functionNode = {
                         isFunction: true,
@@ -650,8 +626,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                             if (!(resolvedObjectRef in uniqueRefs)) {
                                 uniqueRefs[resolvedObjectRef] = 'included';
-                                //resolvedObjectref is the prov id
-                                //TODO: check if in set of workspace!!
 
                                 var path = nodePaths[objectIdentity.ref] + ';' + resolvedObjectRef;
                                 nodePaths[resolvedObjectRef] = path;
@@ -672,11 +646,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         path = prevPath + ';' + dependencies[j];
                         nodePaths[dependencies[j]] = path;
                     }
-                    if (uniqueRefs[dependencies[j]]) {
-                        uniqueCombinePaths.push({ ref: path });
-                    } else {
-                        uniqueRefPaths.push({ ref: path });
-                    }
+    
+                    uniqueRefPaths.push({ ref: path });
                 }
     
                 if (uniqueProvPaths.length > 0) {
@@ -686,13 +657,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         no_data: 1
                     }]), objectIdentity, functionId])
                         .spread(function (refData, objectIdentity, functionId) {
-                        //generic client wrapped result in an array.    
                             if (refData !== null) {
                                 refData = refData[0].data;
-
-                                var isDep = false;
-                                //TODO set type of link
-                                
+                                var isDep = false;                                
                                 addNodeLink(refData, functionId, isDep, null, refData);
 
                             }
@@ -719,23 +686,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         });
            
                 } 
-                else if (uniqueCombinePaths.length > 0) {
-                    
-                    return Promise.all([client.callFunc('get_object2', [{
-                        objects: uniqueCombinePaths,
-                        no_data: 1
-                    }]), objectIdentity])
-                        .spread(function (refData, objectIdentity) {
-                        //generic client wrapped result in an array.    
-                            if (refData !== null) {
-                                refData = refData[0].data;
-                                var isDep = true;
-                                //TODO set type of link
-                                addNodeLink(refData, objectIdentity, isDep, refData);
-
-                            }
-                        });
-                }
+               
             }
         }
 
@@ -781,29 +732,32 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             //TODO: copy loop through nodes and get provenances, with nodes hidden
             var width = 900,
                 height = 800,
-                radius = 10,
                 oldNodes, // data
-                svg, node, link, // d3 selections
-                force = d3.layout.force()
-                    .charge(-800)
-                    .size([width, height]);
-            var nodes = nodesData;
-            var links = linksData;
-            var t = d3.transition()
-                .duration(1750);
+                svg, node, link,
+                rectWidth = 100,
+                rectHeight = 50,
+                nodes = nodesData,
+                links = linksData,
+                t = d3.transition()
+                    .duration(1750); // d3 selections
 
-             
+            var force = d3.layout.force()
+                .charge(-800)
+                .linkDistance(50)
+                .size([width, height]);
+
+            force.drag()
+                .on('dragstart', dragstart)
+                .on('dragend', dragstop);
             svg = d3.select($container.find('#prov-tab')[0])
                 .append('svg')
                 .attr('width', width)
-                .attr('height', height);       
-            svg.attr('class', 'prov');
+                .attr('height', height)       
+                .attr('class', 'prov');
        
 
             function update() {
-         
                 force.nodes(nodes).links(links);
-
                 var l = svg.selectAll('.link')
                     .data(links, function(d) {return d.source + ',' + d.target;});
                 var n = svg.selectAll('.node')
@@ -820,8 +774,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
             function enterNodes(n) {
                 oldNodes = [];
-                var rectWidth = 100;
-                var rectHeight = 50;
      
                 var g = n.enter()
                     .append('g')
@@ -848,37 +800,23 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         return 1;
                     });
 
-                // g.append('circle')
-                //     .attr('cx', 0)
-                //     .attr('cy', 0)
-                //     .attr('r', function (d) {return d.isFunction ? radius : radius;})
-                //     .transition(t)
-                //     .style('fill',  function (d) {
-                //         if (d.isFunction) return 'black';
-                //         if (d.startingObject) return 'orange';
-                //         if (d.endNode) return 'brown';
-                //         return '#2196F3' ;
-                //     })
-                //     .style('opacity', function (d){
-                //         if (d.endNode){return 0.5;}
-                //         return 1;
-                //     });
                 g.transition;
-
         
                 var text = g.append('text');
                 //   .attr("dy", ".35em")
                 text.append('tspan')
-                    .text(function(d) {return d.type;})
+                    .text(function (d) { return (d.type.length < 15) ? d.type : (d.type.slice(0, 10) + '...');})                    
                     .attr('font-weight', 'bold')
                     .attr('x', -rectWidth/2)
                     .attr('y', -rectHeight / 2 + 15)
                     .attr('dy', 0);
+
                 text.append('tspan')
                     .attr('dy', 15)
                     .attr('x', -rectWidth / 2)
                     .attr('y', -rectHeight/2 + 15)
-                    .text(function(d) {return d.name;});
+                    .text(function (d) { return (d.name.length < 15) ? d.name : (d.name.slice(0, 10) + '...'); });                    
+
             }
 
             function enterLinks(l) {
@@ -893,24 +831,23 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         return ('10,0');})
                     .style('stroke-width', function(d) { return 5; });
 
-                var defs = svg.append('svg:defs');
-
                 var dummyData = [1];
-
-                // var marker = defs.selectAll('marker')
-                //     .data(dummyData)
-                //     .enter()
-                //     .append('svg:marker')
-                //     .attr('id', 'markerArrow')
-                //     .attr('markerHeight', 3)
-                //     .attr('markerWidth', 3)
-                //     .attr('orient', 'auto')
-                //     .attr('refX', 25)
-                //     .attr('refY', 0)
-                //     .attr('viewBox', '-5 -5 10 10')
-                //     .append('svg:path')
-                //     .attr('d', 'M 0,0 m -5,-5 L 5,0 L -5,5 Z')
-                //     .attr('fill', 'blue');
+                //marker
+                svg.append('svg:defs')
+                    .selectAll('marker')
+                    .data(dummyData)
+                    .enter()
+                    .append('svg:marker')
+                    .attr('id', 'markerArrow')
+                    .attr('markerHeight', 3)
+                    .attr('markerWidth', 3)
+                    .attr('orient', 'auto')
+                    .attr('refX', 25)
+                    .attr('refY', 0)
+                    .attr('viewBox', '-5 -5 10 10')
+                    .append('svg:path')
+                    .attr('d', 'M 0,0 m -5,-5 L 5,0 L -5,5 Z')
+                    .attr('fill', 'blue');
             }
 
             function maintainNodePositions() {
@@ -918,33 +855,22 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     d.fixed = true;
                 });
             }
-            var drag = force.drag()
-                .on('dragstart', dragstart)
-                //   .on('drag', drag)
-                .on('dragend', dragstop);
+         
             function dragstart(d) {
                 d.fixed = true;
-
                 force.stop();
             }
             function dragstop(d){
                 d.fixed = true;
                 force.stop();
             }
-            //   function drag(d){
-            //     //   console.log(d);
-            //       force.stop();
-
-            //   }
-
+     
             force.on('tick', tick);
             function tick(e) {
-                var q = d3.geom.quadtree(nodes),
-                    i = 0,
-                    n = nodes.length;
+                node.attr('cx', function (d) { return d.x = Math.max(rectWidth/2, Math.min(width - rectWidth/2, d.x)); })
+                    .attr('cy', function (d) { return d.y = Math.max(rectHeight/2, Math.min(height - rectHeight/2, d.y)); })
+                    .attr('transform', function (d) { return 'translate(' + d.x + ',' + d.y + ')'; });
 
-                while (++i < n) q.visit(collide(nodes[i]));
-                // var k = 10 * e.alpha;
                 link
                     .each(function (d) {
         
@@ -957,43 +883,29 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         } 
                         if(d.target.isFunction && !d.target.fixed){
                             d.target.x = d.source.x;
+                        }
+                        var distance = Math.abs(d.source.y - d.target.y);
+                        if(distance < rectHeight){
+                            if (!d.target.fixed) {
+                                d.target.y -= (rectHeight - distance);
+                            } else if (!d.source.fixed) {
+                                d.source.y += (rectHeight - distance);
+                            }
                         } 
-                        // d.source.y += k, d.target.y -= k;
                     })
                     .attr('x1', function (d) { return d.source.x; })
                     .attr('y1', function (d) { return d.source.y; })
                     .attr('x2', function (d) { return d.target.x; })
                     .attr('y2', function (d) { return d.target.y; });
 
-                node.attr('cx', function(d) { return d.x = Math.max(radius, Math.min(width - radius, d.x)); })
-                    .attr('cy', function(d) { return d.y = Math.max(radius, Math.min(height - radius, d.y)); })
-                    .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
-
             }
 
 
             force.on('end', function(e){
                 oldNodes = nodes;
-                // updatePos();
                 maintainNodePositions();
 
             });
-
-            function updatePos(){
-                height += 100;
-                svg.attr('height', height);
-                svg.selectAll('.node')
-                    .attr('cy', function (d) { d.y += 100; return d.y = Math.max(radius, Math.min(height - radius, d.y)); })
-                    .attr('transform', function (d) { return 'translate(' + d.x + ',' + d.y + ')'; })
-                    .transition();
-
-                svg.selectAll('.link')
-                    .attr('x1', function (d) { return d.source.x; })
-                    .attr('y1', function (d) { return d.source.y; })
-                    .attr('x2', function (d) { return d.target.x; })
-                    .attr('y2', function (d) { return d.target.y; })
-                    .transition();
-            }
 
             function dblClick(node){
                 var nodeId = {ref: node.objId};
@@ -1001,44 +913,15 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     //add pruning
                 }
                 else if (!node.endNode){
-                    try{ 
-                        return Promise.all([
-                            provHelper(nodeId, [node.data]),
-                            getReferencingObjects(nodeId)
-                        ])
-                            .then(function(){
-                 
-                                update();
-                                // updatePos();
-                                node.isPresent = true;
-                            });
-                    }
-                    catch(e){}
+                    return Promise.all([
+                        provHelper(nodeId, [node.data]),
+                        getReferencingObjects(nodeId)
+                    ])
+                        .then(function(){
+                            update();
+                            node.isPresent = true;
+                        });
                 }
-            }
-
-            function collide(node) {
-                var r = node.radius + 16,
-                    nx1 = node.x - r,
-                    nx2 = node.x + r,
-                    ny1 = node.y - r,
-                    ny2 = node.y + r;
-                return function (quad, x1, y1, x2, y2) {
-                    if (quad.point && (quad.point !== node)) {
-                        var x = node.x - quad.point.x,
-                            y = node.y - quad.point.y,
-                            l = Math.sqrt(x * x + y * y),
-                            r = node.radius + quad.point.radius;
-                        if (l < r) {
-                            l = (l - r) / l * .5;
-                            node.x -= x *= l;
-                            node.y -= y *= l;
-                            quad.point.x += x;
-                            quad.point.y += y;
-                        }
-                    }
-                    return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
-                };
             }
               
             update();
@@ -1055,9 +938,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             content.append('<div role="tabpanel" class="tab-pane " id="ref-tab"></div>');
             $('#objgraphview').append(ul);
             $('#objgraphview').append(content);
-            // renderForceTree(provenanceGraph.nodes, provenanceGraph.links, false);
             renderForceTree(combineGraph.nodes, combineGraph.links, false);
-            // renderForceTree(referenceGraph.nodes, referenceGraph.links, true);
             addNodeColorKey();
             $container.find('#loading-mssg').hide();
         }
