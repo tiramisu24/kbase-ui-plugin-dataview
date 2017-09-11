@@ -923,7 +923,10 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                             }else if (d.source.fixed && !d.target.fixed){
                                 d.target.y = d.source.y - 20;
                             }
-                        }  
+                        } 
+                        if(d.target.isFunction && !d.target.fixed){
+                            d.target.x = d.source.x;
+                        } 
                         // d.source.y += k, d.target.y -= k;
                     })
                     .attr('x1', function (d) { return d.source.x; })
