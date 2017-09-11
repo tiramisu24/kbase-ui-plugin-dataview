@@ -51,6 +51,10 @@ source:
         -
             module: kb_dataview_widget_provenance
             file: widgets/provenanceWidget
+
+        -   
+            module: kb_dataview_widget_provenance_v2
+            file: widgets/provenanceWidgetv2
             
         -
             module: kb_dataview_downloadWidget
@@ -264,6 +268,10 @@ install:
         -
             module: kb_dataview_widget_provenance
             name: kb_dataview_provenance
+            type: factory
+        -
+            module: kb_dataview_widget_provenance_v2
+            name: kb_dataview_provenance_v2
             type: factory
         -
             module: kb_dataview_downloadWidget
