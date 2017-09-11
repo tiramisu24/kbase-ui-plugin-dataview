@@ -818,6 +818,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
             function enterNodes(n) {
                 oldNodes = [];
+                var rectWidth = 100;
+                var rectHeight = 50;
      
                 var g = n.enter()
                     .append('g')
@@ -827,10 +829,11 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .on('click', onNodeClick)
                     .call(force.drag);
 
-                g.append('circle')
-                    .attr('cx', 0)
-                    .attr('cy', 0)
-                    .attr('r', function (d) {return d.isFunction ? radius : radius;})
+                g.append('rect')
+                    .attr('x', -rectWidth/2)
+                    .attr('y', -rectHeight/2)
+                    .attr('width', rectWidth)
+                    .attr('height', rectHeight)
                     .transition(t)
                     .style('fill',  function (d) {
                         if (d.isFunction) return 'black';
@@ -842,6 +845,22 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         if (d.endNode){return 0.5;}
                         return 1;
                     });
+
+                // g.append('circle')
+                //     .attr('cx', 0)
+                //     .attr('cy', 0)
+                //     .attr('r', function (d) {return d.isFunction ? radius : radius;})
+                //     .transition(t)
+                //     .style('fill',  function (d) {
+                //         if (d.isFunction) return 'black';
+                //         if (d.startingObject) return 'orange';
+                //         if (d.endNode) return 'brown';
+                //         return '#2196F3' ;
+                //     })
+                //     .style('opacity', function (d){
+                //         if (d.endNode){return 0.5;}
+                //         return 1;
+                //     });
                 g.transition;
 
         
@@ -866,20 +885,20 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                 var dummyData = [1];
 
-                var marker = defs.selectAll('marker')
-                    .data(dummyData)
-                    .enter()
-                    .append('svg:marker')
-                    .attr('id', 'markerArrow')
-                    .attr('markerHeight', 3)
-                    .attr('markerWidth', 3)
-                    .attr('orient', 'auto')
-                    .attr('refX', 10)
-                    .attr('refY', 0)
-                    .attr('viewBox', '-5 -5 10 10')
-                    .append('svg:path')
-                    .attr('d', 'M 0,0 m -5,-5 L 5,0 L -5,5 Z')
-                    .attr('fill', 'blue');
+                // var marker = defs.selectAll('marker')
+                //     .data(dummyData)
+                //     .enter()
+                //     .append('svg:marker')
+                //     .attr('id', 'markerArrow')
+                //     .attr('markerHeight', 3)
+                //     .attr('markerWidth', 3)
+                //     .attr('orient', 'auto')
+                //     .attr('refX', 10)
+                //     .attr('refY', 0)
+                //     .attr('viewBox', '-5 -5 10 10')
+                //     .append('svg:path')
+                //     .attr('d', 'M 0,0 m -5,-5 L 5,0 L -5,5 Z')
+                //     .attr('fill', 'blue');
             }
 
             function maintainNodePositions() {
