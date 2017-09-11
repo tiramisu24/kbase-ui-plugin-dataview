@@ -637,6 +637,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                     functionNode = {
                         isFunction: true,
+                        type: 'Function',
                         objId: objectIdentity.ref + 'to' + provenance.service,
                         name: provenance.service,
                         method: provenance.method
@@ -904,7 +905,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 //     .attr('markerHeight', 3)
                 //     .attr('markerWidth', 3)
                 //     .attr('orient', 'auto')
-                //     .attr('refX', 10)
+                //     .attr('refX', 25)
                 //     .attr('refY', 0)
                 //     .attr('viewBox', '-5 -5 10 10')
                 //     .append('svg:path')
@@ -947,11 +948,11 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 link
                     .each(function (d) {
         
-                        if (d.source.y < d.target.y && !d.target.fixed) {
-                            if(d.target.fixed && !d.source.fixed){
-                                d.source.y = d.target.y + 20;
-                            }else if (d.source.fixed && !d.target.fixed){
+                        if (d.source.y < d.target.y) {
+                            if (!d.target.fixed) {
                                 d.target.y = d.source.y - 20;
+                            }else if(!d.source.fixed){
+                                d.source.y = d.target.y + 20;
                             }
                         } 
                         if(d.target.isFunction && !d.target.fixed){
@@ -1006,11 +1007,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                             getReferencingObjects(nodeId)
                         ])
                             .then(function(){
-                                //   height +=100
-                                //   svg.attr("height", height);
-                                
-                                console.log(combineGraph);
-                                
+                 
                                 update();
                                 // updatePos();
                                 node.isPresent = true;
