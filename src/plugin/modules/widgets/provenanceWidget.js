@@ -566,6 +566,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     var refInfo = data.info;
                     var objId = refInfo[6] + '/' + refInfo[0] + '/' + refInfo[4];
                     var functionNode = {
+                        type:'Function',
                         isFunction: true,
                         objId: objId + 'to' + provenance.service,
                         name: provenance.service,
@@ -864,8 +865,18 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 g.transition;
 
         
-                g.append('text')
+                var text = g.append('text');
                 //   .attr("dy", ".35em")
+                text.append('tspan')
+                    .text(function(d) {return d.type;})
+                    .attr('font-weight', 'bold')
+                    .attr('x', -rectWidth/2)
+                    .attr('y', -rectHeight / 2 + 15)
+                    .attr('dy', 0);
+                text.append('tspan')
+                    .attr('dy', 15)
+                    .attr('x', -rectWidth / 2)
+                    .attr('y', -rectHeight/2 + 15)
                     .text(function(d) {return d.name;});
             }
 
