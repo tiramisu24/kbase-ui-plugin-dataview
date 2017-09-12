@@ -532,7 +532,7 @@ install:
         -
             path: 
                 - 
-                    [objgraphview, provenancev2]
+                    [objgraphview2, provenance2]
                 - 
                     name: workspaceId
                 -
