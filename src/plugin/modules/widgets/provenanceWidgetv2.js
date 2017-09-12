@@ -763,13 +763,13 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 .attr('height', height)
                 .attr('class', 'prov');
 
-            var borderPath = svg.append("rect")
-                .attr("x", 0)
-                .attr("y", 0)
-                .attr("height", height)
-                .attr("width", width)
-                .style("fill", "#dbdcdd")
-                .style("stroke-width", 0);
+            var borderPath = svg.append('rect')
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('height', height)
+                .attr('width', width)
+                .style('fill', '#dbdcdd')
+                .style('stroke-width', 0);
        
 
             function update() {
@@ -879,7 +879,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             function tick(e) {
                 node.attr('cx', function (d) { return d.x = Math.max(rectWidth/2, Math.min(width - rectWidth/2, d.x)); })
                     .attr('cy', function (d) { return d.y = Math.max(rectHeight/2, Math.min(height - rectHeight/2, d.y)); })
-                    .attr('transform', function (d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+                    .attr('transform', function (d) { return 'translate(' + d.x + ',' + d.y + ')'; })
+                    .attr('display', function(d){ return (d.toggle === false) ? 'none' : 'initial';});
 
                 link
                     .each(function (d) {
@@ -891,22 +892,25 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                                 d.source.y = d.target.y + (rectHeight / 2);
                             }
                         } 
-                        if(d.target.isFunction && !d.target.fixed){
-                            d.target.x = d.source.x;
-                        }
+
                         var distance = Math.abs(d.source.y - d.target.y);
                         if(distance < rectHeight){
                             if (!d.target.fixed) {
-                                d.target.y -= (rectHeight - distance);
+                                d.target.y -= (rectHeight - distance + 10);
                             } else if (!d.source.fixed) {
-                                d.source.y += (rectHeight - distance);
+                                d.source.y += (rectHeight - distance - 10);
                             }
                         } 
+                        if (d.target.isFunction && !d.target.fixed) {
+                            d.target.x = d.source.x;
+                        }
                     })
                     .attr('x1', function (d) { return d.source.x; })
                     .attr('y1', function (d) { return d.source.y - rectHeight/2; })
                     .attr('x2', function (d) { return d.target.x; })
-                    .attr('y2', function (d) { return d.target.y + rectHeight/2; });
+                    .attr('y2', function (d) { return d.target.y + rectHeight/2; })
+                    .attr('display', function (d) { return (d.toggle === false) ? 'none' : 'initial'; });
+
 
             }
 
@@ -918,10 +922,20 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             });
 
             function dblClick(node){
+                debugger;
                 var nodeId = {ref: node.objId};
-                if(node.isPresent){
-                    node.toggle = !node.toggle;
-                    toggleNode(node);
+                if(node.isPresent || node.isFunction){
+                    var condition;
+                    if(node.expanded === undefined){
+                        node.expanded = false;
+                        condition = false;
+                    }else{
+                        node.expanded = !node.expanded;
+                        condition = node.expanded;
+                    }
+                    toggleNode(node, condition);
+                    update();
+                    
                 }
                 else if (!node.endNode){
                     return Promise.all([
@@ -934,21 +948,28 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         });
                 }
             }
-            function toggleNode(node){
-                var queue = node.referencesFrom;
+            function toggleNode(node, condition){
+                var queue = addLinkstoQueue(node.referencesTo);
                 while (queue.length > 0){
                     var link = queue.pop();
-                    link.toggle = !link.toggle;
-                    if(!hasLinkDep(link.target)){
-                        link.target.toggle = !link.target.toggle;
-                        queue.concat(link.target.referencesFrom);
-                    }
+                    link.toggle = condition;
+                    if((condition === false && !hasLinkDep(link.target)) || (condition === true)){
+                        link.target.toggle = condition;
+                        queue = queue.concat(addLinkstoQueue(link.target.referencesTo));
+                    } 
                 }
             }
+            function addLinkstoQueue (links){
+                var queue = [];
+                for(var i =0; i< links.length; i++){
+                    queue.push(links[i]);
+                }
+                return queue;
+            }
             function hasLinkDep(node){
-                let links = node.referencesFrom;
-                for(let i = 0; i<links.length; i++){
-                    if(links[0].toggle) return true;
+                var links = node.referencesFrom;
+                for(var i = 0; i<links.length; i++){
+                    if(links[0].toggle !== false) return true;
                 }
                 return false;
             }
