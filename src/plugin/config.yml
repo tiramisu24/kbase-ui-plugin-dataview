@@ -46,6 +46,9 @@ source:
             module: kb_dataview_widget_provenancePanel
             file: provenancePanel
         -
+            module: kb_dataview_widget_provenancePanel2
+            file: provenancePanel2
+        -
             module: kb_dataview_widget_panel
             file: panelWidget
         -
@@ -260,6 +263,10 @@ install:
         -
             module: kb_dataview_widget_provenancePanel
             name: kb_dataview_provenancePanel
+            type: factory
+        -
+            module: kb_dataview_widget_provenancePanel2
+            name: kb_dataview_provenancePanel2
             type: factory
         -
             module: kb_dataview_widget_overview
@@ -522,6 +529,18 @@ install:
                     name: objectVersion
                     optional: true
             widget: kb_dataview_provenancePanel
+        -
+            path: 
+                - 
+                    [objgraphview, provenancev2]
+                - 
+                    name: workspaceId
+                -
+                    name: objectId
+                -
+                    name: objectVersion
+                    optional: true
+            widget: kb_dataview_provenancePanel2
         -
             path:
                 -
