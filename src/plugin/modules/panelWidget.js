@@ -55,14 +55,14 @@ define([
                     div({ class: 'col-sm-12' }, [
                         div({ id: widgetSet.addWidget('kb_dataview_overview') }),
                         renderBSCollapsiblePanel({
-                            title: 'Data Provenance and Reference Network ... in Progress',
-                            icon: 'sitemap',
-                            content: div({ id: widgetSet.addWidget('kb_dataview_provenance_v2') })
-                        }),
-                        renderBSCollapsiblePanel({
                             title: 'Data Provenance and Reference Network',
                             icon: 'sitemap',
                             content: div({ id: widgetSet.addWidget('kb_dataview_provenance') })
+                        }),
+                        renderBSCollapsiblePanel({
+                            title: 'Data Provenance and Reference Network ... in Progress',
+                            icon: 'sitemap',
+                            content: div({ id: widgetSet.addWidget('kb_dataview_provenance_v2') })
                         }),
                         div({ id: widgetSet.addWidget('kb_dataview_dataObjectVisualizer') })
                     ])
