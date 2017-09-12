@@ -520,15 +520,14 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
         }
         function getReferencingObjects(objectIdentity) {
             //workspace requires list for referencing objects
-            
             return workspace.list_referencing_objects([objectIdentity])
                 .then(function(refData){
                     var objectIds = getObjectIds(refData[0]);
+                    if(refData[0].length === 0){return null;}
                     return workspace.get_objects2({
                         objects: objectIds,
                         no_data: 1
-                    })
-                        .then(refHelper.bind(null,objectIdentity));
+                    }).then(refHelper.bind(null,objectIdentity));
                 });
         }
         function refHelper(objectIdentity, provData){
