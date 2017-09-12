@@ -946,7 +946,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 }
             }
             function hasLinkDep(node){
-                let links = node.referencesFrom;
+                var links = node.referencesFrom;
                 for(let i = 0; i<links.length; i++){
                     if(links[0].toggle) return true;
                 }
