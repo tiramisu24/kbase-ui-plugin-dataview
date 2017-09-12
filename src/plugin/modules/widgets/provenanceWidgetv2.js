@@ -634,7 +634,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                             if (!(resolvedObjectRef in uniqueRefs)) {
                                 uniqueRefs[resolvedObjectRef] = 'included';
-
+                                if (nodePaths[objectIdentity.ref] === undefined) nodePaths[objectIdentity.ref] = objectIdentity.ref;
                                 var path = nodePaths[objectIdentity.ref] + ';' + resolvedObjectRef;
                                 nodePaths[resolvedObjectRef] = path;
                                 uniqueProvPaths.push({ ref: path });
