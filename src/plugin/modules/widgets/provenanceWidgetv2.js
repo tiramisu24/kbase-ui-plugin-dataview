@@ -896,9 +896,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         var distance = Math.abs(d.source.y - d.target.y);
                         if(distance < rectHeight){
                             if (!d.target.fixed) {
-                                d.target.y -= (rectHeight - distance + 10);
+                                d.target.y -= (rectHeight - distance);
                             } else if (!d.source.fixed) {
-                                d.source.y += (rectHeight - distance - 10);
+                                d.source.y += (rectHeight - distance);
                             }
                         } 
                         if (d.target.isFunction && !d.target.fixed) {
@@ -969,7 +969,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             function hasLinkDep(node){
                 var links = node.referencesFrom;
                 for(var i = 0; i<links.length; i++){
-                    if(links[0].toggle !== false) return true;
+                    if(links[i].toggle !== false) return true;
                 }
                 return false;
             }
