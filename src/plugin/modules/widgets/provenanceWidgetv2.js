@@ -757,6 +757,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             force.drag()
                 .on('dragstart', dragstart)
                 .on('dragend', dragstop);
+
+            force.on('tick', tick);
             svg = d3.select($container.find('#prov-tab')[0])
                 .append('svg')
                 .attr('width', width)
@@ -804,17 +806,12 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .attr('y', -rectHeight/2)
                     .attr('width', rectWidth)
                     .attr('height', rectHeight)
-                    .transition(t)
-                    .style('fill',  function (d) {
-                        if (d.isFunction) return types.functionNode.color;
-                        if (d.startingObject) return types.startingNode.color;
-                        if (d.endNode) return types.noRefs.color;
-                        return types.node.color ;
-                    });
+                    .transition(t);
 
                 g.transition;
         
-                var text = g.append('text');
+                var text = g.append('text')
+                            .attr('fill', 'black');
                 //   .attr("dy", ".35em")
                 text.append('tspan')
                     .text(function (d) { return (d.type.length < 15) ? d.type : (d.type.slice(0, 10) + '...');})                    
@@ -874,12 +871,20 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 d.fixed = true;
                 force.stop();
             }
-     
-            force.on('tick', tick);
+
+            function dragging(d){
+                force.stop();
+            }
             function tick(e) {
                 node.attr('cx', function (d) { return d.x = Math.max(rectWidth/2, Math.min(width - rectWidth/2, d.x)); })
                     .attr('cy', function (d) { return d.y = Math.max(rectHeight/2, Math.min(height - rectHeight/2, d.y)); })
                     .attr('transform', function (d) { return 'translate(' + d.x + ',' + d.y + ')'; })
+                    .style('fill', function (d) {
+                        if (d.isFunction) return types.functionNode.color;
+                        if (d.startingObject) return types.startingNode.color;
+                        if (d.endNode || d.expanded) return types.noRefs.color;
+                        return types.node.color;
+                    })
                     .attr('display', function(d){ return (d.toggle === false) ? 'none' : 'initial';});
 
                 link
@@ -922,22 +927,21 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             });
 
             function dblClick(node){
-                debugger;
                 var nodeId = {ref: node.objId};
                 if(node.isPresent || node.isFunction){
                     var condition;
-                    if(node.expanded === undefined){
-                        node.expanded = false;
-                        condition = false;
-                    }else{
-                        node.expanded = !node.expanded;
-                        condition = node.expanded;
-                    }
+
+                    node.expanded = !node.expanded;
+                    condition = node.expanded;
+                    
                     toggleNode(node, condition);
                     update();
+
                     
                 }
                 else if (!node.endNode){
+
+                    node.expanded = true;
                     return Promise.all([
                         provHelper(nodeId, [node.data]),
                         getReferencingObjects(nodeId)
@@ -953,7 +957,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 while (queue.length > 0){
                     var link = queue.pop();
                     link.toggle = condition;
-                    if((condition === false && !hasLinkDep(link.target)) || (condition === true)){
+                    if((condition === false && !hasLinkDep(link.target)) || (condition === true && condition !== link.target.toggle)){
                         link.target.toggle = condition;
                         queue = queue.concat(addLinkstoQueue(link.target.referencesTo));
                     } 
