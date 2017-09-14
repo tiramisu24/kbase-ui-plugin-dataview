@@ -746,8 +746,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 height = 800,
                 oldNodes, // data
                 svg, node, link,
-                rectWidth = 100,
-                rectHeight = 50,
+                rectWidth = 110,
+                rectHeight = 40,
                 nodes = nodesData,
                 links = linksData,
                 t = d3.transition()
@@ -755,7 +755,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
             var force = d3.layout.force()
                 .charge(-3000)
-                .linkDistance(50)
+                // .linkDistance(50)
                 .size([width, height]);
 
             force.drag()
@@ -810,6 +810,15 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .attr('y', -rectHeight/2)
                     .attr('width', rectWidth)
                     .attr('height', rectHeight)
+                    .attr('rx', function(d){return d.isFunction ? rectWidth/2 : 0;})
+                    .attr('ry', function(d){return d.isFunction ? rectWidth/2 : 0;})
+                    .on('mouseover', function (d) {
+                        d3.select(this).attr('stroke-width', '3px')
+                            .attr('stroke', 'grey');
+                    })
+                    .on('mouseleave', function(d){
+                        d3.select(this).attr('stroke', 'none');
+                    })
                     .transition(t);
 
                 g.append('title')
@@ -826,6 +835,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         }
                         return text;
                     });
+               
 
                 g.transition;
         
@@ -835,15 +845,20 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 text.append('tspan')
                     .text(function (d) { return (d.type.length < 15) ? d.type : (d.type.slice(0, 10) + '...');})                    
                     .attr('font-weight', 'bold')
-                    .attr('x', -rectWidth/2)
-                    .attr('y', -rectHeight / 2 + 15)
+                    .attr('x', function (d) {return (-rectWidth / 2) + (d.isFunction ? 40 : 5);})
+                    .attr('y', -rectHeight/2 + 15)
                     .attr('dy', 0);
 
                 text.append('tspan')
                     .attr('dy', 15)
-                    .attr('x', -rectWidth / 2)
+                    .attr('x', function (d) { return (-rectWidth / 2) + (d.isFunction ? 12 : 5); })
                     .attr('y', -rectHeight/2 + 15)
-                    .text(function (d) { return (d.name.length < 15) ? d.name : (d.name.slice(0, 10) + '...'); });                    
+                    .text(function (d) { 
+                        if(d.isFunction){
+                            return (d.name.length < 12) ? d.name : (d.name.slice(0, 9) + '...'); 
+                        }
+                        return (d.name.length < 20) ? d.name : (d.name.slice(0, 12) + '...'); 
+                    });                    
 
             }
 
@@ -869,6 +884,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .attr('id', 'markerArrow')
                     .attr('markerHeight', 3)
                     .attr('markerWidth', 3)
+                    .attr('refX', 5)
                     .attr('orient', 'auto')
                     .attr('viewBox', '-5 -5 10 10')
                     .append('svg:path')
@@ -958,6 +974,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 maintainNodePositions();
 
             });
+            
 
             function dblClick(node){
                 var nodeId = {ref: node.objId};
