@@ -32,24 +32,24 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             objWidth= 20,
             types = {
                 startingNode: {
-                    color: '#FF9800',
+                    color: '#ffeaad',
                     name: 'Current object',
                     width: objWidth,
                     stroke: (10,0)                    },
                 functionNode: {
-                    color: 'grey',
+                    color: '#bbb6c1',
                     name: 'Functions',
                     width: objWidth,
                     stroke: (10,0)
                 },
                 noRefs: {
-                    color: '#8eb3ed',
-                    name: 'Objects with no provenance or dependancies',
+                    color: '#b5d6ff',
+                    name: 'All References and Dependencies Displayed',
                     width: objWidth,
                     stroke: (10,0)
                 },
                 node: {
-                    color: '#386cc1',
+                    color: '#87abff',
                     name: 'Objects',
                     width: objWidth,
                     stroke: (10,0)
@@ -142,8 +142,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             if (needColorKey) {
                 needColorKey = false;
 
-                var content = $('<div/>', {  id: 'graphkey' });
-                $('#nodeColorKey2').append(content);
+                var content = $('<div/>', {  id: 'graphkey2' });
+                var nodeColorKey2 = $('#nodeColorKey2');
+                nodeColorKey2.append(content);
 
                 Object.keys(types).map(function (type){
                     var row = $('<tr/>', { class: 'prov-graph-color' });
@@ -155,7 +156,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         
                     row.append(colorGrid);
                     row.append(colorName);
-                    $('#graphkey').append(row);
+                    $('#graphkey2').append(row);
                     var temp = '#' + colorId;
                     var colorSvg = d3.select(temp)
                         .append('svg')
@@ -174,7 +175,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                 });
 
-                $('#nodeColorKey2').append($('<div/>', {id : 'objdetailsdiv'}));
+                nodeColorKey2.append($('<div/>', {id : 'objdetailsdiv'}));
+                nodeColorKey2.css('display','flex');
             }
         }
 
@@ -233,8 +235,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                 }
                 catch(err) {
-                    debugger;
-                    console.log(d)
+                    
+                    console.log(d);
                     var info = d.info;
                     var text = '<center><table cellpadding="2" cellspacing="0" class="table table-bordered"><tr><td>';
                     text += '<h4>Data Object Details</h4><table cellpadding="2" cellspacing="0" border="0" class="table table-bordered table-striped">';
@@ -552,7 +554,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     var refInfo = data.info;
                     var objId = refInfo[6] + '/' + refInfo[0] + '/' + refInfo[4];
                     var functionNode = {
-                        type:'Function',
+                        type: 'App',
                         isFunction: true,
                         objId: objId + 'to' + provenance.service,
                         name: provenance.service,
@@ -621,7 +623,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                     functionNode = {
                         isFunction: true,
-                        type: 'Function',
+                        type: 'App',
                         objId: objectIdentity.ref + 'to' + provenance.service,
                         name: provenance.service,
                         method: provenance.method,
@@ -772,7 +774,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 .attr('y', 0)
                 .attr('height', height)
                 .attr('width', width)
-                .style('fill', '#dbdcdd')
+                .style('fill', '#efefef')
                 .style('stroke-width', 0);
        
 
@@ -809,6 +811,21 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .attr('width', rectWidth)
                     .attr('height', rectHeight)
                     .transition(t);
+
+                g.append('title')
+                    .html(function (d) {
+                        //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
+                        // debugger;
+                        var text = 'Type: ' + d.type +'\n' 
+                                    + 'Name: ' + d.name;
+                        if(!d.isFunction){
+                            var info = d.data.info;
+                            text += '\n' + 'Saved on:  ' + getTimeStampStr(info[3]) + '\n' +
+                                'Saved by:  ' + info[5];
+
+                        }
+                        return text;
+                    });
 
                 g.transition;
         
@@ -882,6 +899,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     } else {
                         return d.x = Math.max(rectWidth/2, Math.min(width - rectWidth/2, d.x)); 
                     }
+
+
                 })
                     .attr('cy', function (d) { 
                         if(d.startingObject){
@@ -919,6 +938,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                                 d.source.y += (rectHeight - distance);
                             }
                         } 
+
                         if (d.target.isFunction && !d.target.fixed) {
                             d.target.x = d.source.x;
                         }
