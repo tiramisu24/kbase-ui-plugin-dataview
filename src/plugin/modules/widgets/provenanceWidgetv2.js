@@ -214,7 +214,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     text += '<h4>Provenance</h4><table cellpadding="2" cellspacing="0" class="table table-bordered table-striped">';
 
                     if (objdata.copied) {
-                        text += getTableRow('Copied from', '<a href="#/dataview/' + objdata[0].copied + '" target="_blank">' + objdata[0].copied + '</a>');
+                        text += getTableRow('Copied from', '<a href="#/dataview/' + objdata.copied + '" target="_blank">' + objdata.copied + '</a>');
                     }
                     if (objdata.provenance.length > 0) {
                         var prefix = '';
@@ -233,6 +233,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                 }
                 catch(err) {
+                    debugger;
+                    console.log(d)
                     var info = d.info;
                     var text = '<center><table cellpadding="2" cellspacing="0" class="table table-bordered"><tr><td>';
                     text += '<h4>Data Object Details</h4><table cellpadding="2" cellspacing="0" border="0" class="table table-bordered table-striped">';
@@ -750,7 +752,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .duration(1750); // d3 selections
 
             var force = d3.layout.force()
-                .charge(-800)
+                .charge(-3000)
                 .linkDistance(50)
                 .size([width, height]);
 
@@ -786,7 +788,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 node = svg.selectAll('.node');
                 force.start();
 
-                for (var i = 100; i > 0; --i) force.tick();
+                for (var i = 50; i > 0; --i) force.tick();
                 force.stop();
             }
 
@@ -873,8 +875,22 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             }
 
             function tick(e) {
-                node.attr('cx', function (d) { return d.x = Math.max(rectWidth/2, Math.min(width - rectWidth/2, d.x)); })
-                    .attr('cy', function (d) { return d.y = Math.max(rectHeight/2, Math.min(height - rectHeight/2, d.y)); })
+                node.attr('cx', function (d) { 
+                    if (d.startingObject) {
+                        d.fixed = true;
+                        return d.x = width / 2;
+                    } else {
+                        return d.x = Math.max(rectWidth/2, Math.min(width - rectWidth/2, d.x)); 
+                    }
+                })
+                    .attr('cy', function (d) { 
+                        if(d.startingObject){
+                            d.fixed = true;
+                            return d.y = height/2;
+                        }else{
+                            return d.y = Math.max(rectHeight/2, Math.min(height - rectHeight/2, d.y)); 
+                        }
+                    })
                     .attr('transform', function (d) { return 'translate(' + d.x + ',' + d.y + ')'; })
                     .style('fill', function (d) {
                         if (d.isFunction) return types.functionNode.color;
