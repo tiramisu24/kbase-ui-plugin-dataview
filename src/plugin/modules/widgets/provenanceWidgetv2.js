@@ -1000,13 +1000,17 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 }
             }
             function toggleNode(node, condition){
+                // debugger;
                 var queue = addLinkstoQueue(node.referencesTo);
                 while (queue.length > 0){
                     var link = queue.pop();
                     link.toggle = condition;
                     if((condition === false && !hasLinkDep(link.target)) || (condition === true && condition !== link.target.toggle)){
+                        if (!(link.target.expanded === false && condition === true)){
+                            queue = queue.concat(addLinkstoQueue(link.target.referencesTo));
+                        }
                         link.target.toggle = condition;
-                        queue = queue.concat(addLinkstoQueue(link.target.referencesTo));
+
                     } 
                 }
             }
@@ -1033,6 +1037,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
             d3.select($container.find('#objgraphview2')).html('');
             $container.find('#objgraphview2').show();
+            //add back in if want to have different tabs
             // var ul = $('<ul class="nav nav-tabs"  role="tablist"/>');
             // ul.append('<li role="presentation" class="active"><a href="#prov-tab" aria-controls="prov-tab" role="tab" data-toggle="tab">Provenance and Dependencies</a></li>');
             // ul.append('<li role="presentation"  ><a href="#ref-tab" aria-controls="usage-tab" role="tab" data-toggle="tab">Object Usage</a></li>');
