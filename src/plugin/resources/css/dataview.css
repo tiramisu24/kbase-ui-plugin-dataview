@@ -1119,3 +1119,13 @@ button.kb-method-run:hover {
     color: #fff;
     padding: 0.5em;
 }
+#nodeColorKey2{
+    display: flex;
+    margin-top:10px;
+}
+#graphkey2{
+    padding: 20px 10px;
+    margin-right:20px;
+    border: 1px solid #ddd;
+    height: 209px;
+}

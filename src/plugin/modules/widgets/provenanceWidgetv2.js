@@ -97,7 +97,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
         function renderLayout() {
             return div([
                 div(['This is a visualization of the relationships between this piece of data and other data in KBase.  Click objects to show additional information (shown below the graph). Double click on an object expand graph.', br(), br()]),
-                div({id: 'objgraphview2', style: {overflow: 'auto', height: '450px', resize: 'vertical'}}),
+                div({id: 'objgraphview2', style: {overflow: 'auto', height: "" + (config.height * 3/4) + "px", resize: 'vertical'}}),
                 div({id: 'nodeColorKey2'})
             ]);
         }
@@ -176,7 +176,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 });
 
                 nodeColorKey2.append($('<div/>', {id : 'objdetailsdiv'}));
-                nodeColorKey2.css('display','flex');
             }
         }
 
@@ -742,8 +741,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
         function renderForceTree(nodesData, linksData){
             //TODO: copy loop through nodes and get provenances, with nodes hidden
-            var width = 1200,
-                height = 800,
+            var width = config.width,
+                height = config.height,
                 oldNodes, // data
                 svg, node, link,
                 rectWidth = 110,
@@ -763,7 +762,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 .on('dragend', dragstop);
 
             force.on('tick', tick);
-            svg = d3.select($container.find('#prov-tab')[0])
+            svg = d3.select($container.find('#objgraphview2')[0])
                 .append('svg')
                 .attr('width', width)
                 .attr('height', height)
@@ -824,14 +823,12 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 g.append('title')
                     .html(function (d) {
                         //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
-                        // debugger;
                         var text = 'Type: ' + d.type +'\n' 
                                     + 'Name: ' + d.name;
                         if(!d.isFunction){
                             var info = d.data.info;
                             text += '\n' + 'Saved on:  ' + getTimeStampStr(info[3]) + '\n' +
                                 'Saved by:  ' + info[5];
-
                         }
                         return text;
                     });
@@ -1036,14 +1033,14 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
             d3.select($container.find('#objgraphview2')).html('');
             $container.find('#objgraphview2').show();
-            var ul = $('<ul class="nav nav-tabs"  role="tablist"/>');
-            ul.append('<li role="presentation" class="active"><a href="#prov-tab" aria-controls="prov-tab" role="tab" data-toggle="tab">Provenance and Dependencies</a></li>');
-            ul.append('<li role="presentation"  ><a href="#ref-tab" aria-controls="usage-tab" role="tab" data-toggle="tab">Object Usage</a></li>');
-            var content = $('<div/>',{class:'tab-content'});
-            content.append('<div role="tabpanel" class="tab-pane active" id="prov-tab"></div>');
-            content.append('<div role="tabpanel" class="tab-pane " id="ref-tab"></div>');
-            $('#objgraphview2').append(ul);
-            $('#objgraphview2').append(content);
+            // var ul = $('<ul class="nav nav-tabs"  role="tablist"/>');
+            // ul.append('<li role="presentation" class="active"><a href="#prov-tab" aria-controls="prov-tab" role="tab" data-toggle="tab">Provenance and Dependencies</a></li>');
+            // ul.append('<li role="presentation"  ><a href="#ref-tab" aria-controls="usage-tab" role="tab" data-toggle="tab">Object Usage</a></li>');
+            // var content = $('<div/>',{class:'tab-content'});
+            // content.append('<div role="tabpanel" class="tab-pane active" id="prov-tab"></div>');
+            // content.append('<div role="tabpanel" class="tab-pane " id="ref-tab"></div>');
+            // $('#objgraphview2').append(ul);
+            // $('#objgraphview2').append(content);
             renderForceTree(combineGraph.nodes, combineGraph.links, false);
             addNodeColorKey();
             $container.find('#loading-mssg').hide();
