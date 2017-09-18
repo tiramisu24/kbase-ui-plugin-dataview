@@ -507,15 +507,20 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 var nodeId;
                 if(existingNodeGraphId[objIdGen] !== undefined){
                     nodeId = existingNodeGraphId[objIdGen];
+                    // debugger;
+                    combineGraph.nodes[nodeId].versions[refInfo[4]] = true;
                 }else{
                     var t = refInfo[2].split('-')[0];
                     var endNode = ((data[i].provenance.length + data[i].refs.length) > 0) ? false : true;
+                    var versionSet = {};
+                    versionSet[refInfo[4]] = true;
                     var node = {
                         name: getNodeLabel(refInfo),
                         objId: objId,
                         type: t,
                         data: data[i],
                         endNode: endNode,
+                        versions : versionSet,
                         referencesFrom: [],
                         referencesTo: []
                     };
@@ -754,7 +759,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
         function renderForceTree(nodesData, linksData){
             //TODO: copy loop through nodes and get provenances, with nodes hidden
             var width = config.width,
-                height = config.height,
+                height = config.height*2,
                 oldNodes, // data
                 svg, node, link,
                 rectWidth = 110,
@@ -767,7 +772,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .duration(1750); // d3 selections
 
             var force = d3.layout.force()
-                .charge(-800)
+                .charge(-1800)
                 .linkDistance(30)
                 .size([width, height]);
 
@@ -818,7 +823,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .on('click', onNodeClick)
                     .call(force.drag);
 
-                g.append('rect')
+                var rect = g.append('rect')
                     .attr('class', 'nodeObj')
                     .attr('x', -rectWidth/2)
                     .attr('y', -rectHeight/2)
@@ -834,6 +839,23 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         d3.select(this).attr('stroke', 'none');
                     })
                     .transition(t);
+                d3.selectAll('.nodeObj').each(function (d){
+
+                    if(!(d.versions === undefined)){
+                        // debugger;
+                        for (var i = 1; i < Object.keys(d.versions).length; i++){
+                            d3.select(this.parentNode).insert('rect', ':first-child')
+                                .attr('class', 'versions')
+                                .attr('x', -rectWidth/2 + i*10)
+                                .attr('y', -rectHeight/2 - i*10)
+                                .attr('width', rectWidth)
+                                .attr('height', rectHeight)
+                                .attr('stroke-width', '1px')
+                                .attr('stroke', 'black');
+                        }
+                    }
+                    // debugger;
+                });
 
                 g.append('title')
                     .html(function (d) {
@@ -990,7 +1012,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             
 
             function dblClick(node){
-                debugger;
+                // debugger;
                 var nodeId = {ref: node.objId};
                 if(node.isPresent || node.isFunction){
                     var condition;
