@@ -68,8 +68,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 }
             },
             monthLookup = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            objIdtoDataCombine = {
-                '-1' : 1
+            existingNodeGraphId = {
             },
             combineGraph = {
                 nodes: [],
@@ -85,8 +84,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
             },
             exemptObjects ={
-                'DataPalette.DataPalette': true,
-                'KBaseReport.Report':true
+                // 'KBaseReport.Report':true,
+                'DataPalette.DataPalette': true
             },
             div = html.tag('div'),
             br = html.tag('br'),
@@ -239,7 +238,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 }
                 catch(err) {
                     
-                    console.log(d);
                     var info = d.info;
                     var text = '<center><table cellpadding="2" cellspacing="0" class="table table-bordered"><tr><td>';
                     text += '<h4>Data Object Details</h4><table cellpadding="2" cellspacing="0" border="0" class="table table-bordered table-striped">';
@@ -428,9 +426,12 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
                 var objectInfo = objectData.info;
                 var t = objectInfo[2].split('-')[0],
+                    objIdGen = objectInfo[6] + '/' + objectInfo[0],
                     objId = objectInfo[6] + '/' + objectInfo[0] + '/' + objectInfo[4],
+                    versionSet = {},
                     //first object must be 0; TODO: change this to depend on usage or provenance
                     nodeId = 0;
+                versionSet[objectInfo[4]] = true;
 
                 if (objectInfo[4] > latestVersion) {
                     node = {
@@ -441,14 +442,13 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         isPresent: true,
                         startingObject : true,
                         referencesFrom : [],
-                        versions: {},
+                        versions: versionSet,
                         referencesTo : []
                     };
-            
                     latestVersion = objectInfo[4];
                     latestObjId = objId;
                 }
-                objIdtoDataCombine[objId] = nodeId;
+                existingNodeGraphId[objIdGen] = nodeId;
                 nodePaths [objId] = objId;
                 objIdentities.push({ref: objId});
             });
@@ -482,7 +482,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 functionId = combineGraph.nodes.length;
                 existingFunctions[functionNode.objId] = functionId;
             }
-            var targetId = objIdtoDataCombine[objIdentity.ref];
+            var objIdGen = objIdentity.ref.split('/').slice(0,2).join('/');
+            var targetId = existingNodeGraphId[objIdGen];
             combineGraph.nodes.push(functionNode);
             makeLink(targetId, functionId, isDep, flip);
             return functionId;
@@ -501,10 +502,11 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
                 var refInfo =data[i].info;
                 var objId = refInfo[6] + '/' + refInfo[0] + '/' + refInfo[4];
+                var objIdGen = refInfo[6] + '/' + refInfo[0];
 
                 var nodeId;
-                if(objIdtoDataCombine[objId] !== undefined){
-                    nodeId = objIdtoDataCombine[objId];
+                if(existingNodeGraphId[objIdGen] !== undefined){
+                    nodeId = existingNodeGraphId[objIdGen];
                 }else{
                     var t = refInfo[2].split('-')[0];
                     var endNode = ((data[i].provenance.length + data[i].refs.length) > 0) ? false : true;
@@ -519,7 +521,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     };
                     nodeId = combineGraph.nodes.length;
 
-                    objIdtoDataCombine[objId] = nodeId;
+                    existingNodeGraphId[objIdGen] = nodeId;
                     combineGraph.nodes.push(node);
 
                 }
@@ -549,7 +551,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 for (var j = 0; j < data.refs.length; j++) {
                     if (objectIdentity.ref === data.refs[j]) {
                         var isDep = true;
-                        addNodeLink([data], objIdtoDataCombine[objectIdentity.ref], isDep,flip);
+                        var objIdGen = objectIdentity.ref.split('/').slice(0, 2).join('/');
+
+                        addNodeLink([data], existingNodeGraphId[objIdGen], isDep,flip);
                         break;
                     }
                 }
@@ -557,10 +561,11 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     var provenance = data.provenance[k];
                     var refInfo = data.info;
                     var objId = refInfo[6] + '/' + refInfo[0] + '/' + refInfo[4];
+                    var objIdGen = refInfo[6] + '/' + refInfo[0];
                     var functionNode = {
                         type: 'App',
                         isFunction: true,
-                        objId: objId + 'to' + provenance.service,
+                        objId: objIdGen + 'to' + provenance.service,
                         name: provenance.service,
                         method: provenance.method,
                         referencesFrom : [],
@@ -624,10 +629,12 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                 var objectProvenance = provData[i];
                 objectProvenance.provenance.forEach(function (provenance) {
+                    var objIdGen = objectIdentity.ref.split('/').slice(0, 2).join('/');
+
                     functionNode = {
                         isFunction: true,
                         type: 'App',
-                        objId: objectIdentity.ref + 'to' + provenance.service,
+                        objId: objIdGen + 'to' + provenance.service,
                         name: provenance.service,
                         method: provenance.method,
                         referencesFrom: [],
@@ -693,7 +700,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                                 refData = refData[0].data;
                                 var isDep = true;
                                 //TODO set type of link
-                                var objId = objIdtoDataCombine[objectIdentity.ref];
+                                var objIdGen = objectIdentity.ref.split('/').slice(0, 2).join('/');
+                                var objId = existingNodeGraphId[objIdGen];
                                 addNodeLink(refData, objId, isDep, refData);
 
 
@@ -759,8 +767,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .duration(1750); // d3 selections
 
             var force = d3.layout.force()
-                .charge(-3000)
-                // .linkDistance(50)
+                .charge(-800)
+                .linkDistance(30)
                 .size([width, height]);
 
             force.drag()
@@ -982,6 +990,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             
 
             function dblClick(node){
+                debugger;
                 var nodeId = {ref: node.objId};
                 if(node.isPresent || node.isFunction){
                     var condition;
