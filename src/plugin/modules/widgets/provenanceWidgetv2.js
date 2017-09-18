@@ -84,6 +84,10 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             existingFunctions ={
 
             },
+            exemptObjects ={
+                'DataPalette.DataPalette': true,
+                'KBaseReport.Report':true
+            },
             div = html.tag('div'),
             br = html.tag('br'),
             tr = html.tag('tr'),
@@ -431,13 +435,13 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 if (objectInfo[4] > latestVersion) {
                     node = {
                         name: getNodeLabel(objectInfo),
-                        info: objectInfo,
                         objId: objId,
                         type: t,
                         data: objectData,
                         isPresent: true,
                         startingObject : true,
                         referencesFrom : [],
+                        versions: {},
                         referencesTo : []
                     };
             
@@ -506,7 +510,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     var endNode = ((data[i].provenance.length + data[i].refs.length) > 0) ? false : true;
                     var node = {
                         name: getNodeLabel(refInfo),
-                        info: refInfo,
                         objId: objId,
                         type: t,
                         data: data[i],
@@ -541,6 +544,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             var flip = true;
             for (var i = 0; i < provData.data.length; i++) {
                 var data = provData.data[i];
+                if (exemptObjects[data.info[2].split('-')[0]]) continue;
+
                 for (var j = 0; j < data.refs.length; j++) {
                     if (objectIdentity.ref === data.refs[j]) {
                         var isDep = true;
@@ -619,7 +624,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                 var objectProvenance = provData[i];
                 objectProvenance.provenance.forEach(function (provenance) {
-
                     functionNode = {
                         isFunction: true,
                         type: 'App',
@@ -668,7 +672,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         no_data: 1
                     }]), objectIdentity, functionId])
                         .spread(function (refData, objectIdentity, functionId) {
-                            if (refData !== null) {
+                            if (refData !== null || exemptObjects[refData[0].data.info[2].split('-')[0]]) {
                                 refData = refData[0].data;
                                 var isDep = false;                                
                                 addNodeLink(refData, functionId, isDep, null, refData);
@@ -749,6 +753,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 rectHeight = 40,
                 nodes = nodesData,
                 links = linksData,
+                increase = 100,
+                yoffset = 0,
                 t = d3.transition()
                     .duration(1750); // d3 selections
 
@@ -805,6 +811,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .call(force.drag);
 
                 g.append('rect')
+                    .attr('class', 'nodeObj')
                     .attr('x', -rectWidth/2)
                     .attr('y', -rectHeight/2)
                     .attr('width', rectWidth)
@@ -920,7 +927,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                             d.fixed = true;
                             return d.y = height/2;
                         }else{
-                            return d.y = Math.max(rectHeight/2, Math.min(height - rectHeight/2, d.y)); 
+                            return d.y = Math.max(rectHeight / 2, Math.min(height - rectHeight / 2, d.y)); 
                         }
                     })
                     .attr('transform', function (d) { return 'translate(' + d.x + ',' + d.y + ')'; })
@@ -955,6 +962,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         if (d.target.isFunction && !d.target.fixed) {
                             d.target.x = d.source.x;
                         }
+                        
                     })
                     .attr('x1', function (d) { return d.source.x; })
                     .attr('y1', function (d) { return d.source.y - rectHeight/2; })
@@ -994,6 +1002,10 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         getReferencingObjects(nodeId)
                     ])
                         .then(function(){
+                            // height += increase;
+                            // yoffset += increase;
+                            // force.size([width, height]);
+                            // d3.selectAll('.nodeObj').each(function(d){d.y += increase;});
                             update();
                             node.isPresent = true;
                         });
