@@ -33,11 +33,13 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             types = {
                 startingNode: {
                     color: '#ffeaad',
+                    borderColor: '#dbbc60',
                     name: 'Current object',
                     width: objWidth,
                     stroke: (10,0)                    },
                 functionNode: {
                     color: '#bbb6c1',
+                    borderColor: 'grey',
                     name: 'Functions',
                     width: objWidth,
                     stroke: (10,0)
@@ -50,6 +52,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 },
                 node: {
                     color: '#87abff',
+                    borderColor: '#6079b2',
                     name: 'Objects',
                     width: objWidth,
                     stroke: (10,0)
@@ -819,7 +822,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .append('g')
                     .attr('class', 'node')
                     .each(function (d) {oldNodes.push(d);})
-                    .on('dblclick',dblClick)
                     .on('click', onNodeClick)
                     .call(force.drag);
 
@@ -829,14 +831,18 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .attr('y', -rectHeight/2)
                     .attr('width', rectWidth)
                     .attr('height', rectHeight)
+                    .attr('stroke-width', '1px')
+                    .on('dblclick', dblClick)
+                    .attr('stroke', getBorderColor)
                     .attr('rx', function(d){return d.isFunction ? rectWidth/2 : 0;})
                     .attr('ry', function(d){return d.isFunction ? rectWidth/2 : 0;})
                     .on('mouseover', function (d) {
-                        d3.select(this).attr('stroke-width', '3px')
-                            .attr('stroke', 'grey');
+                        d3.select(this)
+                            .attr('stroke-width', '3px');
                     })
                     .on('mouseleave', function(d){
-                        d3.select(this).attr('stroke', 'none');
+                        d3.select(this)
+                            .attr('stroke-width', '1px');
                     })
                     .transition(t);
                 d3.selectAll('.nodeObj').each(function (d){
@@ -846,15 +852,22 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         for (var i = 1; i < Object.keys(d.versions).length; i++){
                             d3.select(this.parentNode).insert('rect', ':first-child')
                                 .attr('class', 'versions')
-                                .attr('x', -rectWidth/2 + i*10)
-                                .attr('y', -rectHeight/2 - i*10)
+                                .attr('x', -rectWidth/2 + i*5)
+                                .attr('y', -rectHeight/2 - i*5)
                                 .attr('width', rectWidth)
                                 .attr('height', rectHeight)
                                 .attr('stroke-width', '1px')
-                                .attr('stroke', 'black');
+                                .attr('stroke', getBorderColor)
+                                .on('mouseover', function (d) {
+                                    d3.select(this)
+                                        .attr('stroke-width', '3px');
+                                })
+                                .on('mouseleave', function (d) {
+                                    d3.select(this)
+                                        .attr('stroke-width', '1px');
+                                });
                         }
                     }
-                    // debugger;
                 });
 
                 g.append('title')
@@ -1009,10 +1022,15 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 maintainNodePositions();
 
             });
-            
+            function getBorderColor(type){
+                if (type.isFunction) return types.functionNode.borderColor;
+                if (type.startingObject) return types.startingNode.borderColor;
+                // if (type.endNode || type.expanded) return types.noRefs.borderColor;
+                return types.node.borderColor;
+            }
 
             function dblClick(node){
-                // debugger;
+                debugger;
                 var nodeId = {ref: node.objId};
                 if(node.isPresent || node.isFunction){
                     var condition;
