@@ -177,8 +177,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         .attr('stroke-dasharray', types[type].stroke)
                         .attr('stroke-width', types[type].width)
                         .attr('stroke', types[type].color);    
-        
-
                 });
 
                 nodeColorKey2.append($('<div/>', {id : 'objdetailsdiv'}));
@@ -240,7 +238,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                 }
                 catch(err) {
-                    
                     var info = d.info;
                     var text = '<center><table cellpadding="2" cellspacing="0" class="table table-bordered"><tr><td>';
                     text += '<h4>Data Object Details</h4><table cellpadding="2" cellspacing="0" border="0" class="table table-bordered table-striped">';
@@ -510,7 +507,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 var nodeId;
                 if(existingNodeGraphId[objIdGen] !== undefined){
                     nodeId = existingNodeGraphId[objIdGen];
-                    // debugger;
                     combineGraph.nodes[nodeId].versions[refInfo[4]] = true;
                 }else{
                     var t = refInfo[2].split('-')[0];
@@ -531,9 +527,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                     existingNodeGraphId[objIdGen] = nodeId;
                     combineGraph.nodes.push(node);
-
-                }
-                
+                }         
                 makeLink(targetId, nodeId, isDep, flip);
                 
             }
@@ -548,6 +542,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         objects: objectIds,
                         no_data: 1
                     }).then(refHelper.bind(null,objectIdentity));
+                })
+                .catch(function(){
+                    //will not look for references of object you don't have access to
                 });
         }
         function refHelper(objectIdentity, provData){
@@ -568,7 +565,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 for (var k = 0; k < data.provenance.length; k++) {
                     var provenance = data.provenance[k];
                     var refInfo = data.info;
-                    var objId = refInfo[6] + '/' + refInfo[0] + '/' + refInfo[4];
                     var objIdGen = refInfo[6] + '/' + refInfo[0];
                     var functionNode = {
                         type: 'App',
@@ -595,7 +591,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 var temp = source;
                 source = target;
                 target = temp;
-
             }
             var name = source + 'to' + target;
 
@@ -707,12 +702,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                             if (refData !== null) {
                                 refData = refData[0].data;
                                 var isDep = true;
-                                //TODO set type of link
                                 var objIdGen = objectIdentity.ref.split('/').slice(0, 2).join('/');
                                 var objId = existingNodeGraphId[objIdGen];
                                 addNodeLink(refData, objId, isDep, refData);
-
-
                             }
                         });
            
@@ -725,7 +717,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
         function buildDataAndRender(objref) {
             $container.find('#loading-mssg').show();
             $container.find('#objgraphview2').hide();
-            //gets verions of object
 
             workspace.get_objects2({
                 objects: [objref],
@@ -734,23 +725,13 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 .then(function (objData) {
                     return processObjectHistory(objData.data);
                 })
-                .then(function (objectIdentity) {
-
-                    // TODO: ADD CHECK TO MAKE SURE THIS IS LATEST VERSION
-                    // const objectIdentity = objIdentities[objIdentities.length -1];
-                    // we have the history of the object of interest,
-                    // now we can fetch all referencing object, and
-                    // get prov info for each of these objects
-                        
+                .then(function (objectIdentity) {   
                     return Promise.all([
                         getObjectProvenance(objectIdentity),
                         getReferencingObjects(objectIdentity)
                     ]);
-
                 })
-
                 .then(function () {
-
                     finishUpAndRender();
                 })
                 .catch(function (err) {
@@ -762,7 +743,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
         function renderForceTree(nodesData, linksData){
             //TODO: copy loop through nodes and get provenances, with nodes hidden
             var width = config.width,
-                height = config.height*2,
+                height = config.height,
                 oldNodes, // data
                 svg, node, link,
                 rectWidth = 110,
@@ -770,7 +751,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 nodes = nodesData,
                 links = linksData,
                 increase = 100,
-                yoffset = 0,
                 t = d3.transition()
                     .duration(1750); // d3 selections
 
@@ -789,29 +769,52 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 .attr('width', width)
                 .attr('height', height)
                 .attr('class', 'prov');
-
-            var borderPath = svg.append('rect')
+            
+            var background = svg.append('rect')
                 .attr('x', 0)
                 .attr('y', 0)
                 .attr('height', height)
                 .attr('width', width)
                 .style('fill', '#efefef')
                 .style('stroke-width', 0);
+
+            svg.append('rect')
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('height', 20)
+                .attr('width', 30)
+                .style('fill', 'yellow')
+                .on('click', function(){
+                    height += increase;
+                    svg.attr('height', height);
+                    background.attr('height', height);
+                    force.size([width, height]);
+                    for(var i = 0; i<nodes.length;i++){
+                        var d = nodes[i];
+                        if(!node.startingNode){
+                            d.y += increase/2;
+                            d.py += increase/2;
+                        }
+                    }
+                    update();
+                });
+
        
 
             function update() {
                 force.nodes(nodes).links(links);
+                var n = svg.selectAll('.node')
+                    .data(nodes, function (d) { return d.objId; });
                 var l = svg.selectAll('.link')
                     .data(links, function(d) {return d.source + ',' + d.target;});
-                var n = svg.selectAll('.node')
-                    .data(nodes, function(d) {return d.objId;});
+
                 enterLinks(l);
                 enterNodes(n);
                 link = svg.selectAll('.link');
                 node = svg.selectAll('.node');
                 force.start();
 
-                for (var i = 50; i > 0; --i) force.tick();
+                for (var i = 100; i > 0; --i) force.tick();
                 force.stop();
             }
 
@@ -848,7 +851,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 d3.selectAll('.nodeObj').each(function (d){
 
                     if(!(d.versions === undefined)){
-                        // debugger;
                         for (var i = 1; i < Object.keys(d.versions).length; i++){
                             d3.select(this.parentNode).insert('rect', ':first-child')
                                 .attr('class', 'versions')
@@ -962,8 +964,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     } else {
                         return d.x = Math.max(rectWidth/2, Math.min(width - rectWidth/2, d.x)); 
                     }
-
-
                 })
                     .attr('cy', function (d) { 
                         if(d.startingObject){
@@ -984,7 +984,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
 
                 link
                     .each(function (d) {
-        
                         if (d.source.y < d.target.y) {
                             if (!d.target.fixed) {
                                 d.target.y = d.source.y - (rectHeight / 2);
@@ -992,7 +991,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                                 d.source.y = d.target.y + (rectHeight / 2);
                             }
                         } 
-
                         var distance = Math.abs(d.source.y - d.target.y);
                         if(distance < rectHeight){
                             if (!d.target.fixed) {
@@ -1001,11 +999,10 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                                 d.source.y += (rectHeight - distance);
                             }
                         } 
-
+                        
                         if (d.target.isFunction && !d.target.fixed) {
                             d.target.x = d.source.x;
-                        }
-                        
+                        }                        
                     })
                     .attr('x1', function (d) { return d.source.x; })
                     .attr('y1', function (d) { return d.source.y - rectHeight/2; })
@@ -1013,10 +1010,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     .attr('y2', function (d) { return d.target.y + rectHeight/2; })
                     .attr('display', function (d) { return (d.toggle === false) ? 'none' : 'initial'; });
 
-
             }
-
-
             force.on('end', function(e){
                 oldNodes = nodes;
                 maintainNodePositions();
@@ -1025,23 +1019,17 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
             function getBorderColor(type){
                 if (type.isFunction) return types.functionNode.borderColor;
                 if (type.startingObject) return types.startingNode.borderColor;
-                // if (type.endNode || type.expanded) return types.noRefs.borderColor;
                 return types.node.borderColor;
             }
-
             function dblClick(node){
-                debugger;
                 var nodeId = {ref: node.objId};
                 if(node.isPresent || node.isFunction){
-                    var condition;
-
+                    if(node.startingObject && (node.expanded === undefined)) node.expanded = true;
                     node.expanded = !node.expanded;
-                    condition = node.expanded;
+                    var condition = node.expanded;
                     
                     toggleNode(node, condition);
-                    update();
-
-                    
+                    update();   
                 }
                 else if (!node.endNode){
 
@@ -1051,17 +1039,13 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         getReferencingObjects(nodeId)
                     ])
                         .then(function(){
-                            // height += increase;
-                            // yoffset += increase;
-                            // force.size([width, height]);
-                            // d3.selectAll('.nodeObj').each(function(d){d.y += increase;});
                             update();
                             node.isPresent = true;
                         });
                 }
             }
-            function toggleNode(node, condition){
-                // debugger;
+            function toggleNode(node){
+                var condition = node.expanded;
                 var queue = addLinkstoQueue(node.referencesTo);
                 while (queue.length > 0){
                     var link = queue.pop();
@@ -1071,7 +1055,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                             queue = queue.concat(addLinkstoQueue(link.target.referencesTo));
                         }
                         link.target.toggle = condition;
-
                     } 
                 }
             }
@@ -1090,7 +1073,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 }
                 return false;
             }
-              
             update();
         }
         
