@@ -452,7 +452,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 nodePaths [objId] = objId;
                 objIdentities.push({ref: objId});
             });
-
+            
             combineGraph.nodes.push(node);
             return {ref: latestObjId};
         }
@@ -577,7 +577,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                     };
                     var isDep = false;
                     if (provenance.resolved_ws_objects.length > 0) {
-                        var functionId = addFunctionLink(objectIdentity, functionNode, isDep, flip);
+                        if (!provenance.script) {
+                            var functionId = addFunctionLink(objectIdentity, functionNode, isDep, flip);
+                        }
                         addNodeLink([data], functionId, isDep,flip);
                     }
                 }
@@ -644,7 +646,10 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                         referencesTo: []
                     };
                     var isDep = false;
-                    functionId = addFunctionLink(objectIdentity, functionNode, isDep);
+
+                    if(!provenance.script){
+                        functionId = addFunctionLink(objectIdentity, functionNode, isDep);
+                    }
 
                     if (provenance.resolved_ws_objects) {
                         provenance.resolved_ws_objects.forEach(function (resolvedObjectRef) {
