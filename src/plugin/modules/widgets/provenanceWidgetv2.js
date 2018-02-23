@@ -421,7 +421,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 latestVersion = 0,
                 latestObjId = '';
 
-
             data.forEach(function (objectData) {
                 //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
                 var objectInfo = objectData.info;
@@ -633,16 +632,28 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                 var objectProvenance = provData[i];
                 objectProvenance.provenance.forEach(function (provenance) {
                     var objIdGen = objectIdentity.ref.split('/').slice(0, 2).join('/');
+                    if(provenance.script){
+                        functionNode = {
+                            isFunction: true,
+                            type: 'Script',
+                            objId: objIdGen + 'to' + provenance.script,
+                            name: provenance.script,
+                            method: provenance.script,
+                            referencesFrom: [],
+                            referencesTo: []
+                        };
+                    }else{
+                        functionNode = {
+                            isFunction: true,
+                            type: 'App',
+                            objId: objIdGen + 'to' + provenance.service,
+                            name: provenance.service,
+                            method: provenance.method,
+                            referencesFrom: [],
+                            referencesTo: []
+                        };
+                    }
 
-                    functionNode = {
-                        isFunction: true,
-                        type: 'App',
-                        objId: objIdGen + 'to' + provenance.service,
-                        name: provenance.service,
-                        method: provenance.method,
-                        referencesFrom: [],
-                        referencesTo: []
-                    };
                     var isDep = false;
                     functionId = addFunctionLink(objectIdentity, functionNode, isDep);
 
@@ -860,11 +871,11 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
                                 .attr('height', rectHeight)
                                 .attr('stroke-width', '1px')
                                 .attr('stroke', getBorderColor)
-                                .on('mouseover', function (d) {
+                                .on('mouseover', function () {
                                     d3.select(this)
                                         .attr('stroke-width', '3px');
                                 })
-                                .on('mouseleave', function (d) {
+                                .on('mouseleave', function () {
                                     d3.select(this)
                                         .attr('stroke-width', '1px');
                                 });
@@ -1077,18 +1088,8 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient) {
         }
         
         function finishUpAndRender() {
-
             d3.select($container.find('#objgraphview2')).html('');
             $container.find('#objgraphview2').show();
-            //add back in if want to have different tabs
-            // var ul = $('<ul class="nav nav-tabs"  role="tablist"/>');
-            // ul.append('<li role="presentation" class="active"><a href="#prov-tab" aria-controls="prov-tab" role="tab" data-toggle="tab">Provenance and Dependencies</a></li>');
-            // ul.append('<li role="presentation"  ><a href="#ref-tab" aria-controls="usage-tab" role="tab" data-toggle="tab">Object Usage</a></li>');
-            // var content = $('<div/>',{class:'tab-content'});
-            // content.append('<div role="tabpanel" class="tab-pane active" id="prov-tab"></div>');
-            // content.append('<div role="tabpanel" class="tab-pane " id="ref-tab"></div>');
-            // $('#objgraphview2').append(ul);
-            // $('#objgraphview2').append(content);
             renderForceTree(combineGraph.nodes, combineGraph.links, false);
             addNodeColorKey();
             $container.find('#loading-mssg').hide();
