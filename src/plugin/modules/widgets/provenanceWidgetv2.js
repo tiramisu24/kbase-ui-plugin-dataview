@@ -94,17 +94,18 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
             br = html.tag('br'),
             tr = html.tag('tr'),
             td = html.tag('td'),
-            b = html.tag('b');
-
-            // config settings?
-        config.width = 1200;
-        config.height = 700;
-        var dgraph = new dagre.graphlib.Graph();
+            b = html.tag('b'),
+            //d3 rendering
+            svgWidth = 1200,
+            svgHeight = 700,
+            rectWidth = 110,
+            rectHeight = 40,
+            dgraph = new dagre.graphlib.Graph();
 
         function renderLayout() {
             return div([
                 div(['This is a visualization of the relationships between this piece of data and other data in KBase.  Click objects to show additional information (shown below the graph). Double click on an object expand graph.', br(), br()]),
-                div({id: 'objgraphview2', style: {overflow: 'auto', height: "" + (config.height * 3/4) + "px", resize: 'vertical'}}),
+                div({id: 'objgraphview2', style: {overflow: 'auto', height: "" + (svgHeight * 3/4) + "px", resize: 'vertical'}}),
                 div({id: 'nodeColorKey2'})
             ]);
         }
@@ -757,15 +758,12 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
 
         function renderForceTree(nodesData, linksData){
             //TODO: copy loop through nodes and get provenances, with nodes hidden
-            var width = config.width,
-                height = config.height,
+            var width = svgWidth,
+                height = svgHeight,
                 oldNodes, // data
                 svg, node, link,
-                rectWidth = 110,
-                rectHeight = 40,
                 nodes = nodesData,
                 links = linksData,
-                increase = 100,
                 t = d3.transition()
                     .duration(1750); // d3 selections
 
@@ -794,10 +792,10 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
                 .style('stroke-width', 0);
 
             function update() {
-                svg.attr('height', config.height)
-                    .attr('width', config.width);
-                background.attr('height', config.height)
-                    .attr('width', config.width);
+                svg.attr('height', svgHeight)
+                    .attr('width', svgWidth);
+                background.attr('height', svgHeight)
+                    .attr('width', svgWidth);
                 force.nodes(nodes).links(links);
                 var n = svg.selectAll('.node')
                     .data(nodes, function (d) { return d.objId; });
@@ -809,7 +807,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
                 link = svg.selectAll('.link');
                 node = svg.selectAll('.node');
                 force.start();
-                // for(var i =0; i<10; i++ ) force.tick();
                 force.tick();
                 force.stop();
             }
@@ -957,10 +954,10 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
             function tick(e) {
                 node
                     .attr('cx', function (d) { 
-                        return d.x = Math.max(rectWidth/2, Math.min(config.width - rectWidth/2, d.x)); 
+                        return d.x = Math.max(rectWidth/2, Math.min(svgWidth - rectWidth/2, d.x)); 
                     })
                     .attr('cy', function (d) { 
-                        return d.y = Math.max(rectHeight / 2, Math.min(config.height - rectHeight / 2, d.y)); 
+                        return d.y = Math.max(rectHeight / 2, Math.min(svgHeight - rectHeight / 2, d.y)); 
     
                     })
                     .attr('transform', function (d) { return 'translate(' + d.x + ',' + d.y + ')'; })
@@ -1008,7 +1005,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
                         getReferencingObjects(nodeId)
                     ])
                         .then(function(){
-                            nodes = dagreGraph();
+                            nodes = dagreNodes();
                             update();
                             node.isPresent = true;
                         });
@@ -1049,37 +1046,38 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
         function finishUpAndRender() {
             d3.select($container.find('#objgraphview2')).html('');
             $container.find('#objgraphview2').show();
-            renderForceTree(dagreGraph(), combineGraph.links, false);
+            renderForceTree(dagreNodes(), combineGraph.links, false);
             addNodeColorKey();
             $container.find('#loading-mssg').hide();
         }
-        function dagreGraph(){
+        function dagreNodes(){
             // Set an object for the graph label
             dgraph.setGraph({});
 
             // Default to assigning a new object as a label for each new edge.
             dgraph.setDefaultEdgeLabel(function () { return {}; });
 
+            //add nodes into dgraph
             for(var i =0; i<combineGraph.nodes.length; i++){
                 var node = combineGraph.nodes[i];
-                node.height = 40;
-                node.width = 110;
+                node.height = rectHeight;
+                node.width = rectWidth;
                 node.index = i;
                 var nodeInfo = Object.assign({}, node);
                 nodeInfo.label = node.name;
 
                 dgraph.setNode(node.objId, nodeInfo);
             }
+            //add links to dgraph
             for (var i = 0; i < combineGraph.links.length; i++) {
                 var link = combineGraph.links[i];
+                //d3 sometimes mutates the integers to references of the actual object. Manually changing it back b/c of dagre only takes numbers or labels
                 if (isNaN(link.source)){
-                    dgraph.setEdge(combineGraph.nodes[link.source.index].objId, combineGraph.nodes[link.target.index].objId);
-                    combineGraph.links[i].source = link.source.index;
-                    combineGraph.links[i].target = link.target.index;
-
-                }else{
-                    dgraph.setEdge(combineGraph.nodes[link.source].objId, combineGraph.nodes[link.target].objId);
+                    link.source = link.source.index;
+                    link.target = link.target.index;
                 }
+                dgraph.setEdge(combineGraph.nodes[link.source].objId, combineGraph.nodes[link.target].objId);
+                
             }
 
             dagre.layout(dgraph);
@@ -1088,13 +1086,11 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
             for (var i = 0; i < nodeLabels.length; i++) {
                 nodes.push(dgraph.node(nodeLabels[i]));
             }
-            config.height = dgraph._label.height;
-            config.width = dgraph._label.width;
+
+            svgHeight = dgraph._label.height;
+            svgWidth = dgraph._label.width;
             return nodes;
 
-        }
-        function getData() {
-            return {title: 'Data Object Reference Network', workspace: workspaceId, id: 'This view shows the data reference connections to object ' + objectId};
         }
 
         // Widget API
