@@ -793,30 +793,11 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
                 .style('fill', '#efefef')
                 .style('stroke-width', 0);
 
-            svg.append('rect')
-                .attr('x', 0)
-                .attr('y', 0)
-                .attr('height', 20)
-                .attr('width', 30)
-                .style('fill', 'yellow')
-                .on('click', function(){
-                    height += increase;
-                    svg.attr('height', height);
-                    background.attr('height', height);
-                    force.size([width, height]);
-                    for(var i = 0; i<nodes.length;i++){
-                        var d = nodes[i];
-                        if(!node.startingNode){
-                            d.y += increase/2;
-                            d.py += increase/2;
-                        }
-                    }
-                    update();
-                });
-
-       
-
             function update() {
+                svg.attr('height', config.height)
+                    .attr('width', config.width);
+                background.attr('height', config.height)
+                    .attr('width', config.width);
                 force.nodes(nodes).links(links);
                 var n = svg.selectAll('.node')
                     .data(nodes, function (d) { return d.objId; });
@@ -975,31 +956,12 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
 
             function tick(e) {
                 node
-                .attr('cx', function (d) { 
-                    // if (d.startingObject) {
-                    //     d.fixed = true;
-                    //     return d.x = width / 2;
-                    // } else {
-                        if(!d.fixed){
-                            d.fixed = true;
-                            return d.x = Math.max(rectWidth/2, Math.min(width - rectWidth/2, d.x)); 
-                        }else{
-                            return d.x
-                        }
-                    // }
-                })
+                    .attr('cx', function (d) { 
+                        return d.x = Math.max(rectWidth/2, Math.min(config.width - rectWidth/2, d.x)); 
+                    })
                     .attr('cy', function (d) { 
-                        // if(d.startingObject){
-                        //     d.fixed = true;
-                        //     return d.y = height/2;
-                        // }else{
-                        if (!d.fixed) {
-                            d.fixed = true;
-                            return d.y = Math.max(rectHeight / 2, Math.min(height - rectHeight / 2, d.y)); 
-                        } else {
-                            return d.y;
-                        }
-                        // }
+                        return d.y = Math.max(rectHeight / 2, Math.min(config.height - rectHeight / 2, d.y)); 
+    
                     })
                     .attr('transform', function (d) { return 'translate(' + d.x + ',' + d.y + ')'; })
                     .style('fill', function (d) {
@@ -1011,31 +973,10 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
                     .attr('display', function (d) { return (d.toggle === false) ? 'none' : 'initial';});
 
                 link
-                    .each(function (d) {
-                        // if (d.source.y < d.target.y) {
-                        //     if (!d.target.fixed) {
-                        //         d.target.y = d.source.y - (rectHeight / 2);
-                        //     }else if(!d.source.fixed){
-                        //         d.source.y = d.target.y + (rectHeight / 2);
-                        //     }
-                        // } 
-                        // var distance = Math.abs(d.source.y - d.target.y);
-                        // if(distance < rectHeight){
-                        //     if (!d.target.fixed) {
-                        //         d.target.y -= (rectHeight - distance);
-                        //     } else if (!d.source.fixed) {
-                        //         d.source.y += (rectHeight - distance);
-                        //     }
-                        // } 
-                        
-                        // if (d.target.isFunction && !d.target.fixed) {
-                        //     d.target.x = d.source.x;
-                        // }                        
-                    })
                     .attr('x1', function (d) { return d.source.x; })
-                    .attr('y1', function (d) { return d.source.y - rectHeight/2; })
+                    .attr('y1', function (d) { return d.source.y + rectHeight/2; })
                     .attr('x2', function (d) { return d.target.x; })
-                    .attr('y2', function (d) { return d.target.y + rectHeight/2; })
+                    .attr('y2', function (d) { return d.target.y - rectHeight/2; })
                     .attr('display', function (d) { return (d.toggle === false) ? 'none' : 'initial'; });
 
             }
@@ -1109,12 +1050,10 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
             d3.select($container.find('#objgraphview2')).html('');
             $container.find('#objgraphview2').show();
             renderForceTree(dagreGraph(), combineGraph.links, false);
-            // testDagre();
             addNodeColorKey();
             $container.find('#loading-mssg').hide();
         }
         function dagreGraph(){
-
             // Set an object for the graph label
             dgraph.setGraph({});
 
@@ -1144,126 +1083,16 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
             }
 
             dagre.layout(dgraph);
-
-            dgraph.nodes().forEach(function (v) {
-                console.log("Node " + v + " x: " + dgraph.node(v).x + " y:" + dgraph.node(v).y);
-            });
-            var links = [];
-            dgraph.edges().forEach(function (e) {
-
-                console.log("Edge " + e.v + " -> " + e.w + ": " + JSON.stringify(dgraph.edge(e)));
-            });
-            // debugger;
             var nodes = [];
             var nodeLabels = dgraph.nodes();
             for (var i = 0; i < nodeLabels.length; i++) {
                 nodes.push(dgraph.node(nodeLabels[i]));
             }
-            // debugger;
+            config.height = dgraph._label.height;
+            config.width = dgraph._label.width;
             return nodes;
-            // renderForceTree(nodes, combineGraph.links);
 
         }
-        function testDagre(){
-            // Create a new directed graph 
-            
-            var dgraph = new dagre.graphlib.Graph();
-
-            // Set an object for the graph label
-            dgraph.setGraph({});
-
-            // Default to assigning a new object as a label for each new edge.
-            dgraph.setDefaultEdgeLabel(function () { return {}; });
-
-            // Add nodes to the graph. The first argument is the node id. The second is
-            // metadata about the node. In this case we're going to add labels to each of
-            // our nodes.
-            dgraph.setNode("kbacon", { label: "Kevin Bacon", width: 121, height: 100, blah:"blah" });
-            dgraph.setNode("swilliams", { label: "Saul Williams", width: 160, height: 100 });
-            dgraph.setNode("hford", { label: "Harrison Ford", width: 168, height: 100 });
-            dgraph.setNode("bpitt", { label: "Brad Pitt", width: 108, height: 100 });
-            dgraph.setNode("lwilson", { label: "Luke Wilson", width: 144, height: 100 });
-            dgraph.setNode("kspacey", { label: "Kevin Spacey", width: 144, height: 100 });
-
-            // Add edges to the graph.
-            dgraph.setEdge("kspacey", "swilliams");
-            dgraph.setEdge("swilliams", "kbacon");
-            dgraph.setEdge("bpitt", "kbacon");
-            dgraph.setEdge("hford", "lwilson");
-            dgraph.setEdge("lwilson", "kbacon");        
-
-            function draw(){
-                dagre.layout(dgraph);
-                var nodes = [];
-                dgraph.nodes().forEach(function (v) {
-                    var node = {};
-                    node.id = v;
-                    nodes.push(node);
-                    console.log("Node " + v + ": " + JSON.stringify(dgraph.node(v)));
-                });
-                var links = [];
-                dgraph.edges().forEach(function (e) {
-                    var link = {}
-                    link.source = e.v;
-                    link.target = e.w;
-                    links.push(link);
-                    console.log("Edge " + e.v + " -> " + e.w + ": " + JSON.stringify(dgraph.edge(e)));
-                });
-                var w = 960,
-                    h = 500;
-
-                var vis = d3.select("body").append("svg")
-                    .attr("width", w)
-                    .attr("height", h);
-
-                $container.append(vis);
-                var force = d3.layout.force()
-                    .nodes(dgraph.nodes())
-                    .links(links)
-                    .size([w, h]);
-
-                vis.selectAll("testNodes")
-                    .data(dgraph.nodes())
-                    .enter()
-                    .append('g')
-                    .append("rect")
-                    .attr('x', function (d) { combineGraph.nodes;return dgraph.node(d).x })
-                    .attr('y', function (d) { return dgraph.node(d).y })
-                    .attr('width', function (d) { return dgraph.node(d).width })
-                    .attr('height', function (d) { return dgraph.node(d).height })
-                    .style("fill", "steelblue")
-                    .style("stroke", "blue")
-                    .style("stroke-width", "2.5px");
-                vis.selectAll("g")
-                    .append('text')
-                    .attr('fill', 'black')
-                    .append('tspan')
-                    .text(function (d) { return (d); })
-                    .attr('fill', 'black')
-                    .attr('x', function (d) { return dgraph.node(d).x })
-                    .attr('y', function (d) { return dgraph.node(d).y })
-                    .attr('font-weight', 'bold')
-                    .attr('dy', 0);
-
-
-                vis.selectAll("testLinks")
-                    .data(links)
-                    .enter().append("line")
-                    .attr("class", "testLinks")
-                    .style("stroke", "black")
-                    .style('stroke-width', "2px")
-                    .attr("x1", function (d) { return dgraph.node(d.source).x; })
-                    .attr("y1", function (d) { return dgraph.node(d.source).y; })
-                    .attr("x2", function (d) { return dgraph.node(d.target).x; })
-                    .attr("y2", function (d) { return dgraph.node(d.target).y; });
-                    // debugger;
-                    // force.start();
-            }
-
-
-            draw();
-        }
-
         function getData() {
             return {title: 'Data Object Reference Network', workspace: workspaceId, id: 'This view shows the data reference connections to object ' + objectId};
         }
