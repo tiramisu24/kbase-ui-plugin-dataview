@@ -474,7 +474,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
             console.error('Error in building object graph!');
             console.error(err);
         }
-        function addFunctionLink(objIdentity, functionNode, isDep, flip){
+        function addFunctionLink(objIdentity, functionNode, isDep){
             
             var functionId = existingFunctions[functionNode.objId];
             if(functionId !== undefined){
@@ -486,7 +486,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
             var objIdGen = objIdentity.ref.split('/').slice(0,2).join('/');
             var targetId = existingNodeGraphId[objIdGen];
             combineGraph.nodes.push(functionNode);
-            makeLink(targetId, functionId, isDep, flip);
+            makeLink(targetId, functionId, isDep);
             return functionId;
         }
         function getObjectIds(refData){
@@ -497,7 +497,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
             }
             return objIds;
         }
-        function addNodeLink(data, targetId, isDep, flip) {
+        function addNodeLink(data, targetId, isDep) {
             for (var i = 0; i < Math.min(data.length, 10); i++) {
                     
                 //0:obj_id, 1:obj_name, 2:type ,3:timestamp, 4:version, 5:username saved_by, 6:ws_id, 7:ws_name, 8 chsum, 9 size, 10:usermeta
@@ -530,7 +530,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
                     combineGraph.nodes.push(node);
                 }   
       
-                makeLink(targetId, nodeId, isDep, flip);
+                makeLink(targetId, nodeId, isDep);
                 
             }
         }
@@ -550,7 +550,6 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
                 });
         }
         function refHelper(objectIdentity, provData){
-            var flip = true;
             for (var i = 0; i < provData.data.length; i++) {
                 var data = provData.data[i];
                 if (exemptObjects[data.info[2].split('-')[0]]) continue;
@@ -559,8 +558,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
                     if (objectIdentity.ref === data.refs[j]) {
                         var isDep = true;
                         var objIdGen = objectIdentity.ref.split('/').slice(0, 2).join('/');
-
-                        addNodeLink([data], existingNodeGraphId[objIdGen], isDep,flip);
+                        addNodeLink([data], existingNodeGraphId[objIdGen], isDep);
                         break;
                     }
                 }
@@ -568,33 +566,19 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
                     var provenance = data.provenance[k];
                     var refInfo = data.info;
                     var objIdGen = refInfo[6] + '/' + refInfo[0];
-                    var functionNode = {
-                        type: 'App',
-                        isFunction: true,
-                        objId: objIdGen + 'to' + provenance.service,
-                        name: provenance.service,
-                        method: provenance.method,
-                        referencesFrom : [],
-                        referencesTo : []
-                    };
+                    var functionNode = makeFunctionNode(provenance, objIdGen, provenance.script);
+
                     var isDep = false;
                     if (provenance.resolved_ws_objects.length > 0) {
-                        var functionId = addFunctionLink(objectIdentity, functionNode, isDep, flip);
-                        addNodeLink([data], functionId, isDep,flip);
+                        var functionId = addFunctionLink(objectIdentity, functionNode, isDep);
+                        addNodeLink([data], functionId, isDep);
                     }
                 }
             }
 
         }
 
-        function makeLink(target, source, isDep, flip) {
-
-            //flip arrow for calling on referencing objects            
-            if (flip !== true) {
-                var temp = source;
-                source = target;
-                target = temp;
-            }
+        function makeLink(target, source, isDep) {
             var name = source + 'to' + target;
 
             if (!existingLinks[name]){
@@ -610,7 +594,30 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
             }
 
         }
-            
+
+        function makeFunctionNode(provenance, objIdGen, isScript){
+            if(isScript){
+                return {
+                    isFunction: true,
+                    type: 'Script',
+                    objId: objIdGen + 'to' + provenance.script,
+                    name: provenance.script,
+                    method: provenance.script,
+                    referencesFrom: [],
+                    referencesTo: []
+                };
+            }else {
+                return {
+                    isFunction: true,
+                    type: 'App',
+                    objId: objIdGen + 'to' + provenance.service,
+                    name: provenance.service,
+                    method: provenance.method,
+                    referencesFrom: [],
+                    referencesTo: []
+                };
+            }
+        }
 
         function getObjectProvenance(objectIdentity){
             var path = nodePaths[objectIdentity.ref];
@@ -624,44 +631,23 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
                 .then(function(provData){
                     return provData.data;
                 })
-                .then(provHelper.bind(null, objectIdentity));
+                .then(provHelper.bind(null, objectIdentity, true));
         }
-        function provHelper(objectIdentity, provData) {
+        function provHelper(objectIdentity, isProv, provDataSet) {
             var functionNode, functionId;
 
             var uniqueRefs = {},
                 uniqueProvPaths = [],
                 uniqueRefPaths = [];
-            for (var i = 0; i < provData.length; i++) {
+            for (var i = 0; i < provDataSet.length; i++) {
 
-                var objectProvenance = provData[i];
+                var objectProvenance = provDataSet[i];
                 objectProvenance.provenance.forEach(function (provenance) {
                     var objIdGen = objectIdentity.ref.split('/').slice(0, 2).join('/');
-                    if(provenance.script){
-                        functionNode = {
-                            isFunction: true,
-                            type: 'Script',
-                            objId: objIdGen + 'to' + provenance.script,
-                            name: provenance.script,
-                            method: provenance.script,
-                            referencesFrom: [],
-                            referencesTo: []
-                        };
-                    }else{
-                        functionNode = {
-                            isFunction: true,
-                            type: 'App',
-                            objId: objIdGen + 'to' + provenance.service,
-                            name: provenance.service,
-                            method: provenance.method,
-                            referencesFrom: [],
-                            referencesTo: []
-                        };
-                    }
+                    functionNode = makeFunctionNode(provenance, objIdGen, provenance.script);
 
                     var isDep = false;
                     functionId = addFunctionLink(objectIdentity, functionNode, isDep);
-
                     if (provenance.resolved_ws_objects) {
                         provenance.resolved_ws_objects.forEach(function (resolvedObjectRef) {
 
@@ -675,7 +661,9 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
                         });
                     }
                 });
-                var dependencies = provData[i].refs;
+
+                
+                var dependencies = provDataSet[i].refs;
                 for (var j = 0; j < dependencies.length; j++) {
                     var prevPath = nodePaths[objectIdentity.ref];
                     if (!prevPath) {
@@ -724,9 +712,10 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
                             }
                         });
            
-                } 
+                }
+            } 
                
-            }
+            
         }
 
 
@@ -1001,7 +990,7 @@ function (Promise, $, d3, html, dom, Workspace, GenericClient, dagre) {
 
                     node.expanded = true;
                     return Promise.all([
-                        provHelper(nodeId, [node.data]),
+                        provHelper(nodeId, true, [node.data]),
                         getReferencingObjects(nodeId)
                     ])
                         .then(function(){
